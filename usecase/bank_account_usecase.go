@@ -7,38 +7,38 @@ import (
 
 type BankAccUsecase interface {
 	FindAllBankAcc() any
-	FindBankAccByID(id int) any
-	Register(newbankAcc *model.BankAcc) string
+	FindBankAccByID(id uint) any
+	Register(newBankAcc *model.BankAcc) string
 	Edit(bankAcc *model.BankAcc) string
-	Unreg(id int) string
+	Unreg(id uint) string
 }
 
 type bankAccUsecase struct {
 	bankAccRepo repository.BankAccRepository
 }
 
-func NewBankAccUsecase(bankAccRepo repository.BankAccRepository) BankAccUsecase {
-	return &bankAccUsecase{
-		bankAccRepo: bankAccRepo,
-	}
-}
-
 func (u *bankAccUsecase) FindAllBankAcc() any {
 	return u.bankAccRepo.GetAll()
 }
 
-func (u *bankAccUsecase) FindBankAccByID(userID int) any {
-	return u.bankAccRepo.GetByID(userID)
+func (u *bankAccUsecase) FindBankAccByID(id uint) any {
+	return u.bankAccRepo.GetByID(id)
 }
 
-func (u *bankAccUsecase) Register(newbankAcc *model.BankAcc) string {
-	return u.bankAccRepo.Create(newbankAcc)
+func (u *bankAccUsecase) Register(newBankAcc *model.BankAcc) string {
+	return u.bankAccRepo.Create(newBankAcc)
 }
 
 func (u *bankAccUsecase) Edit(bankAcc *model.BankAcc) string {
 	return u.bankAccRepo.Update(bankAcc)
 }
 
-func (u *bankAccUsecase) Unreg(userId int) string {
-	return u.bankAccRepo.Delete(userId)
+func (u *bankAccUsecase) Unreg(id uint) string {
+	return u.bankAccRepo.Delete(id)
+}
+
+func NewBankAccUsecase(bankAccRepo repository.BankAccRepository) BankAccUsecase {
+	return &bankAccUsecase{
+		bankAccRepo: bankAccRepo,
+	}
 }
