@@ -14,14 +14,6 @@ type BankAccController struct {
 	bankAccUsecase usecase.BankAccUsecase
 }
 
-func newBankAccController(u usecase.BankAccUsecase) *BankAccController {
-	controller := BankAccController{
-		bankAccUsecase: u,
-	}
-
-	return &controller
-}
-
 func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	result := c.bankAccUsecase.FindAllBankAcc()
 	if result == nil {
@@ -39,7 +31,7 @@ func (c *BankAccController) FindBankAccByID(ctx *gin.Context) {
 		return
 	}
 
-	result := c.bankAccUsecase.FindBankAccByID(int(id))
+	result := c.bankAccUsecase.FindBankAccByID(uint(id))
 	if result == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank Account not found")
 		return
@@ -79,6 +71,14 @@ func (c *BankAccController) Unreg(ctx *gin.Context) {
 		return
 	}
 
-	result := c.bankAccUsecase.Unreg(id)
+	result := c.bankAccUsecase.Unreg(uint(id))
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+}
+
+func newBankAccController(u usecase.BankAccUsecase) *BankAccController {
+	controller := BankAccController{
+		bankAccUsecase: u,
+	}
+
+	return &controller
 }
