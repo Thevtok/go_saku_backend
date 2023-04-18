@@ -3,6 +3,7 @@ module github.com/ReygaFitra/inc-final-project.git
 go 1.20
 
 require (
+ 
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
@@ -38,4 +39,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.0 // indirect
 	gorm.io/gorm v1.25.0 // indirect
+
+	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.10.8
+
 )
