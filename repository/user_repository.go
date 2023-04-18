@@ -34,3 +34,4 @@ func (r *userRepo) Create(newUser *model.Users) string {
 	}
 	return "Register Successfully"
 }
+

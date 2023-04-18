@@ -1,5 +1,5 @@
 
-CREATE TABLE Users (
+CREATE TABLE MST_Users (
     User_ID SERIAL PRIMARY KEY,
     Name VARCHAR(50) NOT NULL,
     Email VARCHAR(50) NOT NULL,
@@ -9,31 +9,41 @@ CREATE TABLE Users (
     Balance DECIMAL(10, 2) NOT NULL
 );
 
-CREATE TABLE Transaction (
+CREATE TABLE TX_Transaction (
     Transaction_ID SERIAL PRIMARY KEY,
     User_ID INT NOT NULL,
+	Account_ID INT NOT NULL,
+	Card_ID INT NOT NULL,
+	Point_ID INT NOT NULL,
     Type VARCHAR(10) NOT NULL,
     Amount DECIMAL(10, 2) NOT NULL,
     Date DATE NOT NULL,
     Description VARCHAR(100),
-    FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
+    FOREIGN KEY (User_ID) REFERENCES MST_Users(User_ID)
 );
 
-CREATE TABLE Bank_Account (
+CREATE TABLE MST_Bank_Account (
     Account_ID SERIAL PRIMARY KEY,
     User_ID INT NOT NULL,
     Bank_Name VARCHAR(50) NOT NULL,
     Account_Number VARCHAR(20) NOT NULL,
     Account_Holder_Name VARCHAR(50) NOT NULL,
-    FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
+    FOREIGN KEY (User_ID) REFERENCES MST_Users(User_ID)
 );
 
-CREATE TABLE Card (
+CREATE TABLE MST_Card (
     Card_ID SERIAL PRIMARY KEY,
     User_ID INT NOT NULL,
     Card_Type VARCHAR(10) NOT NULL,
     Card_Number VARCHAR(20) NOT NULL,
     Expiration_Date DATE NOT NULL,
     CVV VARCHAR(5) NOT NULL,
-    FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
+    FOREIGN KEY (User_ID) REFERENCES MST_Users(User_ID)
+);
+
+CREATE TABLE MST_Reward_Point (
+    Point_ID SERIAL PRIMARY KEY,
+    User_ID INT NOT NULL,
+    Amount_Reward INT NOT NULL,
+    FOREIGN KEY (User_ID) REFERENCES MST_Users(User_ID)
 );
