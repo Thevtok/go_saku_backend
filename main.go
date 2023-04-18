@@ -1,7 +1,8 @@
 package main
 
-import "github.com/ReygaFitra/inc-final-project.git/config"
+import "github.com/ReygaFitra/inc-final-project.git/delivery"
 
 func main() {
-	config.LoadDatabase()
+	delivery.RunServer()
+
 }

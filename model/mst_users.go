@@ -1,11 +1,20 @@
 package model
 
-type Users struct {
-	User_ID      int     `json:"User_ID"`
-	Name         string  `json:"Name"`
-	Email        string  `json:"Email"`
-	Password     string  `json:"Password"`
-	Phone_Number string  `json:"Phone_Number"`
-	Address      string  `json:"Address"`
-	Balance      float64 `json:"Balance"`
+type User struct {
+	ID           uint   `gorm:"column:user_id;primary_key"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Phone_Number string `json:"phone_number"`
+	Address      string `json:"address"`
+	Balance      int    `json:"balance"`
+}
+
+// Define the table name for the User struct
+type UserGetAll struct {
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Phone_Number string `json:"phone_number"`
+	Address      string `json:"address"`
+	Balance      int    `json:"balance"`
 }
