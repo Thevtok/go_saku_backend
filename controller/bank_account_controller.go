@@ -75,7 +75,7 @@ func (c *BankAccController) Unreg(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func newBankAccController(u usecase.BankAccUsecase) *BankAccController {
+func NewBankAccController(u usecase.BankAccUsecase) *BankAccController {
 	controller := BankAccController{
 		bankAccUsecase: u,
 	}
