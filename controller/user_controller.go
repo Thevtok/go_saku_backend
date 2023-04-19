@@ -46,7 +46,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	res := c.usecase.Register(&newUser)
+	res, _ := c.usecase.Register(&newUser)
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, res)
 }
 

@@ -14,7 +14,7 @@ type UserUseCase interface {
 	FindUsers() any
 	FindByID(id uint) any
 
-	Register(user *model.User) any
+	Register(user *model.User) (any, error)
 	Edit(user *model.User) string
 	Unreg(id uint) string
 }
@@ -54,7 +54,7 @@ func (uc *userUseCase) FindByID(userID uint) any {
 	return uc.userRepo.GetByID(userID)
 }
 
-func (uc *userUseCase) Register(user *model.User) any {
+func (uc *userUseCase) Register(user *model.User) (any, error) {
 
 	return uc.userRepo.Create(user)
 }

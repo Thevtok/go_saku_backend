@@ -18,7 +18,7 @@ type UserRepository interface {
 	GetAll() any
 	GetByID(id uint) any
 
-	Create(user *model.User) any
+	Create(user *model.User) (any, error)
 	Update(user *model.User) string
 	Delete(id uint) string
 }
@@ -28,9 +28,8 @@ type userRepository struct {
 }
 
 func NewUserRepository(db *sql.DB) UserRepository {
-	repo := new(userRepository)
-	repo.db = db
-	return repo
+	return &userRepository{db: db}
+
 }
 
 func (r *userRepository) GetAll() any {
@@ -104,8 +103,7 @@ func (r *userRepository) Delete(id uint) string {
 	return "deleted user successfully"
 }
 
-func (r *userRepository) Create(user *model.User) any {
-
+func (r *userRepository) Create(user *model.User) (interface{}, error) {
 	// Create a copy of the user object
 	hashedPassword, err := utils.HasingPassword(user.Password)
 	if err != nil {
@@ -114,11 +112,13 @@ func (r *userRepository) Create(user *model.User) any {
 
 	user.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, email,password, phone_number,address,balance ) VALUES ($1, $2, $3, $4,$5,$6)", user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
+	_, err = r.db.Exec("INSERT INTO msst_users (name, email, password, phone_number, address, balance) VALUES ($1, $2, $3, $4, $5, $6)", user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
 	if err != nil {
-		print(err)
+		log.Println(err)
+		return nil, err
 	}
-	return user
+
+	return user, nil
 }
 
 func (r *userRepository) GetByUsernameAndPassword(email string, password string) (*model.Credentials, error) {
