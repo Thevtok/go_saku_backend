@@ -54,7 +54,7 @@ func (r *bankAccRepository) GetByID(id uint) any {
 
 	var user model.BankAccResponse
 
-	query := "SELECT u.name, b.bank_name, b.account_number, b.account_holder_name FROM mst_bank_account b JOIN mst_users u ON b.account_id = u.user_id WHERE user_id = $1"
+	query := "SELECT u.name, b.bank_name, b.account_number, b.account_holder_name FROM mst_bank_account b JOIN mst_users u ON b.account_id = u.user_id WHERE u.user_id = $1"
 
 	row := r.db.QueryRow(query, id)
 	err := row.Scan(&user.Name, &user.BankName, &user.AccountNumber, &user.AccountHolderName)
@@ -83,8 +83,8 @@ func (r *bankAccRepository) Update(bankAcc *model.BankAcc) string {
 		return result.(string)
 	}
 
-	query := "UPDATE mst_bank_account SET user_id = $1, bank_name = $2, account_number = $3, account_holder_name = $4 WHERE user_id = $5"
-	_, err := r.db.Exec(query, bankAcc.UserID, bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName)
+	query := "UPDATE mst_bank_account SET bank_name = $1, account_number = $2, account_holder_name = $3 WHERE user_id = $4"
+	_, err := r.db.Exec(query, bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.UserID)
 	if err != nil {
 		log.Println(err)
 		return "failed to update Bank Account"
