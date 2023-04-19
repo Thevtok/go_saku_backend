@@ -20,9 +20,9 @@ type bankAccRepository struct {
 }
 
 func (r *bankAccRepository) GetAll() any {
-	var users []model.BankAcc
+	var users []model.BankResponse
 
-	query := "SELECT account_id, user_id, bank_account, account_number, account_holder_name FROM mst_bank_account"
+	query := "SELECT u.name , b.bank_name, b.account_number, b.account_holder_name FROM mst_users u join mst_bank_account b ON b.user_id = u.user_id "
 	rows, err := r.db.Query(query)
 
 	if err != nil {
@@ -34,9 +34,9 @@ func (r *bankAccRepository) GetAll() any {
 	defer rows.Close()
 
 	for rows.Next() {
-		var user model.BankAcc
+		var user model.BankResponse
 
-		err := rows.Scan(&user.AccountId, &user.UserId, &user.BankName, &user.AccountNumber, &user.AccountHolderName)
+		err := rows.Scan(&user.Name, &user.BankName, &user.AccountNumber, &user.AccountHolderName)
 		if err != nil {
 			log.Println(err)
 		}
@@ -48,11 +48,11 @@ func (r *bankAccRepository) GetAll() any {
 }
 
 func (r *bankAccRepository) GetByID(id uint) any {
-	var user model.BankAcc
+	var user model.BankResponse
 
-	query := "SELECT bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = $1"
+	query := "SELECT u.name , b.bank_name, b.account_number, b.account_holder_name FROM mst_users u join mst_bank_account b ON b.user_id = u.user_id  WHERE account_id = $1"
 	row := r.db.QueryRow(query, id)
-	err := row.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName)
+	err := row.Scan(&user.Name, &user.BankName, &user.AccountNumber, &user.AccountHolderName)
 	if err != nil {
 		log.Println(err)
 	}

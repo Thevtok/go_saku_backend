@@ -14,11 +14,11 @@ import (
 )
 
 type UserRepository interface {
-	GetByUsernameAndPassword(username string, password string) (*model.User, error)
+	GetByUsernameAndPassword(username string, password string) (*model.Credentials, error)
 	GetAll() any
 	GetByID(id uint) any
 
-	Create(user *model.User) string
+	Create(user *model.User) any
 	Update(user *model.User) string
 	Delete(id uint) string
 }
@@ -104,26 +104,29 @@ func (r *userRepository) Delete(id uint) string {
 	return "deleted user successfully"
 }
 
-func (r *userRepository) Create(user *model.User) string {
+func (r *userRepository) Create(user *model.User) any {
+
 	// Create a copy of the user object
 	hashedPassword, err := utils.HasingPassword(user.Password)
 	if err != nil {
 		log.Println(err)
 	}
-	newUser := *user
-	newUser.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, email,password, phone_number,address,balance ) VALUES ($1, $2, $3, $4,$5,$6)", newUser.Name, newUser.Email, newUser.Password, newUser.Phone_Number, newUser.Address, newUser.Balance)
+	user.Password = hashedPassword
+
+	_, err = r.db.Exec("INSERT INTO mst_users (name, email,password, phone_number,address,balance ) VALUES ($1, $2, $3, $4,$5,$6)", user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
 	if err != nil {
 		print(err)
 	}
-	return "created user successfully"
+	return user
 }
 
-func (r *userRepository) GetByUsernameAndPassword(email string, password string) (*model.User, error) {
-	user := &model.User{}
-	row := r.db.QueryRow("SELECT email,password FROM mst_users")
-	err := row.Scan(&user.Email, &user.Password)
+func (r *userRepository) GetByUsernameAndPassword(email string, password string) (*model.Credentials, error) {
+	// Query the database to retrieve the user's hashed password by email
+	query := "SELECT password FROM mst_users WHERE email = $1"
+	row := r.db.QueryRow(query, email)
+	var hashedPassword string
+	err := row.Scan(&hashedPassword)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("user not found")
@@ -132,23 +135,15 @@ func (r *userRepository) GetByUsernameAndPassword(email string, password string)
 		return nil, fmt.Errorf("failed to get user")
 	}
 
-	return user, nil
-}
-
-type UserRepo interface {
-	Register(newUser *model.User) string
-}
-
-type userRepo struct {
-	db *sql.DB
-}
-
-func (r *userRepo) Create(newUser *model.User) string {
-	query := "INSERT INTO (name, email, password, phone_number, address, balance) VALUES ($1, $2, $3, $4, $5, $6)"
-	_, err := r.db.Exec(query, newUser.Name, newUser.Email, newUser.Password, newUser.Phone_Number, newUser.Address, newUser.Balance)
+	// Verify that the retrieved password is a valid hash
+	err = utils.CheckPasswordHash(password, hashedPassword)
 	if err != nil {
-		log.Println(err.Error())
-		return "Failed Register"
+		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, hashedPassword)
 	}
-	return "Register Successfully"
+
+	user := &model.Credentials{
+		Password: hashedPassword,
+	}
+
+	return user, nil
 }

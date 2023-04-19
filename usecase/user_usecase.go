@@ -1,19 +1,20 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
+	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUseCase interface {
-	Login(email string, password string) (*model.User, error)
+	Login(email string, password string) (*model.Credentials, error)
 	FindUsers() any
 	FindByID(id uint) any
 
-	Register(user *model.User) string
+	Register(user *model.User) any
 	Edit(user *model.User) string
 	Unreg(id uint) string
 }
@@ -28,24 +29,21 @@ func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	}
 }
 
-func (uc *userUseCase) Login(email string, password string) (*model.User, error) {
-	// Hash the provided password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
+func (uc *userUseCase) Login(email string, password string) (*model.Credentials, error) {
 
 	// Get the user by email and hashed password
-	user, err := uc.userRepo.GetByUsernameAndPassword(email, string(hashedPassword))
+	user, err := uc.userRepo.GetByUsernameAndPassword(email, password)
 	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		return nil, errors.New("invalid credentials")
+		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
 
-	// Return the user if the passwords match
-	return user, nil
+	// Compare the provided password with the stored password hash
+	err = utils.CheckPasswordHash(password, user.Password)
+	if err != nil {
+		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, user.Password)
+	}
+
+	return &model.Credentials{Password: user.Password}, nil
 }
 
 func (uc *userUseCase) FindUsers() any {
@@ -56,12 +54,8 @@ func (uc *userUseCase) FindByID(userID uint) any {
 	return uc.userRepo.GetByID(userID)
 }
 
-func (uc *userUseCase) Register(user *model.User) string {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		print(err)
-	}
-	user.Password = string(hashedPassword)
+func (uc *userUseCase) Register(user *model.User) any {
+
 	return uc.userRepo.Create(user)
 }
 

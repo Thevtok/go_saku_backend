@@ -39,7 +39,7 @@ func (c *UserController) FindUserByID(ctx *gin.Context) {
 }
 
 func (c *UserController) Register(ctx *gin.Context) {
-	var newUser model.User
+	newUser := model.User{}
 
 	if err := ctx.BindJSON(&newUser); err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")

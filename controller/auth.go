@@ -10,7 +10,6 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginAuth struct {
@@ -20,10 +19,11 @@ type LoginAuth struct {
 
 var jwtKey = []byte(utils.DotEnv("KEY"))
 
-func generateToken(user *model.User) (string, error) {
+func generateToken(user *model.Credentials) (string, error) {
 	// Set token claims
 	claims := jwt.MapClaims{}
 	claims["email"] = user.Email
+	claims["password"] = user.Password
 
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
@@ -37,7 +37,7 @@ func generateToken(user *model.User) (string, error) {
 	return tokenString, nil
 }
 
-func AuthMiddleware(jwtKey []byte) gin.HandlerFunc {
+func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
@@ -47,7 +47,7 @@ func AuthMiddleware(jwtKey []byte) gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
 
@@ -57,42 +57,45 @@ func AuthMiddleware(jwtKey []byte) gin.HandlerFunc {
 			return
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
-		email := claims["email"].(string)
+		claims := token.Claims.(*jwt.MapClaims)
+		email := (*claims)["email"].(string)
+		password := (*claims)["password"].(string)
 
 		c.Set("email", email)
+		c.Set("password", password)
 
 		c.Next()
 	}
 }
+
 func (l *LoginAuth) Login(c *gin.Context) {
-	var user model.User
+	var user model.Credentials
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
 		return
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-
-	User, err := l.usecase.Login(user.Email, string(hashedPassword))
+	// Retrieve the user by email
+	foundUser, err := l.usecase.Login(user.Email, user.Password)
 	if err != nil {
 		log.Println(err) // log the error message
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}
 
-	if User == nil {
+	// Verify that the provided password matches the stored hashed password
+	err = utils.CheckPasswordHash(user.Password, foundUser.Password)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
 
-	// Print the hashed password stored in the database
-
-	token, err := generateToken(User)
+	// Generate a token and return it to the client
+	token, err := generateToken(foundUser)
 	if err != nil {
 		log.Println(err) // log the error message
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}
 

@@ -13,31 +13,47 @@ import (
 )
 
 func RunServer() {
-	secretKey := []byte(utils.DotEnv("KEY"))
 
 	db := config.LoadDatabase()
 	defer db.Close()
 
-	authMiddleware := controller.AuthMiddleware(secretKey)
+	authMiddleware := controller.AuthMiddleware()
 
 	r := gin.Default()
 
 	userRouter := r.Group("/user")
 	userRouter.Use(authMiddleware)
+	// USER DEPEDENCY
 
-	repo := repository.NewUserRepository(db)
-	usecase := usecase.NewUserUseCase(repo)
-	auth := controller.NewUserAuth(usecase)
-	controller := controller.NewUserController(usecase)
+	userRepo := repository.NewUserRepository(db)
+	userUsecase := usecase.NewUserUseCase(userRepo)
+	userAuth := controller.NewUserAuth(userUsecase)
+	userController := controller.NewUserController(userUsecase)
 
-	r.POST("/login", auth.Login)
-	r.POST("/register", controller.Register)
+	// BANK DEPEDENCY
 
-	userRouter.GET("", controller.FindUsers)
-	userRouter.GET("/:id", controller.FindUserByID)
+	bankRepo := repository.NewBankAccRepository(db)
+	bankUsecase := usecase.NewBankAccUsecase(bankRepo)
+	bankController := controller.NewBankAccController(bankUsecase)
 
-	userRouter.PUT("", controller.Edit)
-	userRouter.DELETE("/:id", controller.Unreg)
+	r.POST("/login", userAuth.Login)
+	r.POST("/register", userController.Register)
+	// USER GROUP
+	userRouter.GET("", userController.FindUsers)
+	userRouter.GET("/:id", userController.FindUserByID)
+
+	userRouter.PUT("", userController.Edit)
+	userRouter.DELETE("/:id", userController.Unreg)
+
+	// BANK GROUP
+	bankRouter := r.Group("/user/bank")
+	bankRouter.Use(authMiddleware)
+
+	bankRouter.GET("", bankController.FindAllBankAcc)
+	bankRouter.GET("/:id", bankController.FindBankAccByID)
+	bankRouter.POST("/add", bankController.Register)
+	bankRouter.PUT("/update", bankController.Edit)
+	bankRouter.DELETE("/delete/:id", bankController.Unreg)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
