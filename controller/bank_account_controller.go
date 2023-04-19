@@ -25,13 +25,19 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 }
 
 func (c *BankAccController) FindBankAccByID(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	userID, err := strconv.Atoi(ctx.Param("userID"))
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Bank Account ID")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
 		return
 	}
 
-	result := c.bankAccUsecase.FindBankAccByID(uint(id))
+	accountID, err := strconv.Atoi(ctx.Param("accountID"))
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
+		return
+	}
+
+	result := c.bankAccUsecase.FindBankAccByID(uint(userID), uint(accountID))
 	if result == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank Account not found")
 		return
@@ -65,14 +71,25 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 }
 
 func (c *BankAccController) Unreg(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	userID, err := strconv.Atoi(ctx.Param("userID"))
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Bank Account ID")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
 		return
 	}
 
-	result := c.bankAccUsecase.Unreg(uint(id))
-	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+	accountID, err := strconv.Atoi(ctx.Param("accountID"))
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
+		return
+	}
+
+	result := c.bankAccUsecase.Unreg(uint(userID), uint(accountID))
+	if result != "success" {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, result)
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, "Bank Account unregistered successfully")
 }
 
 func NewBankAccController(u usecase.BankAccUsecase) *BankAccController {

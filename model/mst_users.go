@@ -22,4 +22,5 @@ type UserGetAll struct {
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	UserID   int    `json:"user_id"`
 }

@@ -9,7 +9,7 @@ type RewardUseCase interface {
 	FindPoints() any
 	FindPointByID(id uint) any
 	Register(newPoint *model.Reward) string
-	Edit(point *model.Reward) string
+	// Edit(point *model.Reward) string
 	Unreg(id uint) string
 }
 
@@ -29,9 +29,9 @@ func (u *rewardUsecase) Register(newPoint *model.Reward) string {
 	return u.rewardRepo.Create(newPoint)
 }
 
-func (u *rewardUsecase) Edit(point *model.Reward) string {
-	return u.rewardRepo.Update(point)
-}
+// func (u *rewardUsecase) Edit(point *model.Reward) string {
+// 	return u.rewardRepo.Update(point)
+// }
 
 func (u *rewardUsecase) Unreg(id uint) string {
 	return u.rewardRepo.Delete(id)

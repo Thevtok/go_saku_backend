@@ -67,7 +67,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 func (l *LoginAuth) Login(c *gin.Context) {
 	var user model.Credentials
 
@@ -99,7 +98,8 @@ func (l *LoginAuth) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	// Return the token and the user ID in the context
+	c.JSON(http.StatusOK, gin.H{"token": token, "user_id": foundUser.UserID})
 }
 
 func NewUserAuth(u usecase.UserUseCase) *LoginAuth {

@@ -47,15 +47,15 @@ func (c *RewardController) Register(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, res)
 }
 
-func (c *RewardController) Edit(ctx *gin.Context) {
-	var user model.Reward
-	if err := ctx.BindJSON(&user); err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
-		return
-	}
-	res := c.rewardUsecase.Edit(&user)
-	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
-}
+// func (c *RewardController) Edit(ctx *gin.Context) {
+// 	var user model.Reward
+// 	if err := ctx.BindJSON(&user); err != nil {
+// 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+// 		return
+// 	}
+// 	res := c.rewardUsecase.Edit(&user)
+// 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
+// }
 
 func (c *RewardController) Unreg(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
