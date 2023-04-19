@@ -7,3 +7,10 @@ type BankAcc struct {
 	AccountNumber     string `json:"account_number"`
 	AccountHolderName string `json:"account_holder_name"`
 }
+
+type BankAccResponse struct {
+	Name              string `json:"name"`
+	BankName          string `json:"bank_name"`
+	AccountNumber     string `json:"account_number"`
+	AccountHolderName string `json:"account_holder_name"`
+}

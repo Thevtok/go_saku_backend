@@ -22,22 +22,36 @@ func RunServer() {
 
 	r := gin.Default()
 
+	// User Router
 	userRouter := r.Group("/user")
 	userRouter.Use(authMiddleware)
 
-	repo := repository.NewUserRepository(db)
-	usecase := usecase.NewUserUseCase(repo)
-	auth := controller.NewUserAuth(usecase)
-	controller := controller.NewUserController(usecase)
+	userRepo := repository.NewUserRepository(db)
+	userUsecase := usecase.NewUserUseCase(userRepo)
+	userAuth := controller.NewUserAuth(userUsecase)
+	userController := controller.NewUserController(userUsecase)
 
-	r.POST("/login", auth.Login)
-	r.POST("/register", controller.Register)
+	r.POST("/login", userAuth.Login)
+	r.POST("/register", userController.Register)
 
-	userRouter.GET("", controller.FindUsers)
-	userRouter.GET("/:id", controller.FindUserByID)
+	userRouter.GET("", userController.FindUsers)
+	userRouter.GET("/:id", userController.FindUserByID)
+	userRouter.PUT("", userController.Edit)
+	userRouter.DELETE("/:id", userController.Unreg)
 
-	userRouter.PUT("", controller.Edit)
-	userRouter.DELETE("/:id", controller.Unreg)
+	// Bank Accont Router
+	bankAccRouter := r.Group("/user/:id/bankAcc")
+	bankAccRouter.Use(authMiddleware)
+
+	bankAccRepo := repository.NewBankAccRepository(db)
+	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
+	bankAccController := controller.NewBankAccController(bankAccusecase)
+
+	bankAccRouter.GET("", bankAccController.FindAllBankAcc)
+	bankAccRouter.GET("/:id", bankAccController.FindBankAccByID)
+	bankAccRouter.POST("/add", bankAccController.Register)
+	bankAccRouter.PUT("", bankAccController.Edit)
+	bankAccRouter.DELETE("/:id", bankAccController.Unreg)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
