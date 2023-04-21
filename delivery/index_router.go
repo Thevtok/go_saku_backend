@@ -17,13 +17,14 @@ func RunServer() {
 	db := config.LoadDatabase()
 	defer db.Close()
 
-	authMiddleware := controller.AuthMiddleware()
+	authMiddlewareUsername := controller.AuthMiddleware()
+	authMiddlewareId := controller.AuthMiddlewareID()
 
 	r := gin.Default()
 
 	// User Router
 	userRouter := r.Group("/user")
-	userRouter.Use(authMiddleware)
+	userRouter.Use(authMiddlewareUsername)
 	// USER DEPEDENCY
 
 	userRepo := repository.NewUserRepository(db)
@@ -36,24 +37,24 @@ func RunServer() {
 	// USER GROUP
 
 	userRouter.GET("", userController.FindUsers)
-	userRouter.GET("/:id", userController.FindUserByID)
-	userRouter.PUT("", userController.Edit)
-	userRouter.DELETE("/:id", userController.Unreg)
+	userRouter.GET("/:username", userController.FindUserByUsername)
+	r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
+	userRouter.DELETE("/:username", userController.Unreg)
 
 	// Bank Accont Router
 	bankAccRouter := r.Group("/user/bank")
-	bankAccRouter.Use(authMiddleware)
+	bankAccRouter.Use(authMiddlewareId)
 
 	bankAccRepo := repository.NewBankAccRepository(db)
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
 	bankAccRouter.GET("", bankAccController.FindAllBankAcc)
-	bankAccRouter.GET("/:userID/:accountID", bankAccController.FindBankAccByID)
-	bankAccRouter.POST("/add", bankAccController.Register)
-	bankAccRouter.PUT("update", bankAccController.Edit)
+	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByID)
+	bankAccRouter.POST("/add/:user_id", bankAccController.Register)
+	bankAccRouter.PUT("update/:user_id", bankAccController.Edit)
 
-	bankAccRouter.DELETE("/:id", bankAccController.Unreg)
+	bankAccRouter.DELETE("/:user_id", bankAccController.Unreg)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

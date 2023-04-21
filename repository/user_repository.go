@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 
 	"fmt"
 
@@ -14,13 +15,14 @@ import (
 )
 
 type UserRepository interface {
-	GetByUsernameAndPassword(username string, password string) (*model.Credentials, error)
+	GetByEmailAndPassword(email string, password string) (*model.Credentials, error)
 	GetAll() any
-	GetByID(id uint) any
+	GetByUsername(username string) (*model.UserResponse, error)
+	GetByiD(id uint) (*model.UserResponse, error)
 
-	Create(user *model.User) (any, error)
+	Create(user *model.UserCreate) (any, error)
 	Update(user *model.User) string
-	Delete(id uint) string
+	Delete(user *model.User) string
 }
 
 type userRepository struct {
@@ -33,9 +35,9 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 func (r *userRepository) GetAll() any {
-	var users []model.UserGetAll
+	var users []model.UserResponse
 
-	query := `SELECT name,email,phone_number,address,balance from mst_users`
+	query := `SELECT name,username,email,phone_number,address,balance from mst_users`
 	rows, err := r.db.Query(query)
 
 	if err != nil {
@@ -47,9 +49,9 @@ func (r *userRepository) GetAll() any {
 	defer rows.Close()
 
 	for rows.Next() {
-		var user model.UserGetAll
+		var user model.UserResponse
 
-		if err := rows.Scan(&user.Name, &user.Email, &user.Phone_Number, &user.Address, &user.Balance); err != nil {
+		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance); err != nil {
 			log.Println(err)
 		}
 
@@ -67,26 +69,40 @@ func (r *userRepository) GetAll() any {
 	return users
 }
 
-func (r *userRepository) GetByID(id uint) any {
-	var user model.UserGetAll
-	row := r.db.QueryRow("SELECT name,email,phone_number,address,balance from mst_users WHERE user_id = $1", id)
-	err := row.Scan(&user.Name, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
+func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
+	var user model.UserResponse
+	err := r.db.QueryRow("SELECT name,username, email, phone_number, address, balance FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
 	if err != nil {
-
-		log.Println(err)
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
 	}
-	return user
+
+	return &user, nil
+}
+func (r *userRepository) GetByiD(id uint) (*model.UserResponse, error) {
+	var user model.UserResponse
+	err := r.db.QueryRow("SELECT name,username, email, phone_number, address, balance FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *userRepository) Update(user *model.User) string {
-	res := r.GetByID(user.ID)
+	_, err := r.GetByiD(user.ID)
 
-	if res == "user not found" {
-		return res.(string)
+	if err != nil {
+		return "user not found"
 	}
 
-	_, err := r.db.Exec("UPDATE mst_users SET name=$1, email=$2, password=$3, phone_number=$4, address=$5, balance=$6 WHERE user_id=$7",
-		user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance, user.ID)
+	query := "UPDATE mst_users SET name=$1, email=$2, password=$3, phone_number=$4, address=$5, username=$6 WHERE user_id=$7"
+
+	_, err = r.db.Exec(query, user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Username, user.ID)
 	if err != nil {
 		log.Println(err)
 		return "failed to update user"
@@ -94,16 +110,25 @@ func (r *userRepository) Update(user *model.User) string {
 	return "updated user successfully"
 }
 
-func (r *userRepository) Delete(id uint) string {
-	query := "DELETE FROM mst_users WHERE user_id = $1"
-	_, err := r.db.Exec(query, id)
+func (r *userRepository) Delete(user *model.User) string {
+	// Check if the user exists
+	_, err := r.GetByUsername(user.Username)
 	if err != nil {
-		fmt.Println("failed to delete student")
+		return "user not found"
 	}
+
+	// Execute the delete query
+	query := "DELETE FROM mst_users WHERE username = $1"
+	_, err = r.db.Exec(query, user.Username)
+	if err != nil {
+		log.Println(err)
+		return "failed to delete user"
+	}
+
 	return "deleted user successfully"
 }
 
-func (r *userRepository) Create(user *model.User) (interface{}, error) {
+func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 	// Create a copy of the user object
 	hashedPassword, err := utils.HasingPassword(user.Password)
 	if err != nil {
@@ -112,7 +137,7 @@ func (r *userRepository) Create(user *model.User) (interface{}, error) {
 
 	user.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, email, password, phone_number, address, balance) VALUES ($1, $2, $3, $4, $5, $6)", user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
+	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance) VALUES ($1, $2, $3, $4, $5, $6,$7)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -121,12 +146,12 @@ func (r *userRepository) Create(user *model.User) (interface{}, error) {
 	return user, nil
 }
 
-func (r *userRepository) GetByUsernameAndPassword(email string, password string) (*model.Credentials, error) {
-	// Query the database to retrieve the user's hashed password by email
-	query := "SELECT password FROM mst_users WHERE email = $1"
+func (r *userRepository) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {
+	var m model.Credentials
+	query := "SELECT user_id,username,password FROM mst_users WHERE email = $1"
 	row := r.db.QueryRow(query, email)
 	var hashedPassword string
-	err := row.Scan(&hashedPassword)
+	err := row.Scan(&m.UserID, &m.Username, &hashedPassword)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("user not found")
@@ -143,6 +168,8 @@ func (r *userRepository) GetByUsernameAndPassword(email string, password string)
 
 	user := &model.Credentials{
 		Password: hashedPassword,
+		Username: m.Username,
+		UserID:   m.UserID,
 	}
 
 	return user, nil
