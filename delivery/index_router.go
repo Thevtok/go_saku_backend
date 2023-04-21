@@ -51,10 +51,11 @@ func RunServer() {
 
 	bankAccRouter.GET("", bankAccController.FindAllBankAcc)
 	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByID)
-	bankAccRouter.POST("/add/:user_id", bankAccController.Register)
-	bankAccRouter.PUT("update/:user_id", bankAccController.Edit)
+	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
+	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
 
-	bankAccRouter.DELETE("/:user_id", bankAccController.Unreg)
+	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
+	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountId)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

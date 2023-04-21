@@ -57,7 +57,7 @@ func (c *UserController) Edit(ctx *gin.Context) {
 	}
 
 	// Retrieve the existing user
-	existingUser, err := c.usecase.FindById(uint(user_id))
+	existingUser, _ := c.usecase.FindById(uint(user_id))
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "User not found")
 		return
