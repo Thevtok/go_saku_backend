@@ -18,7 +18,7 @@ type BankAccController struct {
 func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	result := c.bankAccUsecase.FindAllBankAcc()
 	if result == nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to ges user Bank Account")
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user Bank Account")
 		return
 	}
 

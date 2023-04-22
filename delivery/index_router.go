@@ -19,6 +19,7 @@ func RunServer() {
 
 	authMiddlewareUsername := controller.AuthMiddleware()
 	authMiddlewareId := controller.AuthMiddlewareID()
+	authMiddlewareRole := controller.AuthMiddlewareRole()
 
 	r := gin.Default()
 
@@ -36,7 +37,7 @@ func RunServer() {
 	r.POST("/register", userController.Register)
 	// USER GROUP
 
-	userRouter.GET("", userController.FindUsers)
+	r.GET("user", authMiddlewareRole, userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
 	r.PUT("user/:user_id", authMiddlewareId, userController.Edit)
@@ -50,7 +51,7 @@ func RunServer() {
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
-	bankAccRouter.GET("", bankAccController.FindAllBankAcc)
+	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
 	bankAccRouter.GET("/:username", bankAccController.FindBankAccByUsername)
 	bankAccRouter.POST("/add/:username", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:username/:account_id", bankAccController.Edit)

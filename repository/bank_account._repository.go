@@ -27,7 +27,7 @@ func (r *bankAccRepository) GetAll() any {
 
 	var users []model.BankAccResponse
 
-	query := "SELECT u.name, b.bank_name, b.account_number, b.account_holder_name FROM mst_bank_account b JOIN mst_users u ON b.account_id = u.user_id"
+	query := "SELECT  bank_name, account_number, account_holder_name,username FROM mst_bank_account"
 
 	rows, err := r.db.Query(query)
 
@@ -43,7 +43,7 @@ func (r *bankAccRepository) GetAll() any {
 
 		var user model.BankAccResponse
 
-		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName)
+		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.Username)
 		if err != nil {
 			log.Println(err)
 		}

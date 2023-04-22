@@ -37,7 +37,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 func (r *userRepository) GetAll() any {
 	var users []model.UserResponse
 
-	query := `SELECT name,username,email,phone_number,address,balance from mst_users`
+	query := `SELECT name,username,email,phone_number,address,balance ,point from mst_users`
 	rows, err := r.db.Query(query)
 
 	if err != nil {
@@ -51,7 +51,7 @@ func (r *userRepository) GetAll() any {
 	for rows.Next() {
 		var user model.UserResponse
 
-		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance); err != nil {
+		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point); err != nil {
 			log.Println(err)
 		}
 
@@ -71,7 +71,7 @@ func (r *userRepository) GetAll() any {
 
 func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
+	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance ,point FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -83,7 +83,7 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 }
 func (r *userRepository) GetByiD(id uint) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name,username, email, phone_number, address, balance FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
+	err := r.db.QueryRow("SELECT name,username, email, phone_number, address, balance, point FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -137,7 +137,8 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 	user.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance) VALUES ($1, $2, $3, $4, $5, $6,$7)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance)
+	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role,point) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, user.Balance, "user", 0)
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -148,10 +149,10 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 func (r *userRepository) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {
 	var m model.Credentials
-	query := "SELECT user_id,username,password FROM mst_users WHERE email = $1"
+	query := "SELECT user_id,username,password,role FROM mst_users WHERE email = $1"
 	row := r.db.QueryRow(query, email)
 	var hashedPassword string
-	err := row.Scan(&m.UserID, &m.Username, &hashedPassword)
+	err := row.Scan(&m.UserID, &m.Username, &hashedPassword, &m.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("user not found")
@@ -170,6 +171,7 @@ func (r *userRepository) GetByEmailAndPassword(email string, password string) (*
 		Password: hashedPassword,
 		Username: m.Username,
 		UserID:   m.UserID,
+		Role:     m.Role,
 	}
 
 	return user, nil

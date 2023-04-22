@@ -30,6 +30,7 @@ func generateToken(user *model.Credentials) (string, error) {
 	claims["username"] = user.Username
 	claims["user_id"] = uint(user.UserID)
 	claims["account_id"] = uint(ac.AccountId)
+	claims["role"] = user.Role
 
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
@@ -200,6 +201,60 @@ func AuthMiddlewareID() gin.HandlerFunc {
 		c.Set("email", email)
 		c.Set("password", password)
 		c.Set("user_id", uint(requestedID))
+
+		c.Next()
+	}
+}
+
+func AuthMiddlewareRole() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.Abort()
+			return
+		}
+
+		claims := token.Claims.(*jwt.MapClaims)
+		email, ok := (*claims)["email"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
+			c.Abort()
+			return
+		}
+		password, ok := (*claims)["password"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
+			c.Abort()
+			return
+		}
+		role, ok := (*claims)["role"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid role claim"})
+			c.Abort()
+			return
+		}
+
+		if role != "master" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
+			c.Abort()
+			return
+		}
+
+		c.Set("email", email)
+		c.Set("password", password)
+		c.Set("role", role)
 
 		c.Next()
 	}

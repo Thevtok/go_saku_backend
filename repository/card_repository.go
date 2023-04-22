@@ -10,6 +10,7 @@ import (
 )
 
 type CardRepository interface {
+	GetAll() any
 	GetByID(id uint) ([]*model.CardResponse, error)
 	GetByCardID(id uint) (*model.Card, error)
 	Create(userID uint, newCard *model.CardResponse) (any, error)
@@ -20,6 +21,37 @@ type CardRepository interface {
 
 type cardRepository struct {
 	db *sql.DB
+}
+
+func (r *cardRepository) GetAll() any {
+
+	var users []model.BankAccResponse
+
+	query := "SELECT  bank_name, account_number, account_holder_name,username FROM mst_bank_account"
+
+	rows, err := r.db.Query(query)
+
+	if err != nil {
+		log.Println(err)
+	}
+	if rows == nil {
+		return "no data"
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		var user model.BankAccResponse
+
+		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.Username)
+		if err != nil {
+			log.Println(err)
+		}
+
+		users = append(users, user)
+	}
+
+	return users
 }
 
 func (r *cardRepository) GetByID(id uint) ([]*model.CardResponse, error) {

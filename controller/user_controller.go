@@ -16,6 +16,7 @@ type UserController struct {
 }
 
 func (c *UserController) FindUsers(ctx *gin.Context) {
+
 	res := c.usecase.FindUsers()
 	if res == nil {
 

@@ -43,7 +43,7 @@ func (uc *userUseCase) Login(email string, password string) (*model.Credentials,
 		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, user.Password)
 	}
 
-	return &model.Credentials{Password: user.Password, Username: user.Username, UserID: user.UserID}, nil
+	return &model.Credentials{Password: user.Password, Username: user.Username, UserID: user.UserID, Role: user.Role}, nil
 }
 
 func (uc *userUseCase) FindUsers() any {
