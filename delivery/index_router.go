@@ -32,7 +32,6 @@ func RunServer() {
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
 	userController := controller.NewUserController(userUsecase)
-	
 
 	r.POST("/login", userAuth.Login)
 	r.POST("/register", userController.Register)
@@ -52,7 +51,7 @@ func RunServer() {
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
-	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
+	bankAccRouter.GET("user/bank", bankAccController.FindAllBankAcc)
 	bankAccRouter.GET("/:username", bankAccController.FindBankAccByUsername)
 	bankAccRouter.POST("/add/:username", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:username/:account_id", bankAccController.Edit)
@@ -67,7 +66,8 @@ func RunServer() {
 	cardUsecase := usecase.NewCardUsecase(cardRepo)
 	cardController := controller.NewCardController(cardUsecase)
 
-	cardRouter.GET("/:user_id", cardController.FindCardByID)
+	cardRouter.GET("user/card", cardController.FindAllCard)
+	cardRouter.GET("/:user_id", cardController.FindCardByUsername)
 	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
 	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
 	cardRouter.DELETE("/:user_id", cardController.UnregAll)

@@ -16,10 +16,8 @@ type UserController struct {
 }
 
 func (c *UserController) FindUsers(ctx *gin.Context) {
-
 	res := c.usecase.FindUsers()
 	if res == nil {
-
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get users")
 		return
 	}
@@ -38,7 +36,6 @@ func (c *UserController) FindUserByUsername(ctx *gin.Context) {
 
 func (c *UserController) Register(ctx *gin.Context) {
 	newUser := model.UserCreate{}
-
 	if err := ctx.BindJSON(&newUser); err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
 		return
@@ -89,7 +86,6 @@ func (c *UserController) Edit(ctx *gin.Context) {
 
 func (c *UserController) Unreg(ctx *gin.Context) {
 	username := ctx.Param("username")
-
 	user := &model.User{
 		Username: username,
 	}
@@ -102,6 +98,5 @@ func NewUserController(u usecase.UserUseCase) *UserController {
 	controller := UserController{
 		usecase: u,
 	}
-
 	return &controller
 }

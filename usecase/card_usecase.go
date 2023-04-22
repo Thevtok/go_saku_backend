@@ -6,9 +6,10 @@ import (
 )
 
 type CardUsecase interface {
-	FindCardByID(id uint) (any, error)
+	FindAllCard() any
+	FindCardByUsername(username string) (any, error)
 	FindCardByCardID(id uint) (*model.Card, error)
-	Register(userID uint, newCard *model.CardResponse) (any, error)
+	Register(username string, newCard *model.CardResponse) (any, error)
 	Edit(card *model.Card) string
 	UnregALL(card *model.Card) string
 	UnregByCardId(cardID uint) error
@@ -18,16 +19,20 @@ type cardUsecase struct {
 	cardRepo repository.CardRepository
 }
 
-func (u *cardUsecase) FindCardByID(id uint) (any, error) {
-	return u.cardRepo.GetByID(id)
+func (u *cardUsecase) FindAllCard() any {
+	return u.cardRepo.GetAll()
+}
+
+func (u *cardUsecase) FindCardByUsername(username string) (any, error) {
+	return u.cardRepo.GetByUsername(username)
 }
 
 func (u *cardUsecase) FindCardByCardID(id uint) (*model.Card, error) {
 	return u.cardRepo.GetByCardID(id)
 }
 
-func (u *cardUsecase) Register(userID uint, newCard *model.CardResponse) (any, error) {
-	return u.cardRepo.Create(userID, newCard)
+func (u *cardUsecase) Register(username string, newCard *model.CardResponse) (any, error) {
+	return u.cardRepo.Create(username, newCard)
 }
 
 func (u *cardUsecase) Edit(card *model.Card) string {
@@ -35,7 +40,7 @@ func (u *cardUsecase) Edit(card *model.Card) string {
 }
 
 func (u *cardUsecase) UnregALL(card *model.Card) string {
-	return u.cardRepo.DeleteByUserID(card.UserID)
+	return u.cardRepo.DeleteByUsername(card.Username)
 }
 
 func (u *cardUsecase) UnregByCardId(cardID uint) error {

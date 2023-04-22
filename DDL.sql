@@ -1,18 +1,3 @@
-
-CREATE TABLE IF NOT EXISTS public.mst_bank_account
-(
-    account_id serial PRIMARY KEY NOT NULL,
-    bank_name character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    account_number character varying(20) COLLATE pg_catalog."default" NOT NULL,
-    account_holder_name character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    username character varying COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT fk_mst_bank_mst_users FOREIGN KEY (username)
-        REFERENCES public.mst_users (username) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-);
-
-
 CREATE TABLE IF NOT EXISTS public.mst_users
 (
     user_id serial NOT NULL PRIMARY KEY,
@@ -28,6 +13,19 @@ CREATE TABLE IF NOT EXISTS public.mst_users
     CONSTRAINT unique_username UNIQUE (username)
 );
 
+CREATE TABLE IF NOT EXISTS public.mst_bank_account
+(
+    account_id serial PRIMARY KEY NOT NULL,
+    bank_name character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    account_number character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    account_holder_name character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    username character varying COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT fk_mst_bank_mst_users FOREIGN KEY (username)
+        REFERENCES public.mst_users (username) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+);
+
 CREATE TABLE IF NOT EXISTS public.mst_card
 (
     card_id serial NOT NULL PRIMARY KEY,
@@ -41,7 +39,6 @@ CREATE TABLE IF NOT EXISTS public.mst_card
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 );
-
 
 CREATE TABLE IF NOT EXISTS public.tx_transaction
 (
