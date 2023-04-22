@@ -2,7 +2,7 @@ package model
 
 type BankAcc struct {
 	AccountId         uint    `json:"account_id"`
-	UserID            uint    `json:"user_id"`
+	Username          string  `json:"username"`
 	BankName          string  `json:"bank_name"`
 	AccountNumber     string  `json:"account_number"`
 	AccountHolderName string  `json:"account_holder_name"`
@@ -13,7 +13,7 @@ type BankAcc struct {
 }
 
 type BankAccResponse struct {
-	UserID            uint   `json:"user_id"`
+	Username          string `json:"username"`
 	BankName          string `json:"bank_name"`
 	AccountNumber     string `json:"account_number"`
 	AccountHolderName string `json:"account_holder_name"`

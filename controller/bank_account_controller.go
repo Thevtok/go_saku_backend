@@ -25,15 +25,10 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *BankAccController) FindBankAccByID(ctx *gin.Context) {
-	user_id_str := ctx.Param("user_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
+func (c *BankAccController) FindBankAccByUsername(ctx *gin.Context) {
+	username := ctx.Param("username")
 
-	existingUser, _ := c.bankAccUsecase.FindBankAccByID(uint(user_id))
+	existingUser, _ := c.bankAccUsecase.FindBankAccByUsername(username)
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
@@ -60,7 +55,7 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
-	userID := ctx.GetUint("user_id")
+	username := ctx.GetString("username")
 
 	var newBankAcc model.BankAccResponse
 	err := ctx.BindJSON(&newBankAcc)
@@ -69,7 +64,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.bankAccUsecase.Register(userID, &newBankAcc)
+	result, err := c.bankAccUsecase.Register(username, &newBankAcc)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create bank account")
 		return
@@ -106,20 +101,13 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 }
 
 func (c *BankAccController) UnregAll(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
-		return
-	}
+	username := ctx.Param("username")
+
 	user := &model.BankAcc{
-		UserID: uint(userID),
+		Username: username,
 	}
 
 	res := c.bankAccUsecase.UnregAll(user)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, err.Error())
-		return
-	}
 
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }

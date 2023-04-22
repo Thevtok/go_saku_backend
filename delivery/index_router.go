@@ -39,23 +39,23 @@ func RunServer() {
 	userRouter.GET("", userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
-	userRouter.PUT("/:user_id", userController.Edit)
+	r.PUT("user/:user_id", authMiddlewareId, userController.Edit)
 	userRouter.DELETE("/:username", userController.Unreg)
 
 	// Bank Accont Router
 	bankAccRouter := r.Group("/user/bank")
-	bankAccRouter.Use(authMiddlewareId)
+	bankAccRouter.Use(authMiddlewareUsername)
 
 	bankAccRepo := repository.NewBankAccRepository(db)
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
 	bankAccRouter.GET("", bankAccController.FindAllBankAcc)
-	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByID)
-	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
-	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
-	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
-	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountId)
+	bankAccRouter.GET("/:username", bankAccController.FindBankAccByUsername)
+	bankAccRouter.POST("/add/:username", bankAccController.CreateBankAccount)
+	bankAccRouter.PUT("update/:username/:account_id", bankAccController.Edit)
+	bankAccRouter.DELETE("/:username", bankAccController.UnregAll)
+	bankAccRouter.DELETE("/:username/:account_id", bankAccController.UnregByAccountId)
 
 	// Card Router
 	cardRouter := r.Group("/user/card")
