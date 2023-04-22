@@ -73,6 +73,19 @@ func RunServer() {
 	cardRouter.DELETE("/:user_id", cardController.UnregAll)
 	cardRouter.DELETE("/:user_id/card_id", cardController.UnregByCardId)
 
+	// Photo Router
+	photoRouter := r.Group("/user/photo")
+	photoRouter.Use(controller.AuthMiddleware())
+
+	photoRepo := repository.NewPhotoRepository(db)
+	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
+	photoController := controller.NewPhotoController(photoUsecase)
+
+	bankAccRouter.POST("", photoController.Upload)
+	bankAccRouter.GET("/user_id", photoController.Download)
+	bankAccRouter.PUT("/user_id", photoController.Edit)
+	bankAccRouter.DELETE("/user_id", photoController.Remove)
+
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
 	}
