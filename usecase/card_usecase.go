@@ -6,35 +6,44 @@ import (
 )
 
 type CardUsecase interface {
-	FindByID(id uint) (*model.Card, error)
-	FindByUserID(userID uint) ([]*model.Card, error)
-	Register(card *model.Card) error
-	Edit(card *model.Card) error
-	Unreg(card *model.Card) error
+	FindCardByID(id uint) (any, error)
+	FindCardByCardID(id uint) (*model.Card, error)
+	Register(userID uint, newCard *model.CardResponse) (any, error)
+	Edit(card *model.Card) string
+	UnregALL(card *model.Card) string
+	UnregByCardId(cardID uint) error
 }
 
 type cardUsecase struct {
 	cardRepo repository.CardRepository
 }
 
-func (u *cardUsecase) FindByID(id uint) (*model.Card, error) {
+func (u *cardUsecase) FindCardByID(id uint) (any, error) {
 	return u.cardRepo.GetByID(id)
 }
 
-func (u *cardUsecase) FindByUserID(userID uint) ([]*model.Card, error) {
-	return u.cardRepo.GetByUserID(userID)
+func (u *cardUsecase) FindCardByCardID(id uint) (*model.Card, error) {
+	return u.cardRepo.GetByCardID(id)
 }
 
-func (u *cardUsecase) Register(card *model.Card) error {
-	return u.cardRepo.Create(card)
+func (u *cardUsecase) Register(userID uint, newCard *model.CardResponse) (any, error) {
+	return u.cardRepo.Create(userID, newCard)
 }
 
-func (u *cardUsecase) Edit(card *model.Card) error {
+func (u *cardUsecase) Edit(card *model.Card) string {
 	return u.cardRepo.Update(card)
 }
 
-func (u *cardUsecase) Unreg(card *model.Card) error {
-	return u.cardRepo.Delete(card)
+func (u *cardUsecase) UnregALL(card *model.Card) string {
+	return u.cardRepo.DeleteByUserID(card.UserID)
+}
+
+func (u *cardUsecase) UnregByCardId(cardID uint) error {
+	err := u.cardRepo.DeleteByCardId(cardID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewCardUsecase(cardRepo repository.CardRepository) CardUsecase {

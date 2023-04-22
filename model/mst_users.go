@@ -1,8 +1,9 @@
 package model
 
 type User struct {
-	ID           uint   `gorm:"column:user_id;primary_key"`
+	ID           uint   `json:"user_id"`
 	Name         string `json:"name"`
+	Username     string `json:"username"`
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	Phone_Number string `json:"phone_number"`
@@ -11,9 +12,19 @@ type User struct {
 }
 
 // Define the table name for the User struct
-type UserGetAll struct {
+type UserResponse struct {
 	Name         string `json:"name"`
+	Username     string `json:"username"`
 	Email        string `json:"email"`
+	Phone_Number string `json:"phone_number"`
+	Address      string `json:"address"`
+	Balance      int    `json:"balance"`
+}
+type UserCreate struct {
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
 	Phone_Number string `json:"phone_number"`
 	Address      string `json:"address"`
 	Balance      int    `json:"balance"`
@@ -22,5 +33,6 @@ type UserGetAll struct {
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	UserID   int    `json:"user_id"`
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
 }

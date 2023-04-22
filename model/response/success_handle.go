@@ -20,7 +20,7 @@ func JSON(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-func JSONSuccess(w http.ResponseWriter, status int, data interface{}) {
+func JSONSuccess(w http.ResponseWriter, status int, data any) {
 	res := SuccessResponse{
 		Result: data,
 

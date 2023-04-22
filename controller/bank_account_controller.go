@@ -8,6 +8,7 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
 	"github.com/gin-gonic/gin"
+	"github.com/mitchellh/mapstructure"
 )
 
 type BankAccController struct {
@@ -24,72 +25,108 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *BankAccController) FindBankAccByID(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("userID"))
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
+func (c *BankAccController) FindBankAccByUsername(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	existingUser, _ := c.bankAccUsecase.FindBankAccByUsername(username)
+	if existingUser == nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
 	}
 
-	accountID, err := strconv.Atoi(ctx.Param("accountID"))
+	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
+}
+
+func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
+	user_id_str := ctx.Param("account_id")
+	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
-	result := c.bankAccUsecase.FindBankAccByID(uint(userID), uint(accountID))
-	if result == nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank Account not found")
+	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(user_id))
+	if existingUser == nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
+}
+
+func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
+	username := ctx.GetString("username")
+
+	var newBankAcc model.BankAccResponse
+	err := ctx.BindJSON(&newBankAcc)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	result, err := c.bankAccUsecase.Register(username, &newBankAcc)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create bank account")
 		return
 	}
 
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
-}
-
-func (c *BankAccController) Register(ctx *gin.Context) {
-	var newUser model.BankAcc
-	err := ctx.BindJSON(&newUser)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
-		return
-	}
-
-	result := c.bankAccUsecase.Register(&newUser)
-	response.JSONSuccess(ctx.Writer, http.StatusCreated, result)
 }
 
 func (c *BankAccController) Edit(ctx *gin.Context) {
-	var user model.BankAcc
-	err := ctx.BindJSON(&user)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
-		return
-	}
-
-	result := c.bankAccUsecase.Edit(&user)
-	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
-}
-
-func (c *BankAccController) Unreg(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("userID"))
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
-		return
-	}
-
-	accountID, err := strconv.Atoi(ctx.Param("accountID"))
+	account_id_str := ctx.Param("account_id")
+	account_id, err := strconv.ParseUint(account_id_str, 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
-	result := c.bankAccUsecase.Unreg(uint(userID), uint(accountID))
-	if result != "success" {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, result)
+	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(account_id))
+	if existingUser == nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
+		return
+	}
+	user := &model.BankAcc{}
+	if err := mapstructure.Decode(existingUser, user); err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit Bank")
 		return
 	}
 
-	response.JSONSuccess(ctx.Writer, http.StatusOK, "Bank Account unregistered successfully")
+	if err := ctx.BindJSON(user); err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid input")
+		return
+	}
+	updateBank := c.bankAccUsecase.Edit(user)
+	response.JSONSuccess(ctx.Writer, http.StatusOK, updateBank)
+}
+
+func (c *BankAccController) UnregAll(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	user := &model.BankAcc{
+		Username: username,
+	}
+
+	res := c.bankAccUsecase.UnregAll(user)
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
+}
+
+func (c *BankAccController) UnregByAccountId(ctx *gin.Context) {
+	accountIDStr := ctx.Param("account_id")
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid account ID")
+		return
+	}
+
+	err = c.bankAccUsecase.UnregByAccountId(uint(accountID))
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to delete bank account")
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, "Bank account deleted successfully")
 }
 
 func NewBankAccController(u usecase.BankAccUsecase) *BankAccController {
