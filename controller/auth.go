@@ -29,7 +29,7 @@ func generateToken(user *model.Credentials) (string, error) {
 	claims["password"] = user.Password
 	claims["username"] = user.Username
 	claims["user_id"] = uint(user.UserID)
-	claims["account_id"] = uint(ac.AccountId)
+	claims["account_id"] = uint(ac.AccountID)
 	claims["role"] = user.Role
 
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()

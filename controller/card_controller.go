@@ -15,15 +15,19 @@ type CardController struct {
 	cardUsecase usecase.CardUsecase
 }
 
-func (c *CardController) FindCardByID(ctx *gin.Context) {
-	user_id_str := ctx.Param("user_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+func (c *CardController) FindAllCard(ctx *gin.Context) {
+	result := c.cardUsecase.FindAllCard()
+	if result == nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user Card")
 		return
 	}
 
-	existingUser, _ := c.cardUsecase.FindCardByID(uint(user_id))
+	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+}
+
+func (c *CardController) FindCardByUsername(ctx *gin.Context) {
+	username := ctx.Param("username")
+	existingUser, _ := c.cardUsecase.FindCardByUsername(username)
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Card not found")
 		return
@@ -50,8 +54,7 @@ func (c *CardController) FindCardByCardID(ctx *gin.Context) {
 }
 
 func (c *CardController) CreateCardID(ctx *gin.Context) {
-	userID := ctx.GetUint("user_id")
-
+	username := ctx.GetString("username")
 	var newCardID model.CardResponse
 	err := ctx.BindJSON(&newCardID)
 	if err != nil {
@@ -59,10 +62,13 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.cardUsecase.Register(userID, &newCardID)
+	result, err := c.cardUsecase.Register(username, &newCardID)
 	if err != nil {
-		response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Card")
+		return
 	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
@@ -93,20 +99,11 @@ func (c *CardController) Edit(ctx *gin.Context) {
 }
 
 func (c *CardController) UnregAll(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User ID")
-		return
-	}
+	username := ctx.Param("username")
 	user := &model.Card{
-		UserID: uint(userID),
+		Username: username,
 	}
-
 	result := c.cardUsecase.UnregALL(user)
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, err.Error())
-		return
-	}
 
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }

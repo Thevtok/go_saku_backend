@@ -2,7 +2,7 @@ package model
 
 type Card struct {
 	CardID         uint   `json:"card_id"`
-	UserID         uint   `json:"user_id"`
+	Username       string `json:"username"`
 	CardType       string `json:"card_type"`
 	CardNumber     string `json:"card_number"`
 	ExpirationDate string `json:"expiration_date"`
@@ -11,7 +11,7 @@ type Card struct {
 }
 
 type CardResponse struct {
-	UserID         uint   `json:"user_id"`
+	Username       string `json:"username"`
 	CardType       string `json:"card_type"`
 	CardNumber     string `json:"card_number"`
 	ExpirationDate string `json:"expiration_date"`
