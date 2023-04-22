@@ -30,6 +30,7 @@ func RunServer() {
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
 	userController := controller.NewUserController(userUsecase)
+	
 
 	r.POST("/login", userAuth.Login)
 	r.POST("/register", userController.Register)
