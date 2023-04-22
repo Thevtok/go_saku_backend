@@ -13,10 +13,10 @@ import (
 )
 
 type PhotoUsecase interface {
-	Upload(ctx context.Context, userID uint, file multipart.File, header *multipart.FileHeader) error
-	Download(id uint) (*model.PhotoUrl, error)
-	Edit(photo *model.PhotoUrl, id uint, file multipart.File, header *multipart.FileHeader) error
-	Remove(id uint) string
+	Upload(ctx context.Context, username string, file multipart.File, header *multipart.FileHeader) error
+	Download(username string) (*model.PhotoUrl, error)
+	Edit(photo *model.PhotoUrl, username string, file multipart.File, header *multipart.FileHeader) error
+	Remove(username string) string
 }
 
 type photoUsecase struct {
@@ -29,7 +29,7 @@ func NewPhotoUseCase(photoRepo repository.PhotoRepository) PhotoUsecase {
 	}
 }
 
-func (u *photoUsecase) Upload(ctx context.Context, userID uint, file multipart.File, header *multipart.FileHeader) error {
+func (u *photoUsecase) Upload(ctx context.Context, username string, file multipart.File, header *multipart.FileHeader) error {
 	// Simpan file ke server
     filename := header.Filename
     path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
@@ -44,8 +44,8 @@ func (u *photoUsecase) Upload(ctx context.Context, userID uint, file multipart.F
     }
     // Simpan informasi file ke database
     photo := &model.PhotoUrl{
-        User_ID: userID,
         Url:    path,
+        Username: username,
     }
     err = u.photoRepo.Create(photo)
     if err != nil {
@@ -54,11 +54,11 @@ func (u *photoUsecase) Upload(ctx context.Context, userID uint, file multipart.F
     return nil
 }
 
-func (u *photoUsecase) Download(id uint) (*model.PhotoUrl, error) {
-	return u.photoRepo.GetByID(id)
+func (u *photoUsecase) Download(username string) (*model.PhotoUrl, error) {
+	return u.photoRepo.GetByID(username)
 }
 
-func (u *photoUsecase) Edit(photo *model.PhotoUrl, id uint, file multipart.File, header *multipart.FileHeader) error {
+func (u *photoUsecase) Edit(photo *model.PhotoUrl, username string, file multipart.File, header *multipart.FileHeader) error {
 	// Simpan file ke server
     filename := header.Filename
     path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
@@ -73,12 +73,12 @@ func (u *photoUsecase) Edit(photo *model.PhotoUrl, id uint, file multipart.File,
     }
     // Simpan informasi file ke database
     photoUrl := &model.PhotoUrl{
-        User_ID: id,
         Url:    path,
+        Username: username,
     }
     return u.photoRepo.Update(photoUrl)
 }
 
-func (u *photoUsecase) Remove(id uint) string {
-	return u.photoRepo.Delete(id)
+func (u *photoUsecase) Remove(username string) string {
+	return u.photoRepo.Delete(username)
 }

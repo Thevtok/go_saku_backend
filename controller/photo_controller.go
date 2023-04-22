@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
@@ -17,9 +16,9 @@ type PhotoController struct {
 }
 
 func (c *PhotoController) Upload(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	userName := ctx.PostForm("username")
+    if userName == "" {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
         return
     }
     file, header, err := ctx.Request.FormFile("photo")
@@ -34,7 +33,7 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		 ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
 		 return
 	 }
-    err = c.photoUsecase.Upload(ctx.Request.Context(), uint(userID), file, header)
+    err = c.photoUsecase.Upload(ctx.Request.Context(), userName, file, header)
     if err != nil {
         ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
@@ -43,12 +42,12 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 }
 
 func (c *PhotoController) Download(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("user_id")) 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user id"})
+	userName := ctx.Param("username")
+	if userName == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
 		return 
 	}
-	photo, err := c.photoUsecase.Download(uint(userID))
+	photo, err := c.photoUsecase.Download(userName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
@@ -66,10 +65,10 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 }
 
 func (c *PhotoController) Edit(ctx *gin.Context) {
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message":"Invalid user id"})
-		return
+	userName := ctx.Param("username")
+	if userName == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
+		return 
 	}
 	file, header, err := ctx.Request.FormFile("photo")
     if err != nil {
@@ -83,7 +82,7 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
 		return
 	}
-	err = c.photoUsecase.Edit(&model.PhotoUrl{}, uint(userID), file, header)
+	err = c.photoUsecase.Edit(&model.PhotoUrl{}, userName, file, header)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -92,13 +91,12 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 }
 
 func (c *PhotoController) Remove(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid User Id")
-		return
+	userName := ctx.Param("username")
+	if userName == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
+		return 
 	}
-
-	res := c.photoUsecase.Remove(uint(id))
+	res := c.photoUsecase.Remove(userName)
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
 
@@ -106,6 +104,5 @@ func NewPhotoController(u usecase.PhotoUsecase) *PhotoController {
 	controller := PhotoController{
 		photoUsecase: u,
 	}
-
 	return &controller
 }
