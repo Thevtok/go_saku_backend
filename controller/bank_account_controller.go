@@ -41,11 +41,12 @@ func (c *BankAccController) FindBankAccByID(ctx *gin.Context) {
 
 	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
 }
+
 func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	user_id_str := ctx.Param("account_id")
 	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid account ID")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
@@ -81,7 +82,7 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 	account_id_str := ctx.Param("account_id")
 	account_id, err := strconv.ParseUint(account_id_str, 10, 64)
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid account ID")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
@@ -92,7 +93,7 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 	}
 	user := &model.BankAcc{}
 	if err := mapstructure.Decode(existingUser, user); err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit bank")
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit Bank")
 		return
 	}
 

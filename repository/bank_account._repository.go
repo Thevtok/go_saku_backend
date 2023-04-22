@@ -27,7 +27,7 @@ func (r *bankAccRepository) GetAll() any {
 
 	var users []model.BankAccResponse
 
-	query := "SELECT  b.bank_name, b.account_number, b.account_holder_name FROM mst_bank_account b JOIN mst_users u ON b.account_id = u.user_id"
+	query := "SELECT u.name, b.bank_name, b.account_number, b.account_holder_name FROM mst_bank_account b JOIN mst_users u ON b.account_id = u.user_id"
 
 	rows, err := r.db.Query(query)
 
@@ -78,9 +78,10 @@ func (r *bankAccRepository) GetByID(id uint) ([]*model.BankAccResponse, error) {
 
 	return bankAccs, nil
 }
+
 func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	var bankAcc model.BankAcc
-	query := "SELECT account_id, bank_name, account_number, account_holder_name FROM mst_bank_account   WHERE account_id = $1"
+	query := "SELECT account_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE account_id = $1"
 	row := r.db.QueryRow(query, id)
 	err := row.Scan(&bankAcc.UserID, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
 	if err != nil {
@@ -124,10 +125,10 @@ func (r *bankAccRepository) DeleteByUserID(id uint) string {
 	query := "DELETE FROM mst_bank_account WHERE user_id = $1"
 	_, err := r.db.Exec(query, id)
 	if err != nil {
-		return "failed to delete bank"
+		return "failed to delete Bank Account"
 	}
 
-	return "deleted all bank account successfully"
+	return "Deleted All Bank Account Successfully"
 }
 
 func (r *bankAccRepository) DeleteByAccountId(accountID uint) error {
@@ -146,6 +147,7 @@ func (r *bankAccRepository) DeleteByAccountId(accountID uint) error {
 
 	return nil
 }
+
 func NewBankAccRepository(db *sql.DB) BankAccRepository {
 	repo := new(bankAccRepository)
 	repo.db = db

@@ -38,7 +38,8 @@ func RunServer() {
 
 	userRouter.GET("", userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
-	r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
+	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
+	userRouter.PUT("/:user_id", userController.Edit)
 	userRouter.DELETE("/:username", userController.Unreg)
 
 	// Bank Accont Router
@@ -53,9 +54,22 @@ func RunServer() {
 	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByID)
 	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
-
 	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
 	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountId)
+
+	// Card Router
+	cardRouter := r.Group("/user/card")
+	cardRouter.Use(authMiddlewareId)
+
+	cardRepo := repository.NewCardRepository(db)
+	cardUsecase := usecase.NewCardUsecase(cardRepo)
+	cardController := controller.NewCardController(cardUsecase)
+
+	cardRouter.GET("/:user_id", cardController.FindCardByID)
+	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
+	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
+	cardRouter.DELETE("/:user_id", cardController.UnregAll)
+	cardRouter.DELETE("/:user_id/card_id", cardController.UnregByCardId)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

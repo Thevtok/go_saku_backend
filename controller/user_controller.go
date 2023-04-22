@@ -26,7 +26,7 @@ func (c *UserController) FindUsers(ctx *gin.Context) {
 }
 
 func (c *UserController) FindUserByUsername(ctx *gin.Context) {
-	username := ctx.Param("username")
+	username := ctx.Param("usename")
 	res, _ := c.usecase.FindByUsername(username)
 	if res == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "User not found")

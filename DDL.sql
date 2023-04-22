@@ -1,4 +1,3 @@
-
 CREATE TABLE MST_Users (
     User_ID SERIAL PRIMARY KEY,
     Name VARCHAR(50) NOT NULL,
@@ -6,15 +5,16 @@ CREATE TABLE MST_Users (
     Password VARCHAR(50) NOT NULL,
     Phone_Number VARCHAR(20) NOT NULL,
     Address VARCHAR(100) NOT NULL,
-    Balance DECIMAL(10, 2) NOT NULL
+    Balance DECIMAL(10, 2) NOT NULL,
+    Username VARCHAR(100) NOT NULL,
 );
 
 CREATE TABLE TX_Transaction (
     Transaction_ID SERIAL PRIMARY KEY,
     User_ID INT NOT NULL,
-	Account_ID INT NOT NULL,
-	Card_ID INT NOT NULL,
-	Point_ID INT NOT NULL,
+	  Account_ID INT NOT NULL,
+	  Card_ID INT NOT NULL,
+	  Point_ID INT NOT NULL,
     Type VARCHAR(10) NOT NULL,
     Amount DECIMAL(10, 2) NOT NULL,
     Date DATE NOT NULL,

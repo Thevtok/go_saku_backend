@@ -1,10 +1,19 @@
 package model
 
 type Card struct {
-	Card_ID         int    `json:"Card_ID"`
-	User_ID         int    `json:"User_ID"`
-	Card_Type       string `json:"Card_Type"`
-	Card_Number     string `json:"Card_Number"`
-	Expiration_Date string `json:"Expiration_Date"`
-	CVV             string `json:"CVV"`
+	CardID         uint   `json:"card_id"`
+	UserID         uint   `json:"user_id"`
+	CardType       string `json:"card_type"`
+	CardNumber     string `json:"card_number"`
+	ExpirationDate string `json:"expiration_date"`
+	CVV            string `json:"cvv"`
+	Name           string `json:"name"`
+}
+
+type CardResponse struct {
+	UserID         uint   `json:"user_id"`
+	CardType       string `json:"card_type"`
+	CardNumber     string `json:"card_number"`
+	ExpirationDate string `json:"expiration_date"`
+	CVV            string `json:"cvv"`
 }

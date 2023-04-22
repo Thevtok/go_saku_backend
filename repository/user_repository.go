@@ -71,7 +71,7 @@ func (r *userRepository) GetAll() any {
 
 func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name,username, email, phone_number, address, balance FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
+	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")

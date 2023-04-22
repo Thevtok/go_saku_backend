@@ -13,8 +13,7 @@ type BankAcc struct {
 }
 
 type BankAccResponse struct {
-	UserID uint `json:"user_id"`
-
+	UserID            uint   `json:"user_id"`
 	BankName          string `json:"bank_name"`
 	AccountNumber     string `json:"account_number"`
 	AccountHolderName string `json:"account_holder_name"`

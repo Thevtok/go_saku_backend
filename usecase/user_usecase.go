@@ -14,7 +14,6 @@ type UserUseCase interface {
 	FindUsers() any
 	FindByUsername(username string) (*model.UserResponse, error)
 	FindById(id uint) (*model.UserResponse, error)
-
 	Register(user *model.UserCreate) (any, error)
 	Edit(user *model.User) string
 	Unreg(user *model.User) string
