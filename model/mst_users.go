@@ -9,6 +9,8 @@ type User struct {
 	Phone_Number string `json:"phone_number"`
 	Address      string `json:"address"`
 	Balance      int    `json:"balance"`
+	Role         string `json:"role"`
+	Point        int    `json:"point"`
 }
 
 // Define the table name for the User struct
