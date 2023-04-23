@@ -86,6 +86,17 @@ func RunServer() {
 	photoRouter.PUT("/:username", photoController.Edit)
 	photoRouter.DELETE("/:username", photoController.Remove)
 
+	//TX Router
+	txRouter := r.Group("/user/tx")
+	txRouter.Use(authMiddlewareId)
+
+	txRepo := repository.NewTxRepository(db)
+	txUsecase := usecase.NewTransactionUseCase(txRepo, userRepo)
+	txController := controller.NewTransactionController(txUsecase, userUsecase)
+
+	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
+	txRouter.POST("depo/bank/:user_id", txController.CreateDepositBank)
+
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
 	}

@@ -13,7 +13,7 @@ type UserUseCase interface {
 	Login(email string, password string) (*model.Credentials, error)
 	FindUsers() any
 	FindByUsername(username string) (*model.UserResponse, error)
-	FindById(id uint) (*model.UserResponse, error)
+	FindById(id uint) (*model.User, error)
 	Register(user *model.UserCreate) (any, error)
 	Edit(user *model.User) string
 	Unreg(user *model.User) string
@@ -46,7 +46,7 @@ func (uc *userUseCase) FindByUsername(username string) (*model.UserResponse, err
 	return uc.userRepo.GetByUsername(username)
 }
 
-func (uc *userUseCase) FindById(id uint) (*model.UserResponse, error) {
+func (uc *userUseCase) FindById(id uint) (*model.User, error) {
 	return uc.userRepo.GetByiD(id)
 }
 

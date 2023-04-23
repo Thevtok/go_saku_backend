@@ -146,9 +146,11 @@ func NewUserAuth(u usecase.UserUseCase) *LoginAuth {
 	}
 	return &loginauth
 }
-
 func AuthMiddlewareID() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Add log statement here
+		log.Println("AuthMiddlewareID called")
+
 		tokenString := c.GetHeader("Authorization")
 
 		if tokenString == "" {
@@ -156,6 +158,9 @@ func AuthMiddlewareID() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		// Add log statement here
+		log.Println("Token string:", tokenString)
 
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
@@ -166,6 +171,9 @@ func AuthMiddlewareID() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		// Add log statement here
+		log.Println("Token parsed successfully")
 
 		claims := token.Claims.(*jwt.MapClaims)
 		email, ok := (*claims)["email"].(string)
