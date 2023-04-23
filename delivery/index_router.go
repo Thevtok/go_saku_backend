@@ -52,7 +52,7 @@ func RunServer() {
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
 	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
-	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUserId)
+	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUseerID)
 	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
 	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
@@ -67,7 +67,7 @@ func RunServer() {
 	cardController := controller.NewCardController(cardUsecase)
 
 	cardRouter.GET("user/card", cardController.FindAllCard)
-	cardRouter.GET("/:user_id", cardController.FindCardByUsername)
+	cardRouter.GET("/:user_id", cardController.FindCardByUserID)
 	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
 	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
 	cardRouter.DELETE("/:user_id", cardController.UnregAll)
@@ -75,16 +75,16 @@ func RunServer() {
 
 	// Photo Router
 	photoRouter := r.Group("/user/photo")
-	photoRouter.Use(authMiddlewareUsername)
+	photoRouter.Use(authMiddlewareId)
 
 	photoRepo := repository.NewPhotoRepository(db)
 	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
 	photoController := controller.NewPhotoController(photoUsecase)
 
-	photoRouter.POST("/:username", photoController.Upload)
-	photoRouter.GET("/:username", photoController.Download)
-	photoRouter.PUT("/:username", photoController.Edit)
-	photoRouter.DELETE("/:username", photoController.Remove)
+	photoRouter.POST("/:user_id", photoController.Upload)
+	photoRouter.GET("/:user_id", photoController.Download)
+	photoRouter.PUT("/:user_id", photoController.Edit)
+	photoRouter.DELETE("/:user_id", photoController.Remove)
 
 	//TX Router
 	txRouter := r.Group("/user/tx")

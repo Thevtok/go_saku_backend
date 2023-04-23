@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
@@ -16,38 +17,38 @@ type PhotoController struct {
 }
 
 func (c *PhotoController) Upload(ctx *gin.Context) {
-	userName := ctx.PostForm("username")
-    if userName == "" {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
-        return
-    }
-    file, header, err := ctx.Request.FormFile("photo")
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-    defer file.Close()
-	 // Validasi ekstensi file hanya png
-	 ext := filepath.Ext(header.Filename)
-	 if ext != ".png" {
-		 ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
-		 return
-	 }
-    err = c.photoUsecase.Upload(ctx.Request.Context(), userName, file, header)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    ctx.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
+	userID, err := strconv.Atoi(ctx.PostForm("user_id")) 
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
+		return
+	}
+	file, header, err := ctx.Request.FormFile("photo")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer file.Close()
+	// Validasi ekstensi file hanya png
+	ext := filepath.Ext(header.Filename)
+	if ext != ".png" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
+		return
+	}
+	err = c.photoUsecase.Upload(ctx.Request.Context(), uint(userID), file, header)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully"})
 }
 
 func (c *PhotoController) Download(ctx *gin.Context) {
-	userName := ctx.Param("username")
-	if userName == "" {
+	userID, err := strconv.Atoi(ctx.Param("user_id")) 
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
-		return 
+		return
 	}
-	photo, err := c.photoUsecase.Download(userName)
+	photo, err := c.photoUsecase.Download(uint(userID))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
@@ -58,23 +59,23 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 		return
 	}
 	defer file.Close()
-	
-    ctx.Header("Content-Type", "image/png")
+
+	ctx.Header("Content-Type", "image/png")
 	ctx.File(photo.Url)
-	
+
 }
 
 func (c *PhotoController) Edit(ctx *gin.Context) {
-	userName := ctx.Param("username")
-	if userName == "" {
+	userID, err := strconv.Atoi(ctx.Param("user_id")) 
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
-		return 
+		return
 	}
 	file, header, err := ctx.Request.FormFile("photo")
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	defer file.Close()
 	// Validasi ekstensi file hanya png
 	ext := filepath.Ext(header.Filename)
@@ -82,7 +83,7 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
 		return
 	}
-	err = c.photoUsecase.Edit(&model.PhotoUrl{}, userName, file, header)
+	err = c.photoUsecase.Edit(&model.PhotoUrl{}, uint(userID), file, header)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -91,12 +92,12 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 }
 
 func (c *PhotoController) Remove(ctx *gin.Context) {
-	userName := ctx.Param("username")
-	if userName == "" {
+	userID, err := strconv.Atoi(ctx.Param("user_id")) 
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
-		return 
+		return
 	}
-	res := c.photoUsecase.Remove(userName)
+	res := c.photoUsecase.Remove(uint(userID))
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
 

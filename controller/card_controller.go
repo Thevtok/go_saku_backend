@@ -25,9 +25,12 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *CardController) FindCardByUsername(ctx *gin.Context) {
-	username := ctx.Param("username")
-	existingUser, _ := c.cardUsecase.FindCardByUsername(username)
+func (c *CardController) FindCardByUserID(ctx *gin.Context) {
+	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+	}
+	existingUser, _ := c.cardUsecase.FindCardByUserID(uint(userID))
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Card not found")
 		return
@@ -37,16 +40,15 @@ func (c *CardController) FindCardByUsername(ctx *gin.Context) {
 }
 
 func (c *CardController) FindCardByCardID(ctx *gin.Context) {
-	user_id_str := ctx.Param("card_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
+	userID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Card ID")
 		return
 	}
 
-	existingUser, _ := c.cardUsecase.FindCardByCardID(uint(user_id))
+	existingUser, _ := c.cardUsecase.FindCardByCardID(uint(userID))
 	if existingUser == nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Card ID not found")
 		return
 	}
 
@@ -54,17 +56,22 @@ func (c *CardController) FindCardByCardID(ctx *gin.Context) {
 }
 
 func (c *CardController) CreateCardID(ctx *gin.Context) {
-	username := ctx.GetString("username")
-	var newCardID model.CardResponse
-	err := ctx.BindJSON(&newCardID)
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Failed to get user ID")
+		return
+	}
+
+	var newCard model.CardResponse
+	err := ctx.BindJSON(&newCard)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	result, err := c.cardUsecase.Register(username, &newCardID)
+	result, err := c.cardUsecase.Register(userID.(uint), &newCard)
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Card")
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Card ID")
 		return
 	}
 
@@ -72,14 +79,13 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
-	card_id_str := ctx.Param("card_id")
-	card_id, err := strconv.ParseUint(card_id_str, 10, 64)
+	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Card ID")
 		return
 	}
 
-	existingUser, _ := c.cardUsecase.FindCardByCardID(uint(card_id))
+	existingUser, _ := c.cardUsecase.FindCardByCardID(uint(cardID))
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Card not found")
 		return
@@ -95,13 +101,18 @@ func (c *CardController) Edit(ctx *gin.Context) {
 		return
 	}
 	updateCard := c.cardUsecase.Edit(user)
+
 	response.JSONSuccess(ctx.Writer, http.StatusOK, updateCard)
 }
 
 func (c *CardController) UnregAll(ctx *gin.Context) {
-	username := ctx.Param("username")
+	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+	}
+
 	user := &model.Card{
-		Username: username,
+		UserID: uint(userID),
 	}
 	result := c.cardUsecase.UnregALL(user)
 
@@ -109,14 +120,13 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 }
 
 func (c *CardController) UnregByCardId(ctx *gin.Context) {
-	cardIDStr := ctx.Param("card_id")
-	cardID, err := strconv.ParseUint(cardIDStr, 10, 64)
+	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid account ID")
 		return
 	}
 
-	err = c.cardUsecase.UnregByCardId(uint(cardID))
+	err = c.cardUsecase.UnregByCardID(uint(cardID))
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to delete Card ID")
 		return
