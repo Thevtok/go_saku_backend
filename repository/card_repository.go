@@ -43,7 +43,7 @@ func (r *cardRepository) GetAll() any {
 
 		var user model.BankAccResponse
 
-		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.Username)
+		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.UserId)
 		if err != nil {
 			log.Println(err)
 		}

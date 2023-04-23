@@ -25,11 +25,15 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *BankAccController) FindBankAccByUsername(ctx *gin.Context) {
-	username := ctx.Param("username")
+func (c *BankAccController) FindBankAccByUserId(ctx *gin.Context) {
+	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
 
-	existingUser, _ := c.bankAccUsecase.FindBankAccByUsername(username)
-	if existingUser == nil {
+	existingUser, err := c.bankAccUsecase.FindBankAccByUseerId(uint(userID))
+	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
 	}
@@ -55,7 +59,11 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
-	username := ctx.GetString("username")
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user ID")
+		return
+	}
 
 	var newBankAcc model.BankAccResponse
 	err := ctx.BindJSON(&newBankAcc)
@@ -64,7 +72,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.bankAccUsecase.Register(username, &newBankAcc)
+	result, err := c.bankAccUsecase.Register(userID.(uint), &newBankAcc)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create bank account")
 		return
@@ -101,10 +109,14 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 }
 
 func (c *BankAccController) UnregAll(ctx *gin.Context) {
-	username := ctx.Param("username")
+	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
 
 	user := &model.BankAcc{
-		Username: username,
+		UserId: uint(userID),
 	}
 
 	res := c.bankAccUsecase.UnregAll(user)

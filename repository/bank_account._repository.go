@@ -11,11 +11,11 @@ import (
 
 type BankAccRepository interface {
 	GetAll() any
-	GetByUsername(username string) ([]*model.BankAccResponse, error)
+	GetByUserId(id uint) ([]*model.BankAccResponse, error)
 	GetByAccountID(id uint) (*model.BankAcc, error)
-	Create(username string, newBankAcc *model.BankAccResponse) (any, error)
+	Create(id uint, newBankAcc *model.BankAccResponse) (any, error)
 	Update(bankAcc *model.BankAcc) string
-	DeleteByUsername(username string) string
+	DeleteByUserId(id uint) string
 	DeleteByAccountId(accountID uint) error
 }
 
@@ -27,7 +27,7 @@ func (r *bankAccRepository) GetAll() any {
 
 	var users []model.BankAccResponse
 
-	query := "SELECT  bank_name, account_number, account_holder_name,username FROM mst_bank_account"
+	query := "SELECT  bank_name, account_number, account_holder_name,user_id FROM mst_bank_account"
 
 	rows, err := r.db.Query(query)
 
@@ -43,7 +43,7 @@ func (r *bankAccRepository) GetAll() any {
 
 		var user model.BankAccResponse
 
-		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.Username)
+		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.UserId)
 		if err != nil {
 			log.Println(err)
 		}
@@ -54,10 +54,10 @@ func (r *bankAccRepository) GetAll() any {
 	return users
 }
 
-func (r *bankAccRepository) GetByUsername(username string) ([]*model.BankAccResponse, error) {
+func (r *bankAccRepository) GetByUserId(id uint) ([]*model.BankAccResponse, error) {
 	var bankAccs []*model.BankAccResponse
-	query := "SELECT username, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE username = $1"
-	rows, err := r.db.Query(query, username)
+	query := "SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = $1"
+	rows, err := r.db.Query(query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (r *bankAccRepository) GetByUsername(username string) ([]*model.BankAccResp
 
 	for rows.Next() {
 		var bankAcc model.BankAccResponse
-		err = rows.Scan(&bankAcc.Username, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
+		err = rows.Scan(&bankAcc.UserId, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
 		if err != nil {
 			return nil, err
 		}
@@ -81,9 +81,9 @@ func (r *bankAccRepository) GetByUsername(username string) ([]*model.BankAccResp
 
 func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	var bankAcc model.BankAcc
-	query := "SELECT account_id, bank_name, account_number, account_holder_name ,username FROM mst_bank_account WHERE account_id = $1"
+	query := "SELECT account_id, bank_name, account_number, account_holder_name ,user_id FROM mst_bank_account WHERE account_id = $1"
 	row := r.db.QueryRow(query, id)
-	err := row.Scan(&bankAcc.AccountId, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName, &bankAcc.Username)
+	err := row.Scan(&bankAcc.AccountId, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName, &bankAcc.UserId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("bank account not found")
@@ -93,9 +93,9 @@ func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	return &bankAcc, nil
 }
 
-func (r *bankAccRepository) Create(username string, newBankAcc *model.BankAccResponse) (any, error) {
-	query := "INSERT INTO mst_bank_account (username, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4)"
-	_, err := r.db.Exec(query, username, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName)
+func (r *bankAccRepository) Create(id uint, newBankAcc *model.BankAccResponse) (any, error) {
+	query := "INSERT INTO mst_bank_account (user_id, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4)"
+	_, err := r.db.Exec(query, id, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to create data")
@@ -105,7 +105,7 @@ func (r *bankAccRepository) Create(username string, newBankAcc *model.BankAccRes
 }
 
 func (r *bankAccRepository) Update(bankAcc *model.BankAcc) string {
-	_, err := r.GetByUsername(bankAcc.Username)
+	_, err := r.GetByUserId(bankAcc.UserId)
 	if err != nil {
 		return "user not found"
 	}
@@ -121,9 +121,9 @@ func (r *bankAccRepository) Update(bankAcc *model.BankAcc) string {
 	return "Bank Account updated Successfully"
 }
 
-func (r *bankAccRepository) DeleteByUsername(username string) string {
-	query := "DELETE FROM mst_bank_account WHERE username = $1"
-	_, err := r.db.Exec(query, username)
+func (r *bankAccRepository) DeleteByUserId(id uint) string {
+	query := "DELETE FROM mst_bank_account WHERE user_id = $1"
+	_, err := r.db.Exec(query, id)
 	if err != nil {
 		return "failed to delete Bank Account"
 	}
