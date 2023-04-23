@@ -23,13 +23,13 @@ var jwtKey = []byte(utils.DotEnv("KEY"))
 
 func generateToken(user *model.Credentials) (string, error) {
 	// Set token claims
-	var ac = model.BankAcc{}
+
 	claims := jwt.MapClaims{}
 	claims["email"] = user.Email
 	claims["password"] = user.Password
 	claims["username"] = user.Username
 	claims["user_id"] = uint(user.UserID)
-	claims["account_id"] = uint(ac.AccountId)
+
 	claims["role"] = user.Role
 
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()

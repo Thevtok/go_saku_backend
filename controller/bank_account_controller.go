@@ -34,6 +34,7 @@ func (c *BankAccController) FindBankAccByUserId(ctx *gin.Context) {
 
 	existingUser, err := c.bankAccUsecase.FindBankAccByUseerId(uint(userID))
 	if err != nil {
+
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
 	}
@@ -59,6 +60,7 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
+
 	userID, exists := ctx.Get("user_id")
 	if !exists {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user ID")
@@ -74,7 +76,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 
 	result, err := c.bankAccUsecase.Register(userID.(uint), &newBankAcc)
 	if err != nil {
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create bank account")
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Bank Account")
 		return
 	}
 
@@ -109,6 +111,7 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 }
 
 func (c *BankAccController) UnregAll(ctx *gin.Context) {
+
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
@@ -118,7 +121,6 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	user := &model.BankAcc{
 		UserId: uint(userID),
 	}
-
 	res := c.bankAccUsecase.UnregAll(user)
 
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
@@ -145,6 +147,5 @@ func NewBankAccController(u usecase.BankAccUsecase) *BankAccController {
 	controller := BankAccController{
 		bankAccUsecase: u,
 	}
-
 	return &controller
 }

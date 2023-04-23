@@ -3,14 +3,11 @@ package repository
 import (
 	"database/sql"
 	"errors"
-
 	"fmt"
-
 	"log"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/utils"
-
 	_ "github.com/lib/pq"
 )
 
@@ -19,7 +16,6 @@ type UserRepository interface {
 	GetAll() any
 	GetByUsername(username string) (*model.UserResponse, error)
 	GetByiD(id uint) (*model.UserResponse, error)
-
 	Create(user *model.UserCreate) (any, error)
 	Update(user *model.User) string
 	Delete(user *model.User) string
@@ -29,17 +25,10 @@ type userRepository struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{db: db}
-
-}
-
 func (r *userRepository) GetAll() any {
 	var users []model.UserResponse
-
-	query := `SELECT name,username,email,phone_number,address,balance ,point from mst_users`
+	query := "SELECT name,username,email,phone_number,address,balance ,point from mst_users"
 	rows, err := r.db.Query(query)
-
 	if err != nil {
 		log.Println(err)
 	}
@@ -50,11 +39,9 @@ func (r *userRepository) GetAll() any {
 
 	for rows.Next() {
 		var user model.UserResponse
-
 		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point); err != nil {
 			log.Println(err)
 		}
-
 		users = append(users, user)
 	}
 
@@ -65,7 +52,6 @@ func (r *userRepository) GetAll() any {
 	if len(users) == 0 {
 		return "no data"
 	}
-
 	return users
 }
 
@@ -78,7 +64,6 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 		}
 		return nil, err
 	}
-
 	return &user, nil
 }
 func (r *userRepository) GetByiD(id uint) (*model.UserResponse, error) {
@@ -95,7 +80,6 @@ func (r *userRepository) GetByiD(id uint) (*model.UserResponse, error) {
 
 func (r *userRepository) Update(user *model.User) string {
 	_, err := r.GetByiD(user.ID)
-
 	if err != nil {
 		return "user not found"
 	}
@@ -124,7 +108,6 @@ func (r *userRepository) Delete(user *model.User) string {
 		log.Println(err)
 		return "failed to delete user"
 	}
-
 	return "deleted user successfully"
 }
 
@@ -143,7 +126,6 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 		log.Println(err)
 		return nil, err
 	}
-
 	return user, nil
 }
 
@@ -173,6 +155,9 @@ func (r *userRepository) GetByEmailAndPassword(email string, password string) (*
 		UserID:   m.UserID,
 		Role:     m.Role,
 	}
-
 	return user, nil
+}
+
+func NewUserRepository(db *sql.DB) UserRepository {
+	return &userRepository{db: db}
 }

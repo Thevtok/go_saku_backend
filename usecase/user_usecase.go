@@ -23,14 +23,7 @@ type userUseCase struct {
 	userRepo repository.UserRepository
 }
 
-func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
-	return &userUseCase{
-		userRepo: userRepo,
-	}
-}
-
 func (uc *userUseCase) Login(email string, password string) (*model.Credentials, error) {
-
 	// Get the user by email and hashed password
 	user, err := uc.userRepo.GetByEmailAndPassword(email, password)
 	if err != nil {
@@ -42,7 +35,6 @@ func (uc *userUseCase) Login(email string, password string) (*model.Credentials,
 	if err != nil {
 		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, user.Password)
 	}
-
 	return &model.Credentials{Password: user.Password, Username: user.Username, UserID: user.UserID, Role: user.Role}, nil
 }
 
@@ -53,11 +45,12 @@ func (uc *userUseCase) FindUsers() any {
 func (uc *userUseCase) FindByUsername(username string) (*model.UserResponse, error) {
 	return uc.userRepo.GetByUsername(username)
 }
+
 func (uc *userUseCase) FindById(id uint) (*model.UserResponse, error) {
 	return uc.userRepo.GetByiD(id)
 }
-func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
 
+func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
 	return uc.userRepo.Create(user)
 }
 
@@ -72,4 +65,10 @@ func (uc *userUseCase) Edit(user *model.User) string {
 
 func (uc *userUseCase) Unreg(user *model.User) string {
 	return uc.userRepo.Delete(user)
+}
+
+func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
+	return &userUseCase{
+		userRepo: userRepo,
+	}
 }

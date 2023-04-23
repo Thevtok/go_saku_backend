@@ -66,11 +66,25 @@ func RunServer() {
 	cardUsecase := usecase.NewCardUsecase(cardRepo)
 	cardController := controller.NewCardController(cardUsecase)
 
-	cardRouter.GET("/:user_id", cardController.FindCardByID)
+	cardRouter.GET("user/card", cardController.FindAllCard)
+	cardRouter.GET("/:user_id", cardController.FindCardByUsername)
 	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
 	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
 	cardRouter.DELETE("/:user_id", cardController.UnregAll)
 	cardRouter.DELETE("/:user_id/card_id", cardController.UnregByCardId)
+
+	// Photo Router
+	photoRouter := r.Group("/user/photo")
+	photoRouter.Use(authMiddlewareUsername)
+
+	photoRepo := repository.NewPhotoRepository(db)
+	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
+	photoController := controller.NewPhotoController(photoUsecase)
+
+	photoRouter.POST("/:username", photoController.Upload)
+	photoRouter.GET("/:username", photoController.Download)
+	photoRouter.PUT("/:username", photoController.Edit)
+	photoRouter.DELETE("/:username", photoController.Remove)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
