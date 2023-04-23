@@ -25,14 +25,14 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *BankAccController) FindBankAccByUserId(ctx *gin.Context) {
+func (c *BankAccController) FindBankAccByUseerID(ctx *gin.Context) {
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
-	existingUser, err := c.bankAccUsecase.FindBankAccByUseerId(uint(userID))
+	existingUser, err := c.bankAccUsecase.FindBankAccByUserID(uint(userID))
 	if err != nil {
 
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
@@ -43,14 +43,13 @@ func (c *BankAccController) FindBankAccByUserId(ctx *gin.Context) {
 }
 
 func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
-	user_id_str := ctx.Param("account_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
+	userID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
-	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(user_id))
+	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(userID))
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
@@ -60,7 +59,6 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
-
 	userID, exists := ctx.Get("user_id")
 	if !exists {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user ID")
@@ -84,14 +82,13 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 }
 
 func (c *BankAccController) Edit(ctx *gin.Context) {
-	account_id_str := ctx.Param("account_id")
-	account_id, err := strconv.ParseUint(account_id_str, 10, 64)
+	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Account ID")
 		return
 	}
 
-	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(account_id))
+	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(accountID))
 	if existingUser == nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
 		return
@@ -107,11 +104,11 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 		return
 	}
 	updateBank := c.bankAccUsecase.Edit(user)
+
 	response.JSONSuccess(ctx.Writer, http.StatusOK, updateBank)
 }
 
 func (c *BankAccController) UnregAll(ctx *gin.Context) {
-
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
@@ -119,7 +116,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	}
 
 	user := &model.BankAcc{
-		UserId: uint(userID),
+		UserID: uint(userID),
 	}
 	res := c.bankAccUsecase.UnregAll(user)
 
@@ -127,14 +124,13 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 }
 
 func (c *BankAccController) UnregByAccountId(ctx *gin.Context) {
-	accountIDStr := ctx.Param("account_id")
-	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid account ID")
 		return
 	}
 
-	err = c.bankAccUsecase.UnregByAccountId(uint(accountID))
+	err = c.bankAccUsecase.UnregByAccountID(uint(accountID))
 	if err != nil {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to delete bank account")
 		return

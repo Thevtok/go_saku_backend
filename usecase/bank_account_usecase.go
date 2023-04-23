@@ -7,12 +7,12 @@ import (
 
 type BankAccUsecase interface {
 	FindAllBankAcc() any
-	FindBankAccByUseerId(id uint) (any, error)
+	FindBankAccByUserID(id uint) (any, error)
 	FindBankAccByAccountID(id uint) (*model.BankAcc, error)
 	Register(id uint, newBankAcc *model.BankAccResponse) (any, error)
 	Edit(bankAcc *model.BankAcc) string
 	UnregAll(bankAcc *model.BankAcc) string
-	UnregByAccountId(accountID uint) error
+	UnregByAccountID(accountID uint) error
 }
 
 type bankAccUsecase struct {
@@ -23,15 +23,15 @@ func (u *bankAccUsecase) FindAllBankAcc() any {
 	return u.bankAccRepo.GetAll()
 }
 
-func (u *bankAccUsecase) FindBankAccByUseerId(id uint) (any, error) {
-	return u.bankAccRepo.GetByUserId(id)
+func (u *bankAccUsecase) FindBankAccByUserID(id uint) (any, error) {
+	return u.bankAccRepo.GetByUserID(id)
 }
 func (u *bankAccUsecase) FindBankAccByAccountID(id uint) (*model.BankAcc, error) {
 	return u.bankAccRepo.GetByAccountID(id)
 }
 
 func (u *bankAccUsecase) Register(id uint, newBankAcc *model.BankAccResponse) (any, error) {
-	newBankAcc.UserId = id
+	newBankAcc.UserID = id
 	return u.bankAccRepo.Create(id, newBankAcc)
 }
 
@@ -40,11 +40,11 @@ func (u *bankAccUsecase) Edit(bankAcc *model.BankAcc) string {
 }
 
 func (u *bankAccUsecase) UnregAll(bankAcc *model.BankAcc) string {
-	return u.bankAccRepo.DeleteByUserId(bankAcc.UserId)
+	return u.bankAccRepo.DeleteByUserID(bankAcc.UserID)
 }
 
-func (u *bankAccUsecase) UnregByAccountId(accountID uint) error {
-	err := u.bankAccRepo.DeleteByAccountId(accountID)
+func (u *bankAccUsecase) UnregByAccountID(accountID uint) error {
+	err := u.bankAccRepo.DeleteByAccountID(accountID)
 	if err != nil {
 		return err
 	}
