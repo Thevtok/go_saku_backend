@@ -38,8 +38,8 @@ func (u *photoUsecase) Upload(ctx context.Context, id uint, file multipart.File,
 	}
 	// Simpan informasi file ke database
 	photo := &model.PhotoUrl{
-		Url:    path,
 		UserID: id,
+		Url:    path,
 	}
 	err = u.photoRepo.Create(photo)
 	if err != nil {
@@ -67,8 +67,8 @@ func (u *photoUsecase) Edit(photo *model.PhotoUrl, id uint, file multipart.File,
 	}
 	// Simpan informasi file ke database
 	photoUrl := &model.PhotoUrl{
-		Url:    path,
 		UserID: id,
+		Url:    path,
 	}
 	return u.photoRepo.Update(photoUrl)
 }

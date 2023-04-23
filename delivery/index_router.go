@@ -75,16 +75,16 @@ func RunServer() {
 
 	// Photo Router
 	photoRouter := r.Group("/user/photo")
-	photoRouter.Use(authMiddlewareUsername)
+	photoRouter.Use(authMiddlewareId)
 
 	photoRepo := repository.NewPhotoRepository(db)
 	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
 	photoController := controller.NewPhotoController(photoUsecase)
 
-	photoRouter.POST("/:username", photoController.Upload)
-	photoRouter.GET("/:username", photoController.Download)
-	photoRouter.PUT("/:username", photoController.Edit)
-	photoRouter.DELETE("/:username", photoController.Remove)
+	photoRouter.POST("/:user_id", photoController.Upload)
+	photoRouter.GET("/:user_id", photoController.Download)
+	photoRouter.PUT("/:user_id", photoController.Edit)
+	photoRouter.DELETE("/:user_id", photoController.Remove)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
