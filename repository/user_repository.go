@@ -67,7 +67,7 @@ func (r *userRepository) UpdatePoint(userID uint, newPoint int) error {
 
 func (r *userRepository) GetAll() any {
 	var users []model.UserResponse
-	query := "SELECT name, username, email, phone_number, address, balance, point,tx_count from mst_users"
+	query := "SELECT name, username, email, phone_number, address, balance, point, tx_count from mst_users"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
