@@ -36,6 +36,7 @@ type TransactionCard struct {
 type TransactionWithdraw struct {
 	ID              uint      `json:"tx_id"`
 	TransactionType string    `json:"transaction_type"`
+	BankAccountID   uint      `json:"bank_account_id"`
 	SenderID        uint      `json:"sender_id"`
 	Amount          uint      `json:"amount"`
 	Timestamp       time.Time `json:"timestamp"`
@@ -52,9 +53,10 @@ type TransactionTransfer struct {
 
 type TransactionPoint struct {
 	ID              uint      `json:"tx_id"`
+	Reward          string    `json:"reward"`
 	TransactionType string    `json:"transaction_type"`
 	SenderID        uint      `json:"sender_id"`
-	Point           uint      `json:"point"`
-	PointExchangeID uint      `json:"point_exchange_id"`
+	Point           int       `json:"point"`
+	PointExchangeID int       `json:"pe_id"`
 	Timestamp       time.Time `json:"timestamp"`
 }

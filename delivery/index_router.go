@@ -7,6 +7,7 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/controller"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
+
 	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -97,6 +98,8 @@ func RunServer() {
 	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
 	txRouter.POST("depo/bank/:user_id", txController.CreateDepositBank)
 	txRouter.POST("depo/card/:user_id", txController.CreateDepositCard)
+	txRouter.POST("wd/:user_id", txController.CreateWithdrawal)
+	txRouter.POST("redeem/:user_id", txController.CreateRedeemTransaction)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

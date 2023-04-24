@@ -146,6 +146,34 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"status": "success"})
 }
 
+func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
+	// Parse user_id from URL parameter
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		log.Printf("Failed to convert user_id to uint: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+
+	// Parse redeem data from request body
+	var txData model.TransactionPoint
+	if err := ctx.ShouldBindJSON(&txData); err != nil {
+		log.Printf("Failed to parse redeem data: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+	txData.SenderID = uint(userID)
+
+	// Create redeem transaction in use case layer
+	err = c.txUsecase.CreateRedeem(&txData)
+	if err != nil {
+		log.Printf("Failed to create redeem transaction: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.JSONSuccess(ctx.Writer, http.StatusCreated, "Redeem transaction created successfully")
+}
+
 func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {
 	controller := TransactionController{
 		txUsecase:   usecase,
