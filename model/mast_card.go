@@ -11,7 +11,7 @@ type Card struct {
 }
 
 type CardResponse struct {
-	UserID         string `json:"user_id"`
+	UserID         uint   `json:"user_id"`
 	CardType       string `json:"card_type"`
 	CardNumber     string `json:"card_number"`
 	ExpirationDate string `json:"expiration_date"`

@@ -23,15 +23,12 @@ var jwtKey = []byte(utils.DotEnv("KEY"))
 
 func generateToken(user *model.Credentials) (string, error) {
 	// Set token claims
-
 	claims := jwt.MapClaims{}
 	claims["email"] = user.Email
 	claims["password"] = user.Password
 	claims["username"] = user.Username
 	claims["user_id"] = uint(user.UserID)
-
 	claims["role"] = user.Role
-
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
 	// Print out the claims
@@ -146,6 +143,7 @@ func NewUserAuth(u usecase.UserUseCase) *LoginAuth {
 	}
 	return &loginauth
 }
+
 func AuthMiddlewareID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Add log statement here
