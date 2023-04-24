@@ -30,7 +30,7 @@ CREATE TABLE mst_card
     user_id integer NOT NULL,
     card_type character varying(10) NOT NULL,
     card_number character varying(20) NOT NULL,
-    expiration_date date NOT NULL,
+    expiration_date character varying NOT NULL,
     cvv character varying(5) NOT NULL,
     CONSTRAINT card_userID_fkey FOREIGN KEY(user_id)
     REFERENCES mst_users(user_id)
