@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,23 +20,27 @@ type PhotoController struct {
 func (c *PhotoController) Upload(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.PostForm("user_id")) 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username"})
+		log.Printf("Failed to get user id: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
 		return
 	}
 	file, header, err := ctx.Request.FormFile("photo")
 	if err != nil {
+		log.Printf("Something went wrong at Form File Key: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	defer file.Close()
-	// Validasi ekstensi file hanya png
+	// Validasi ekstensi file
 	ext := filepath.Ext(header.Filename)
-	if ext != ".png" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
+	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		log.Printf("Extension file is not image file: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only Image files are allowed"})
 		return
 	}
 	err = c.photoUsecase.Upload(ctx.Request.Context(), uint(userID), file, header)
 	if err != nil {
+		log.Printf("Something went wrong when uploading file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -45,22 +50,35 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 func (c *PhotoController) Download(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("user_id")) 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
+		log.Printf("Failed to get user id: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
 		return
 	}
 	photo, err := c.photoUsecase.Download(uint(userID))
 	if err != nil {
+		log.Printf("Something went wrong when downloading file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	// Validasi extensi file
+	if filepath.Ext(photo.Url) != ".png" && filepath.Ext(photo.Url) != ".jpg" && filepath.Ext(photo.Url) != ".jpeg" {
+		log.Printf("Extension file is not image file: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only Image files are allowed"})
 		return
 	}
 	file, err := os.Open(photo.Url)
 	if err != nil {
+		log.Printf("Failed to get photo: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	defer file.Close()
-
-	ctx.Header("Content-Type", "image/png")
+	// Set response header sesuai format file
+	contentType := "image/png"
+	if filepath.Ext(photo.Url) == ".jpg" || filepath.Ext(photo.Url) == ".jpeg" {
+		contentType = "image/jpeg"
+	}
+	ctx.Header("Content-Type", contentType)
 	ctx.File(photo.Url)
 
 }
@@ -68,23 +86,27 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 func (c *PhotoController) Edit(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("user_id")) 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
+		log.Printf("Failed to get user id: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
 		return
 	}
 	file, header, err := ctx.Request.FormFile("photo")
 	if err != nil {
+		log.Printf("Something went wrong at Form File Key: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	defer file.Close()
 	// Validasi ekstensi file hanya png
 	ext := filepath.Ext(header.Filename)
-	if ext != ".png" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only PNG files are allowed"})
+	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		log.Printf("Extension file is not image file: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only Image files are allowed"})
 		return
 	}
 	err = c.photoUsecase.Edit(&model.PhotoUrl{}, uint(userID), file, header)
 	if err != nil {
+		log.Printf("Something went wrong when editing file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -94,7 +116,8 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 func (c *PhotoController) Remove(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("user_id")) 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid username"})
+		log.Printf("Failed to get user id: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
 		return
 	}
 	res := c.photoUsecase.Remove(uint(userID))
