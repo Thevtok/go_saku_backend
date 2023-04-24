@@ -32,6 +32,7 @@ func (u *cardUsecase) FindCardByCardID(id uint) (*model.Card, error) {
 }
 
 func (u *cardUsecase) Register(id uint, newCard *model.CardResponse) (any, error) {
+	newCard.UserID = id
 	return u.cardRepo.Create(id, newCard)
 }
 

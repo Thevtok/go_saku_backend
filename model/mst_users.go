@@ -1,30 +1,31 @@
 package model
 
 type User struct {
-	ID                uint   `json:"user_id"`
-	Name              string `json:"name"`
-	Username          string `json:"username"`
-	Email             string `json:"email"`
-	Password          string `json:"password"`
-	Phone_Number      string `json:"phone_number"`
-	Address           string `json:"address"`
-	Balance           uint   `json:"balance"`
-	Role              string `json:"role"`
-	Point             uint   `json:"point"`
-	NumOfTransactions int
+	ID           uint   `json:"user_id"`
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Phone_Number string `json:"phone_number"`
+	Address      string `json:"address"`
+	Balance      uint   `json:"balance"`
+	Role         string `json:"role"`
+	Point        int    `json:"point"`
+	TxCount      int    `json:"tx_count"`
 }
 
 // Define the table name for the User struct
 type UserResponse struct {
-	Name              string `json:"name"`
-	Username          string `json:"username"`
-	Email             string `json:"email"`
-	Phone_Number      string `json:"phone_number"`
-	Address           string `json:"address"`
-	Balance           uint   `json:"balance"`
-	Point             int    `json:"point"`
-	NumOfTransactions int
+	Name         string `json:"name"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Phone_Number string `json:"phone_number"`
+	Address      string `json:"address"`
+	Balance      uint   `json:"balance"`
+	Point        int    `json:"point"`
+	TxCount      int    `json:"tx_count"`
 }
+
 type UserCreate struct {
 	Name         string `json:"name"`
 	Username     string `json:"username"`

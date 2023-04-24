@@ -25,9 +25,7 @@ type bankAccRepository struct {
 
 func (r *bankAccRepository) GetAll() any {
 	var users []model.BankAccResponse
-
-	query := "SELECT bank_name, account_number, account_holder_name,user_id FROM mst_bank_account"
-
+	query := "SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
@@ -39,9 +37,7 @@ func (r *bankAccRepository) GetAll() any {
 
 	for rows.Next() {
 		var user model.BankAccResponse
-
 		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.UserID)
-
 		if err != nil {
 			log.Println(err)
 		}

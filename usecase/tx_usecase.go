@@ -34,6 +34,18 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 		return fmt.Errorf("failed to update user balance: %v", err)
 	}
 
+	err = uc.userRepo.IncrementTxCount(user.ID)
+	if err != nil {
+		return err
+	}
+
+	// check if user is eligible for bonus points
+	newPoint := user.Point + 20 // change from 20 to 100
+	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+	if err != nil {
+		return err
+	}
+
 	// insert transaction
 	err = uc.transactionRepo.CreateDepositBank(transaction)
 	if err != nil {
@@ -55,6 +67,19 @@ func (uc *transactionUseCase) CreateDepositCard(transaction *model.TransactionCa
 	if err != nil {
 		return fmt.Errorf("failed to update user balance: %v", err)
 	}
+	// increment tx_count for user
+	err = uc.userRepo.IncrementTxCount(user.ID)
+	if err != nil {
+		return err
+	}
+
+	newPoint := user.Point + 20 // change from 20 to 100
+	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+	if err != nil {
+		return err
+	}
+
+	// check if user is eligible for bonus points
 
 	// insert transaction
 	err = uc.transactionRepo.CreateDepositCard(transaction)
@@ -106,6 +131,17 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	if err != nil {
 		return newBalanceR, err
 	}
+	err = uc.userRepo.IncrementTxCount(sender.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if sender is eligible for bonus points
+	newPoint := sender.Point + 20 // change from 20 to 100
+	err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
+	if err != nil {
+		return nil, err
+	}
 
 	// insert transaction
 	newTransfer := model.TransactionTransfer{
@@ -122,11 +158,34 @@ func (uc *transactionUseCase) CreateRedeem(transaction *model.TransactionPoint) 
 		return err
 	}
 
-	// update user balance
-	newBalance := user.Balance + transaction.Point
-	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
+	// Get all point exchanges
+	pointExchanges, err := uc.transactionRepo.GetAllPoint()
 	if err != nil {
 		return err
+	}
+
+	// Find the point exchange with matching pe_id
+	var pointExchange *model.PointExchange
+	for _, pe := range pointExchanges {
+		if pe.PE_ID == transaction.PointExchangeID {
+			pointExchange = pe
+			break
+		}
+	}
+
+	// Check if point exchange was found
+	if pointExchange == nil {
+		return fmt.Errorf("point exchange with pe_id %d not found", transaction.PointExchangeID)
+	}
+
+	// Check if point exchange reward and price match with transaction data
+	if pointExchange.Price != transaction.Point {
+		return fmt.Errorf("reward or price on point exchange data doesn't match with the transaction data")
+	}
+
+	// update user balance
+	if user.Point < transaction.Point {
+		return fmt.Errorf("your point is not enough to redeem")
 	}
 
 	// update user point

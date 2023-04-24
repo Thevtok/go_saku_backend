@@ -36,10 +36,8 @@ func (r *cardRepository) GetAll() any {
 	defer rows.Close()
 
 	for rows.Next() {
-
 		var user model.CardResponse
 		err := rows.Scan(&user.UserID, &user.CardType, &user.CardNumber, &user.ExpirationDate, &user.CVV)
-
 		if err != nil {
 			log.Println(err)
 		}

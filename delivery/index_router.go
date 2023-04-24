@@ -7,6 +7,7 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/controller"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
+
 	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -26,16 +27,16 @@ func RunServer() {
 	// User Router
 	userRouter := r.Group("/user")
 	userRouter.Use(authMiddlewareUsername)
-	// USER DEPEDENCY
 
+	// USER DEPEDENCY
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
 	userController := controller.NewUserController(userUsecase)
 
+	// USER GROUP
 	r.POST("/login", userAuth.Login)
 	r.POST("/register", userController.Register)
-	// USER GROUP
 
 	r.GET("user", authMiddlewareRole, userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
@@ -47,6 +48,7 @@ func RunServer() {
 	bankAccRouter := r.Group("/user/bank")
 	bankAccRouter.Use(authMiddlewareId)
 
+	// Bank Acc Depedency
 	bankAccRepo := repository.NewBankAccRepository(db)
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
@@ -63,6 +65,7 @@ func RunServer() {
 	cardRouter := r.Group("/user/card")
 	cardRouter.Use(authMiddlewareId)
 
+	// Card Depedency
 	cardRepo := repository.NewCardRepository(db)
 	cardUsecase := usecase.NewCardUsecase(cardRepo)
 	cardController := controller.NewCardController(cardUsecase)
@@ -79,6 +82,7 @@ func RunServer() {
 	photoRouter := r.Group("/user/photo")
 	photoRouter.Use(authMiddlewareId)
 
+	// Photo Depedency
 	photoRepo := repository.NewPhotoRepository(db)
 	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
 	photoController := controller.NewPhotoController(photoUsecase)
@@ -92,6 +96,7 @@ func RunServer() {
 	txRouter := r.Group("/user/tx")
 	txRouter.Use(authMiddlewareId)
 
+	// TX Depedency
 	txRepo := repository.NewTxRepository(db)
 	txUsecase := usecase.NewTransactionUseCase(txRepo, userRepo)
 	txController := controller.NewTransactionController(txUsecase, userUsecase)
@@ -99,9 +104,10 @@ func RunServer() {
 	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
 	txRouter.POST("depo/bank/:user_id", txController.CreateDepositBank)
 	txRouter.POST("depo/card/:user_id", txController.CreateDepositCard)
+	txRouter.POST("wd/:user_id", txController.CreateWithdrawal)
+	txRouter.POST("redeem/:user_id", txController.CreateRedeemTransaction)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)
 	}
-
 }

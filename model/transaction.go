@@ -12,7 +12,7 @@ type Transaction struct {
 	PointExchangeID uint      `json:"point_exchange_id"`
 	Amount          uint      `json:"amount"`
 	Point           uint      `json:"point"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionBank struct {
@@ -21,7 +21,7 @@ type TransactionBank struct {
 	SenderID        uint      `json:"sender_id"`
 	BankAccountID   uint      `json:"bank_account_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionCard struct {
@@ -30,15 +30,16 @@ type TransactionCard struct {
 	SenderID        uint      `json:"sender_id"`
 	CardID          uint      `json:"card_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionWithdraw struct {
 	ID              uint      `json:"tx_id"`
 	TransactionType string    `json:"transaction_type"`
+	BankAccountID   uint      `json:"bank_account_id"`
 	SenderID        uint      `json:"sender_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionTransfer struct {
@@ -47,14 +48,15 @@ type TransactionTransfer struct {
 	SenderID        uint      `json:"sender_id"`
 	RecipientID     uint      `json:"recipient_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionPoint struct {
 	ID              uint      `json:"tx_id"`
+	Reward          string    `json:"reward"`
 	TransactionType string    `json:"transaction_type"`
 	SenderID        uint      `json:"sender_id"`
-	Point           uint      `json:"point"`
-	PointExchangeID uint      `json:"point_exchange_id"`
-	Timestamp       time.Time `json:"timestamp"`
+	Point           int       `json:"point"`
+	PointExchangeID int       `json:"pe_id"`
+	TransactionDate time.Time `json:"transaction_date"`
 }

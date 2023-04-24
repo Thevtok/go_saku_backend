@@ -16,48 +16,6 @@ type TransactionController struct {
 	userUsecase usecase.UserUseCase
 }
 
-func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
-	// Parse transfer data from request body
-	newTransfer := model.TransactionTransfer{}
-	if err := ctx.BindJSON(&newTransfer); err != nil {
-		log.Printf("Failed to parse transfer data: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
-		return
-	}
-
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		log.Printf("Failed to convert user_id to uint: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
-		return
-	}
-
-	// Get sender by ID
-	sender, err := c.userUsecase.FindById(uint(userID))
-	if err != nil {
-		log.Printf("Failed to get sender user: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
-		return
-	}
-
-	recipient, err := c.userUsecase.FindById(newTransfer.RecipientID)
-	if err != nil {
-		log.Printf("Failed to get recipient user: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
-		return
-	}
-
-	// Create transfer transaction in use case layer
-	result, err := c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
-	if err != nil {
-		log.Printf("Failed to create transfer transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
-		return
-	}
-
-	response.JSONSuccess(ctx.Writer, http.StatusCreated, result)
-}
-
 func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	// Parse user_id parameter
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
@@ -143,7 +101,78 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"status": "success"})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "Withdrawal transaction created successfully"})
+}
+
+func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
+	// Parse transfer data from request body
+	newTransfer := model.TransactionTransfer{}
+	if err := ctx.BindJSON(&newTransfer); err != nil {
+		log.Printf("Failed to parse transfer data: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		log.Printf("Failed to convert user_id to uint: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+
+	// Get sender by ID
+	sender, err := c.userUsecase.FindById(uint(userID))
+	if err != nil {
+		log.Printf("Failed to get sender user: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
+		return
+	}
+
+	recipient, err := c.userUsecase.FindById(newTransfer.RecipientID)
+	if err != nil {
+		log.Printf("Failed to get recipient user: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
+		return
+	}
+
+	// Create transfer transaction in use case layer
+	result, err := c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
+	if err != nil {
+		log.Printf("Failed to create transfer transaction: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusCreated, result)
+}
+
+func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
+	// Parse user_id from URL parameter
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		log.Printf("Failed to convert user_id to uint: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+
+	// Parse redeem data from request body
+	var txData model.TransactionPoint
+	if err := ctx.ShouldBindJSON(&txData); err != nil {
+		log.Printf("Failed to parse redeem data: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+	txData.SenderID = uint(userID)
+
+	// Create redeem transaction in use case layer
+	err = c.txUsecase.CreateRedeem(&txData)
+	if err != nil {
+		log.Printf("Failed to create redeem transaction: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusCreated, "Redeem transaction created successfully")
 }
 
 func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {
