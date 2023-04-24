@@ -11,7 +11,7 @@ import (
 type TransactionUseCase interface {
 	CreateDepositBank(transaction *model.TransactionBank) error
 	CreateDepositCard(transaction *model.TransactionCard) error
-	CreateWithdrawal(transaction *model.TransactionBank) error
+	CreateWithdrawal(transaction *model.TransactionWithdraw) error
 	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
 	CreateRedeem(transaction *model.TransactionPoint) error
 }
@@ -19,13 +19,6 @@ type TransactionUseCase interface {
 type transactionUseCase struct {
 	transactionRepo repository.TransactionRepository
 	userRepo        repository.UserRepository
-}
-
-func NewTransactionUseCase(transactionRepo repository.TransactionRepository, userRepo repository.UserRepository) TransactionUseCase {
-	return &transactionUseCase{
-		transactionRepo: transactionRepo,
-		userRepo:        userRepo,
-	}
 }
 
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
@@ -72,7 +65,7 @@ func (uc *transactionUseCase) CreateDepositCard(transaction *model.TransactionCa
 	return nil
 }
 
-func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionBank) error {
+func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionWithdraw) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)
 	if err != nil {
 		return fmt.Errorf("failed to get user data: %v", err)
@@ -98,6 +91,7 @@ func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionBan
 
 	return nil
 }
+
 func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error) {
 	// update sender balance
 	newBalanceS := sender.Balance - amount
@@ -149,4 +143,11 @@ func (uc *transactionUseCase) CreateRedeem(transaction *model.TransactionPoint) 
 	}
 
 	return nil
+}
+
+func NewTransactionUseCase(transactionRepo repository.TransactionRepository, userRepo repository.UserRepository) TransactionUseCase {
+	return &transactionUseCase{
+		transactionRepo: transactionRepo,
+		userRepo:        userRepo,
+	}
 }

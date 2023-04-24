@@ -96,6 +96,7 @@ func RunServer() {
 
 	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
 	txRouter.POST("depo/bank/:user_id", txController.CreateDepositBank)
+	txRouter.POST("depo/card/:user_id", txController.CreateDepositCard)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

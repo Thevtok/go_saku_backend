@@ -16,14 +16,6 @@ type TransactionController struct {
 	userUsecase usecase.UserUseCase
 }
 
-func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {
-	con := TransactionController{
-		txUsecase:   usecase,
-		userUsecase: uc,
-	}
-	return &con
-}
-
 func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	// Parse transfer data from request body
 	newTransfer := model.TransactionTransfer{}
@@ -92,4 +84,72 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 
 	// Return success response
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Deposit transaction created successfully"})
+}
+
+func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
+	// Parse user_id parameter
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid user_id parameter"})
+		return
+	}
+
+	// Parse request body
+	var reqBody model.TransactionCard
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set the sender ID to the user ID
+	reqBody.SenderID = uint(userID)
+
+	// Create the deposit transaction
+	if err := c.txUsecase.CreateDepositCard(&reqBody); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return success response
+	ctx.JSON(http.StatusCreated, gin.H{"message": "Deposit transaction created successfully"})
+}
+
+func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
+	// Parse user_id parameter
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid user_id parameter"})
+		return
+	}
+
+	// Parse request body
+	var reqBody model.TransactionWithdraw
+	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set the sender ID to the user ID
+	reqBody.SenderID = uint(userID)
+
+	// Create the withdrawal transaction
+	if err := c.txUsecase.CreateWithdrawal(&reqBody); err != nil {
+		if err.Error() == "insufficient balance" {
+			ctx.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+			return
+		} else {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"status": "success"})
+}
+
+func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {
+	controller := TransactionController{
+		txUsecase:   usecase,
+		userUsecase: uc,
+	}
+	return &controller
 }

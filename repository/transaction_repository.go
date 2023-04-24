@@ -14,19 +14,13 @@ var waktu = now.Format("2006-01-02 15:04")
 type TransactionRepository interface {
 	CreateDepositBank(tx *model.TransactionBank) error
 	CreateDepositCard(tx *model.TransactionCard) error
-	CreateWithdrawal(tx *model.TransactionBank) error
+	CreateWithdrawal(tx *model.TransactionWithdraw) error
 	CreateTransfer(tx *model.TransactionTransfer) (any, error)
 	CreateRedeem(tx *model.TransactionPoint) error
 }
 
 type transactionRepository struct {
 	db *sql.DB
-}
-
-func NewTxRepository(db *sql.DB) TransactionRepository {
-	repo := new(transactionRepository)
-	repo.db = db
-	return repo
 }
 
 func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
@@ -40,6 +34,7 @@ func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) err
 
 	return nil
 }
+
 func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) error {
 	query := `INSERT INTO tx_transaction (transaction_type, sender_id, card_id, amount, timestamp)
               VALUES ($1, $2, $3, $4, $5)`
@@ -52,17 +47,18 @@ func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) err
 	return nil
 }
 
-func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionBank) error {
-	query := `INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, timestamp)
-              VALUES ($1, $2, $3, $4, $5)`
+func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) error {
+	query := `INSERT INTO tx_transaction (transaction_type, sender_id, amount, timestamp)
+              VALUES ($1, $2, $3, $4)`
 
-	_, err := r.db.Exec(query, "Withdraw", tx.SenderID, tx.BankAccountID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Withdraw", tx.SenderID, tx.Amount, waktu)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
+
 func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransfer) (any, error) {
 
 	query := `INSERT INTO tx_transaction (transaction_type, sender_id, recipient_id, amount, timestamp)
@@ -78,12 +74,18 @@ func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransfer) (a
 
 func (r *transactionRepository) CreateRedeem(tx *model.TransactionPoint) error {
 	query := `INSERT INTO tx_transaction (transaction_type, sender_id, point_exchange_id, point, timestamp)
-              VALUES ($1, $2, $3, $4, $5)`
+	VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := r.db.Exec(query, tx.TransactionType, tx.SenderID, tx.PointExchangeID, tx.Point, waktu)
+	_, err := r.db.Exec(query, "Redeem", tx.SenderID, tx.PointExchangeID, tx.Point, waktu)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func NewTxRepository(db *sql.DB) TransactionRepository {
+	repo := new(transactionRepository)
+	repo.db = db
+	return repo
 }
