@@ -168,11 +168,34 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	err = c.txUsecase.CreateRedeem(&txData)
 	if err != nil {
 		log.Printf("Failed to create redeem transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, err.Error())
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, "Redeem transaction created successfully")
+}
+func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
+	userId, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Failed to get user_id")
+		return
+	}
+
+	// Get sender by ID
+	_, err = c.userUsecase.FindById(uint(userId))
+	if err != nil {
+		log.Printf("Failed to get sender user: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create transfer transaction")
+		return
+	}
+
+	txs, err := c.txUsecase.FindTxById(uint(userId))
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, err)
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, txs)
 }
 
 func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {

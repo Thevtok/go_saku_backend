@@ -34,7 +34,21 @@ CREATE TABLE mst_card(
     REFERENCES mst_users(user_id)
 );
 
-CREATE TABLE mst_photo_url(
+<<<<<<< HEAD
+CREATE TABLE tx_transaction
+(
+    tx_id serial NOT NULL PRIMARY KEY,
+    user_id integer,
+    amount numeric(10,2),
+    type character varying(20),
+    created_at timestamp without time zone DEFAULT 'now()',
+    CONSTRAINT transaction_userID_fkey FOREIGN KEY(user_id)
+    REFERENCES mst_users(user_id)
+);
+
+CREATE TABLE mst_photo_url
+(
+
     photo_id serial NOT NULL PRIMARY KEY,
     url_photo character varying,
     user_id integer,

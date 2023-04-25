@@ -45,7 +45,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, res)
 }
 
-func (c *UserController) Edit(ctx *gin.Context) {
+func (c *UserController) EditEmailPassword(ctx *gin.Context) {
 	// Retrieve the user_id parameter from the request
 	user_id_str := ctx.Param("user_id")
 	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
@@ -75,7 +75,46 @@ func (c *UserController) Edit(ctx *gin.Context) {
 	}
 
 	// Update the user and save changes
-	updatedUser := c.usecase.Edit(user)
+	updatedUser := c.usecase.EditEmailPassword(user)
+	if updatedUser == "" {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit user")
+		return
+	}
+
+	response.JSONSuccess(ctx.Writer, http.StatusOK, updatedUser)
+}
+
+func (c *UserController) EditProfile(ctx *gin.Context) {
+	// Retrieve the user_id parameter from the request
+	user_id_str := ctx.Param("user_id")
+	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
+	if err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	// Retrieve the existing user
+	existingUser, _ := c.usecase.FindById(uint(user_id))
+	if existingUser == nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "User not found")
+		return
+	}
+
+	// Create a new User instance and map the properties from existingUser
+	user := &model.User{}
+	if err := mapstructure.Decode(existingUser, user); err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit user")
+		return
+	}
+
+	// Parse the request body to update the user
+	if err := ctx.BindJSON(user); err != nil {
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid input")
+		return
+	}
+
+	// Update the user and save changes
+	updatedUser := c.usecase.EditProfile(user)
 	if updatedUser == "" {
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit user")
 		return

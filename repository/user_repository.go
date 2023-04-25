@@ -17,7 +17,8 @@ type UserRepository interface {
 	GetByUsername(username string) (*model.UserResponse, error)
 	GetByiD(id uint) (*model.User, error)
 	Create(user *model.UserCreate) (any, error)
-	Update(user *model.User) string
+	UpdateProfile(user *model.User) string
+	UpdateEmailPassword(user *model.User) string
 	Delete(user *model.User) string
 	UpdateBalance(userID uint, newBalance uint) error
 	UpdatePoint(userID uint, newPoint int) error
@@ -119,19 +120,37 @@ func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	return &user, nil
 }
 
-func (r *userRepository) Update(user *model.User) string {
+func (r *userRepository) UpdateProfile(user *model.User) string {
 	_, err := r.GetByiD(user.ID)
 	if err != nil {
 		return "user not found"
 	}
 
-	query := "UPDATE mst_users SET name = $1, email = $2, password = $3, phone_number = $4, address = $5, username = $6 WHERE user_id = $7"
-	_, err = r.db.Exec(query, user.Name, user.Email, user.Password, user.Phone_Number, user.Address, user.Username, user.ID)
+	query := "UPDATE mst_users SET name=$1,  phone_number=$2, address=$3, username=$4 WHERE user_id=$5"
+
+	_, err = r.db.Exec(query, user.Name, user.Phone_Number, user.Address, user.Username, user.ID)
+
 	if err != nil {
 		log.Println(err)
 		return "failed to update user"
 	}
-	return "updated user successfully"
+	return "updated profile successfully"
+}
+
+func (r *userRepository) UpdateEmailPassword(user *model.User) string {
+	_, err := r.GetByiD(user.ID)
+	if err != nil {
+		return "user not found"
+	}
+
+	query := "UPDATE mst_users SET  email=$1, password=$2  WHERE user_id=$3"
+
+	_, err = r.db.Exec(query, user.Email, user.Password, user.ID)
+	if err != nil {
+		log.Println(err)
+		return "failed to update user"
+	}
+	return "updated email and password successfully"
 }
 
 func (r *userRepository) Delete(user *model.User) string {
@@ -160,8 +179,8 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 	user.Password = hashedPassword
 
-	query := "INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role, point, tx_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
-	_, err = r.db.Exec(query, user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0, 0)
+	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role,point,tx_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9, $10)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0, 0)
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
