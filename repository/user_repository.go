@@ -160,7 +160,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 	user.Password = hashedPassword
 
-	query := "INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role, point, tx_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+	query := "INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role, point, tx_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
 	_, err = r.db.Exec(query, user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0, 0)
 	if err != nil {
 		log.Println(err)
