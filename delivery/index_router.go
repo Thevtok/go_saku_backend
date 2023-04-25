@@ -41,7 +41,8 @@ func RunServer() {
 	r.GET("user", authMiddlewareRole, userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
-	r.PUT("user/:user_id", authMiddlewareId, userController.Edit)
+	r.PUT("user/pass/:user_id", authMiddlewareId, userController.EditEmailPassword)
+	r.PUT("user/profile/:user_id", authMiddlewareId, userController.EditProfile)
 	userRouter.DELETE("/:username", userController.Unreg)
 
 	// Bank Accont Router
@@ -100,6 +101,7 @@ func RunServer() {
 	txRouter.POST("depo/card/:user_id", txController.CreateDepositCard)
 	txRouter.POST("wd/:user_id", txController.CreateWithdrawal)
 	txRouter.POST("redeem/:user_id", txController.CreateRedeemTransaction)
+	txRouter.GET(":user_id", txController.GetTxBySenderId)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

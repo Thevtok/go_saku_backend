@@ -15,7 +15,8 @@ type UserUseCase interface {
 	FindByUsername(username string) (*model.UserResponse, error)
 	FindById(id uint) (*model.User, error)
 	Register(user *model.UserCreate) (any, error)
-	Edit(user *model.User) string
+	EditProfile(user *model.User) string
+	EditEmailPassword(user *model.User) string
 	Unreg(user *model.User) string
 }
 
@@ -54,13 +55,18 @@ func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
 	return uc.userRepo.Create(user)
 }
 
-func (uc *userUseCase) Edit(user *model.User) string {
+func (uc *userUseCase) EditEmailPassword(user *model.User) string {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		print(err)
 	}
 	user.Password = string(hashedPassword)
-	return uc.userRepo.Update(user)
+	return uc.userRepo.UpdateEmailPassword(user)
+}
+
+func (uc *userUseCase) EditProfile(user *model.User) string {
+
+	return uc.userRepo.UpdateProfile(user)
 }
 
 func (uc *userUseCase) Unreg(user *model.User) string {

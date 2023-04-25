@@ -36,45 +36,16 @@ CREATE TABLE mst_card
     REFERENCES mst_users(user_id)
 );
 
--- Table: public.tx_transaction
-
--- DROP TABLE IF EXISTS public.tx_transaction;
-
-CREATE TABLE IF NOT EXISTS public.tx_transaction
+CREATE TABLE tx_transaction
 (
-    tx_id integer NOT NULL DEFAULT 'nextval('transaction_id_seq'::regclass)',
-    amount integer,
-    transaction_type character varying(20) COLLATE pg_catalog."default",
-    "timestamp" timestamp without time zone DEFAULT 'now()',
-    sender_id integer,
-    recipient_id integer,
-    bank_account_id integer,
-    card_id integer,
-    pe_id integer,
-    point integer,
-    CONSTRAINT transaction_pkey PRIMARY KEY (tx_id),
-    CONSTRAINT fk_transaction_bank_acc FOREIGN KEY (bank_account_id)
-        REFERENCES public.mst_bank_account (account_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT fk_transaction_card FOREIGN KEY (card_id)
-        REFERENCES public.mst_card (card_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT fk_transaction_recipient_user_id FOREIGN KEY (recipient_id)
-        REFERENCES public.mst_users (user_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT fk_user_id FOREIGN KEY (sender_id)
-        REFERENCES public.mst_users (user_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
-
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS public.tx_transaction
-    OWNER to postgres;
+    tx_id serial NOT NULL PRIMARY KEY,
+    user_id integer,
+    amount numeric(10,2),
+    type character varying(20),
+    created_at timestamp without time zone DEFAULT 'now()',
+    CONSTRAINT transaction_userID_fkey FOREIGN KEY(user_id)
+    REFERENCES mst_users(user_id)
+);
 
 CREATE TABLE mst_photo_url
 (

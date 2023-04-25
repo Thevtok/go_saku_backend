@@ -14,6 +14,7 @@ type TransactionUseCase interface {
 	CreateWithdrawal(transaction *model.TransactionWithdraw) error
 	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
 	CreateRedeem(transaction *model.TransactionPoint) error
+	FindTxById(senderId uint) ([]*model.Transaction, error)
 }
 
 type transactionUseCase struct {
@@ -21,6 +22,9 @@ type transactionUseCase struct {
 	userRepo        repository.UserRepository
 }
 
+func (uc *transactionUseCase) FindTxById(senderId uint) ([]*model.Transaction, error) {
+	return uc.transactionRepo.GetBySenderId(senderId)
+}
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)
 	if err != nil {

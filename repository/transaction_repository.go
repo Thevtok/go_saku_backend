@@ -18,10 +18,58 @@ type TransactionRepository interface {
 	CreateTransfer(tx *model.TransactionTransfer) (any, error)
 	CreateRedeem(tx *model.TransactionPoint) error
 	GetAllPoint() ([]*model.PointExchange, error)
+	GetBySenderId(senderId uint) ([]*model.Transaction, error)
 }
 
 type transactionRepository struct {
 	db *sql.DB
+}
+
+func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
+	var txs []*model.Transaction
+	rows, err := r.db.Query(`
+        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, timestamp
+        FROM tx_transaction
+        WHERE sender_id = $1
+    `, senderId)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tx *model.Transaction
+		tx = &model.Transaction{}
+		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.Timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("error while scanning transaction: %v", err)
+		}
+		if tx.RecipientID == nil {
+			tx.RecipientID = new(uint)
+		}
+		if tx.BankAccountID == nil {
+			tx.BankAccountID = new(uint)
+		}
+		if tx.CardID == nil {
+			tx.CardID = new(uint)
+		}
+		if tx.PointExchangeID == nil {
+			tx.PointExchangeID = new(uint)
+		}
+		if tx.Amount == nil {
+			tx.Amount = new(uint)
+		}
+		if tx.Point == nil {
+			tx.Point = new(uint)
+		}
+		txs = append(txs, tx)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
+	}
+
+	return txs, nil
 }
 
 func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
