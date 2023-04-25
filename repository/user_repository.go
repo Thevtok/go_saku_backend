@@ -30,7 +30,7 @@ type userRepository struct {
 }
 
 func (r *userRepository) IncrementTxCount(userID uint) error {
-	query := `UPDATE mst_users SET tx_count = tx_count + 1 WHERE user_id = $1`
+	query := "UPDATE mst_users SET tx_count = tx_count + 1 WHERE user_id = $1"
 	_, err := r.db.Exec(query, userID)
 	return err
 }
@@ -41,8 +41,7 @@ func (r *userRepository) UpdateBalance(userID uint, newBalance uint) error {
 		return err
 	}
 
-	query := "UPDATE mst_users SET balance=$1 WHERE user_id=$2"
-
+	query := "UPDATE mst_users SET balance = $1 WHERE user_id = $2"
 	_, err = r.db.Exec(query, newBalance, userID)
 	if err != nil {
 		log.Println(err)
@@ -58,8 +57,7 @@ func (r *userRepository) UpdatePoint(userID uint, newPoint int) error {
 		return err
 	}
 
-	query := "UPDATE mst_users SET point=$1 WHERE user_id=$2"
-
+	query := "UPDATE mst_users SET point = $1 WHERE user_id = $2"
 	_, err = r.db.Exec(query, newPoint, userID)
 	if err != nil {
 		log.Println(err)
@@ -70,7 +68,7 @@ func (r *userRepository) UpdatePoint(userID uint, newPoint int) error {
 
 func (r *userRepository) GetAll() any {
 	var users []model.UserResponse
-	query := "SELECT name,username,email,phone_number,address,balance ,point,tx_count from mst_users"
+	query := "SELECT name, username, email, phone_number, address, balance, point, tx_count from mst_users"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
@@ -100,7 +98,7 @@ func (r *userRepository) GetAll() any {
 
 func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance ,point ,tx_count FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
+	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -109,9 +107,10 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 	}
 	return &user, nil
 }
+
 func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	var user model.User
-	err := r.db.QueryRow("SELECT name,user_id, email, phone_number, address, balance, point ,tx_count FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
+	err := r.db.QueryRow("SELECT name,user_id, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -130,6 +129,7 @@ func (r *userRepository) UpdateProfile(user *model.User) string {
 	query := "UPDATE mst_users SET name=$1,  phone_number=$2, address=$3, username=$4 WHERE user_id=$5"
 
 	_, err = r.db.Exec(query, user.Name, user.Phone_Number, user.Address, user.Username, user.ID)
+
 	if err != nil {
 		log.Println(err)
 		return "failed to update user"

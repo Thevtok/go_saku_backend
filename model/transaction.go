@@ -3,8 +3,9 @@ package model
 import "time"
 
 type Transaction struct {
-	TransactionType string    `json:"transaction_type"`
-	SenderID        uint      `json:"sender_id"`
+	TransactionType string `json:"transaction_type"`
+	SenderID        uint   `json:"sender_id"`
+
 	RecipientID     *uint     `json:"recipient_id"`
 	BankAccountID   *uint     `json:"bank_account_id"`
 	CardID          *uint     `json:"card_id"`
@@ -20,7 +21,7 @@ type TransactionBank struct {
 	SenderID        uint      `json:"sender_id"`
 	BankAccountID   uint      `json:"bank_account_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionCard struct {
@@ -29,7 +30,7 @@ type TransactionCard struct {
 	SenderID        uint      `json:"sender_id"`
 	CardID          uint      `json:"card_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionWithdraw struct {
@@ -38,7 +39,7 @@ type TransactionWithdraw struct {
 	BankAccountID   uint      `json:"bank_account_id"`
 	SenderID        uint      `json:"sender_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionTransfer struct {
@@ -47,7 +48,7 @@ type TransactionTransfer struct {
 	SenderID        uint      `json:"sender_id"`
 	RecipientID     uint      `json:"recipient_id"`
 	Amount          uint      `json:"amount"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionPoint struct {
@@ -57,5 +58,5 @@ type TransactionPoint struct {
 	SenderID        uint      `json:"sender_id"`
 	Point           int       `json:"point"`
 	PointExchangeID int       `json:"pe_id"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }

@@ -25,6 +25,7 @@ type UserResponse struct {
 	Point        int    `json:"point"`
 	TxCount      int    `json:"tx_count"`
 }
+
 type UserCreate struct {
 	Name         string `json:"name"`
 	Username     string `json:"username"`
