@@ -11,7 +11,6 @@ type User struct {
 	Balance      uint   `json:"balance"`
 	Role         string `json:"role"`
 	Point        int    `json:"point"`
-	TxCount      int    `json:"tx_count"`
 }
 
 // Define the table name for the User struct

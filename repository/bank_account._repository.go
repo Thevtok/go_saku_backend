@@ -31,6 +31,7 @@ func (r *bankAccRepository) GetAll() any {
 		log.Println(err)
 	}
 	if rows == nil {
+		log.Println("no data")
 		return "no data"
 	}
 	defer rows.Close()
@@ -43,6 +44,7 @@ func (r *bankAccRepository) GetAll() any {
 		}
 		users = append(users, user)
 	}
+	log.Printf("GetAll() retrieved %d rows", len(users))
 	return users
 }
 
@@ -51,6 +53,7 @@ func (r *bankAccRepository) GetByUserID(id uint) ([]*model.BankAccResponse, erro
 	query := "SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = $1"
 	rows, err := r.db.Query(query, id)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -59,12 +62,14 @@ func (r *bankAccRepository) GetByUserID(id uint) ([]*model.BankAccResponse, erro
 		var bankAcc model.BankAccResponse
 		err = rows.Scan(&bankAcc.UserID, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
 		if err != nil {
+			log.Println(err)
 			return nil, err
 		}
 		bankAccs = append(bankAccs, &bankAcc)
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	return bankAccs, nil
@@ -78,6 +83,7 @@ func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Println(err)
 			return nil, errors.New("bank account not found")
 		}
 		return nil, err
@@ -114,6 +120,7 @@ func (r *bankAccRepository) DeleteByUserID(id uint) string {
 	query := "DELETE FROM mst_bank_account WHERE user_id = $1"
 	_, err := r.db.Exec(query, id)
 	if err != nil {
+		log.Println(err)
 		return "failed to delete Bank Account"
 	}
 	return "Deleted All Bank Account Successfully"
@@ -122,6 +129,7 @@ func (r *bankAccRepository) DeleteByUserID(id uint) string {
 func (r *bankAccRepository) DeleteByAccountID(accountID uint) error {
 	_, err := r.GetByAccountID(accountID)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
