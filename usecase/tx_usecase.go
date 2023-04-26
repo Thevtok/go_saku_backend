@@ -15,6 +15,7 @@ type TransactionUseCase interface {
 	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
 	CreateRedeem(transaction *model.TransactionPoint) error
 	FindTxById(senderId uint) ([]*model.Transaction, error)
+	FindByPeId(id uint) ([]*model.PointExchange, error)
 }
 
 type transactionUseCase struct {
@@ -22,9 +23,14 @@ type transactionUseCase struct {
 	userRepo        repository.UserRepository
 }
 
+func (uc *transactionUseCase) FindByPeId(id uint) ([]*model.PointExchange, error) {
+	return uc.transactionRepo.GetByPeId(id)
+}
+
 func (uc *transactionUseCase) FindTxById(senderId uint) ([]*model.Transaction, error) {
 	return uc.transactionRepo.GetBySenderId(senderId)
 }
+
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)
 	if err != nil {
@@ -35,24 +41,21 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	newBalance := user.Balance + transaction.Amount
 	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
 	if err != nil {
-		return fmt.Errorf("failed to update user balance: %v", err)
-	}
 
-	err = uc.userRepo.IncrementTxCount(user.ID)
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to update user balance: %v", err)
 	}
 
 	// check if user is eligible for bonus points
 	newPoint := user.Point + 20 // change from 20 to 100
 	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	if err != nil {
+
 		return err
 	}
 
-	// insert transaction
 	err = uc.transactionRepo.CreateDepositBank(transaction)
 	if err != nil {
+
 		return fmt.Errorf("failed to create deposit transaction: %v", err)
 	}
 
@@ -70,11 +73,6 @@ func (uc *transactionUseCase) CreateDepositCard(transaction *model.TransactionCa
 	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
 	if err != nil {
 		return fmt.Errorf("failed to update user balance: %v", err)
-	}
-	// increment tx_count for user
-	err = uc.userRepo.IncrementTxCount(user.ID)
-	if err != nil {
-		return err
 	}
 
 	newPoint := user.Point + 20 // change from 20 to 100
@@ -128,16 +126,16 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	if err != nil {
 		return newBalanceS, err
 	}
+	// validate sender balance
+	if sender.Balance < amount {
+		return nil, errors.New("insufficient balance")
+	}
 
 	// update recipient balance
 	newBalanceR := recipient.Balance + amount
 	err = uc.userRepo.UpdateBalance(recipient.ID, newBalanceR)
 	if err != nil {
 		return newBalanceR, err
-	}
-	err = uc.userRepo.IncrementTxCount(sender.ID)
-	if err != nil {
-		return nil, err
 	}
 
 	// check if sender is eligible for bonus points
