@@ -121,7 +121,6 @@ func (r *transactionRepository) CreateRedeem(tx *model.TransactionPoint) error {
 	return nil
 }
 
-// Get all point exchanges
 func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 	query := "SELECT pe_id, reward, price FROM mst_point_exchange"
 	rows, err := r.db.Query(query)
