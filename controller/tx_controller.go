@@ -174,6 +174,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, "Redeem transaction created successfully")
 }
+
 func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {

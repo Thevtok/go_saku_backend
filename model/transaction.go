@@ -3,16 +3,15 @@ package model
 import "time"
 
 type Transaction struct {
-	TransactionType string `json:"transaction_type"`
-	SenderID        uint   `json:"sender_id"`
-
+	TransactionType string    `json:"transaction_type"`
+	SenderID        uint      `json:"sender_id"`
 	RecipientID     *uint     `json:"recipient_id"`
 	BankAccountID   *uint     `json:"bank_account_id"`
 	CardID          *uint     `json:"card_id"`
 	PointExchangeID *uint     `json:"pe_id"`
 	Amount          *uint     `json:"amount"`
 	Point           *uint     `json:"point"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionBank struct {
