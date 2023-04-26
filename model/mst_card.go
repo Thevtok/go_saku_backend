@@ -7,7 +7,6 @@ type Card struct {
 	CardNumber     string `json:"card_number"`
 	ExpirationDate string `json:"expiration_date"`
 	CVV            string `json:"cvv"`
-	Name           string `json:"name"`
 }
 
 type CardResponse struct {

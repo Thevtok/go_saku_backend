@@ -14,6 +14,12 @@ import (
 )
 
 func RunServer() {
+	 // Membuat file log
+	 logFile, err := utils.CreateLogFile()
+	 if err != nil {
+		 log.Fatalf("Failed to create log file: %v", err)
+	 }
+	 defer logFile.Close()
 
 	db := config.LoadDatabase()
 	defer db.Close()

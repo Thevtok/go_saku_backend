@@ -110,7 +110,7 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 
 func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	var user model.User
-	err := r.db.QueryRow("SELECT name,user_id, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
+	err := r.db.QueryRow("SELECT name,user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -179,7 +179,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 	user.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role,point,tx_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9, $10)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0, 0)
+	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role,point) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0)
 
 	if err != nil {
 		log.Println(err)
