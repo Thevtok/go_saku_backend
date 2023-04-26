@@ -85,31 +85,38 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
         return
     }
 	logrus.Info("Photo uploaded succesfully")
-    ctx.JSON(http.StatusOK, gin.H{"message": "photo uploaded successfully"})
+    ctx.JSON(http.StatusCreated, gin.H{"message": "photo uploaded successfully"})
 }
 
 func (c *PhotoController) Download(ctx *gin.Context) {
+	// Logging
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	userID, err := strconv.Atoi(ctx.Param("user_id")) 
 	if err != nil {
-		log.Printf("Failed to get user id: %v", err)
+		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
 		return
 	}
 	photo, err := c.photoUsecase.Download(uint(userID))
 	if err != nil {
-		log.Printf("Something went wrong when downloading file: %v", err)
+		logrus.Errorf("Something went wrong when downloading file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	// Validasi extensi file
 	if filepath.Ext(photo.Url) != ".png" && filepath.Ext(photo.Url) != ".jpg" && filepath.Ext(photo.Url) != ".jpeg" {
-		log.Printf("Extension file is not image file: %v", err)
+		logrus.Errorf("Extension file is not image file: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only Image files are allowed"})
 		return
 	}
 	file, err := os.Open(photo.Url)
 	if err != nil {
-		log.Printf("Failed to get photo: %v", err)
+		logrus.Errorf("Failed to get photo: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
@@ -121,21 +128,29 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 	}
 	ctx.Header("Content-Type", contentType)
 	ctx.File(photo.Url)
-
+	logrus.Info("Photo get succesfully")
+    ctx.JSON(http.StatusOK, gin.H{"message": "Photo get successfully"})
 }
 
 func (c *PhotoController) Edit(ctx *gin.Context) {
+	// Logging
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	// Body Form data user_id
 	userID, err := strconv.Atoi(ctx.PostForm("user_id")) 
 	if err != nil {
-		log.Printf("Failed to get user id: %v", err)
+		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
 		return
 	}
 	// Body Form data File
 	file, err := ctx.FormFile("photo")
 	if err != nil {
-		log.Printf("Failed to get file from request: %v", err)
+		logrus.Errorf("Failed to get file from request: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get file from request"})
 		return
 	}
@@ -144,7 +159,7 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 	path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
 	out, err := os.Create(path)
 	if err != nil {
-		log.Printf("Failed to create file: %v", err)
+		logrus.Errorf("Failed to create file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create file"})
 		return
 	}
@@ -152,20 +167,20 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 	// Validasi ekstensi file
 	ext := filepath.Ext(filename)
 	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-		log.Printf("Extension file is not image file: %v", err)
+		logrus.Errorf("Extension file is not image file: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Only Image files are allowed"})
 		return
 	}
 	fileIn, err := file.Open()
 	if err != nil {
-		log.Printf("Failed to open file: %v", err)
+		logrus.Errorf("Failed to open file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file"})
 		return
 	}
 	defer fileIn.Close()
 	_, err = io.Copy(out, fileIn)
 	if err != nil {
-		log.Printf("Failed to write file: %v", err)
+		logrus.Errorf("Failed to write file: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write file"})
 		return
 	}
@@ -176,22 +191,30 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		}
     err = c.photoUsecase.Edit(photo)
     if err != nil {
-		log.Printf("Failed to upload photo: %v", err)
+		logrus.Errorf("Failed to upload photo: %v", err)
         ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload photo"})
         return
     }
-	log.Printf("Photo uploaded succesfully")
-    ctx.JSON(http.StatusOK, gin.H{"message": "photo updated successfully"})
+	logrus.Info("Photo Edit succesfully")
+    ctx.JSON(http.StatusOK, gin.H{"message": "photo Edit successfully"})
 }
 
 func (c *PhotoController) Remove(ctx *gin.Context) {
+	// Logging
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	userID, err := strconv.Atoi(ctx.Param("user_id")) 
 	if err != nil {
-		log.Printf("Failed to get user id: %v", err)
+		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
 		return
 	}
 	res := c.photoUsecase.Remove(uint(userID))
+	logrus.Info("Remove Photo Succesfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
 

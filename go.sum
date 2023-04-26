@@ -1,7 +1,5 @@
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/ReygaFitra/app-mahasiswa-api v1.0.1 h1:e0hkI4tMpHZjMntzlH13eTkx0jJRJgf9HpkN00wnvgw=
-github.com/ReygaFitra/app-mahasiswa-api v1.0.1/go.mod h1:pupfthVzmoC0PceGntM8EcyL05rM7z0fg/5T1jL7sZ8=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.8.0 h1:ea0Xadu+sHlu7x5O3gKhRpQ1IKiMrSiHttPF0ybECuA=
 github.com/bytedance/sonic v1.8.0/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
