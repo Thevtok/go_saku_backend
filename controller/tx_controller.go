@@ -14,6 +14,8 @@ import (
 type TransactionController struct {
 	txUsecase   usecase.TransactionUseCase
 	userUsecase usecase.UserUseCase
+	bankUsecase usecase.BankAccUsecase
+	cardUsecase usecase.CardUsecase
 }
 
 func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
@@ -21,6 +23,27 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid user_id parameter"})
+		return
+	}
+
+	// Parse bank_account_id parameter
+	bankAccID, err := strconv.Atoi(ctx.Param("bank_account_id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid bank_account_id parameter"})
+		return
+	}
+
+	// Retrieve bank account by bank_account_id
+	bankAcc, err := c.bankUsecase.FindBankAccByAccountID(uint(bankAccID))
+	if err != nil {
+		log.Printf("Invalid Bank: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Deposit transaction")
+		return
+	}
+
+	// Check if bank account belongs to the given user_id
+	if bankAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "bank account does not belong to the given user_id"})
 		return
 	}
 
@@ -33,6 +56,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 
 	// Set the sender ID to the user ID
 	reqBody.SenderID = uint(userID)
+	reqBody.BankAccountID = uint(bankAccID)
 
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositBank(&reqBody); err != nil {
@@ -51,6 +75,22 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid user_id parameter"})
 		return
 	}
+	cardID, err := strconv.Atoi(ctx.Param("card_id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid card_id parameter"})
+		return
+	}
+	cardAcc, err := c.cardUsecase.FindCardByCardID(uint(cardID))
+	if err != nil {
+		log.Printf("Invalid Bank: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Deposit transaction")
+		return
+	}
+
+	if cardAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "card account does not belong to the given user_id"})
+		return
+	}
 
 	// Parse request body
 	var reqBody model.TransactionCard
@@ -61,6 +101,7 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 
 	// Set the sender ID to the user ID
 	reqBody.SenderID = uint(userID)
+	reqBody.CardID = uint(cardID)
 
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositCard(&reqBody); err != nil {
@@ -77,6 +118,23 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid user_id parameter"})
+		return
+	}
+	bankAccID, err := strconv.Atoi(ctx.Param("bank_account_id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid bank_account_id parameter"})
+		return
+	}
+
+	// Retrieve bank account by bank_account_id
+	bankAcc, err := c.bankUsecase.FindBankAccByAccountID(uint(bankAccID))
+	if err != nil {
+		log.Printf("Invalid Bank: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Deposit transaction")
+		return
+	}
+	if bankAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "bank account does not belong to the given user_id"})
 		return
 	}
 
@@ -154,6 +212,18 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
 		return
 	}
+	peID, err := strconv.Atoi(ctx.Param("pe_id"))
+	if err != nil {
+		log.Printf("Failed to convert user_id to uint: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
+		return
+	}
+	_, err = c.txUsecase.FindByPeId(uint(peID))
+	if err != nil {
+		log.Printf("Invalid Bank: %v", err)
+		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Deposit transaction")
+		return
+	}
 
 	// Parse redeem data from request body
 	var txData model.TransactionPoint
@@ -163,6 +233,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 		return
 	}
 	txData.SenderID = uint(userID)
+	txData.PointExchangeID = peID
 
 	// Create redeem transaction in use case layer
 	err = c.txUsecase.CreateRedeem(&txData)
@@ -199,10 +270,12 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, txs)
 }
 
-func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase) *TransactionController {
+func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase, bk usecase.BankAccUsecase, cd usecase.CardUsecase) *TransactionController {
 	controller := TransactionController{
 		txUsecase:   usecase,
 		userUsecase: uc,
+		bankUsecase: bk,
+		cardUsecase: cd,
 	}
 	return &controller
 }
