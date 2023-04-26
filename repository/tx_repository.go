@@ -19,6 +19,7 @@ type TransactionRepository interface {
 	CreateRedeem(tx *model.TransactionPoint) error
 	GetAllPoint() ([]*model.PointExchange, error)
 	GetBySenderId(senderId uint) ([]*model.Transaction, error)
+	GetByPeId(id uint) ([]*model.PointExchange, error)
 }
 
 type transactionRepository struct {
@@ -27,11 +28,9 @@ type transactionRepository struct {
 
 func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
 	var txs []*model.Transaction
-	rows, err := r.db.Query(`
-        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date
-        FROM tx_transaction
-        WHERE sender_id = $1
-    `, senderId)
+	query := "SELECT transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date FROM tx_transaction WHERE sender_id = $1"
+
+	rows, err := r.db.Query(query, senderId)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
 	}
@@ -72,9 +71,9 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	return txs, nil
 }
 
-func (r *transactionRepository) CreateDepositBank(Tx *model.TransactionBank) error {
+func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Deposit Bank", Tx.SenderID, Tx.BankAccountID, Tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, waktu)
 	if err != nil {
 		return err
 	}
@@ -122,7 +121,6 @@ func (r *transactionRepository) CreateRedeem(tx *model.TransactionPoint) error {
 	return nil
 }
 
-// Get all point exchanges
 func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 	query := "SELECT pe_id, reward, price FROM mst_point_exchange"
 	rows, err := r.db.Query(query)
@@ -142,6 +140,30 @@ func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 	}
 
 	return pointExchanges, nil
+}
+
+func (r *transactionRepository) GetByPeId(id uint) ([]*model.PointExchange, error) {
+	var peAccs []*model.PointExchange
+	query := "SELECT pe_id, reward, price FROM mst_point_exchange WHERE pe_id = $1"
+	rows, err := r.db.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var peAcc model.PointExchange
+		err = rows.Scan(&peAcc.PE_ID, &peAcc.Reward, &peAcc.Price)
+		if err != nil {
+			return nil, err
+		}
+		peAccs = append(peAccs, &peAcc)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return peAccs, nil
 }
 
 func NewTxRepository(db *sql.DB) TransactionRepository {
