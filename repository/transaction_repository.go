@@ -28,7 +28,7 @@ type transactionRepository struct {
 func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
 	var txs []*model.Transaction
 	rows, err := r.db.Query(`
-        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, timestamp
+        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date
         FROM tx_transaction
         WHERE sender_id = $1
     `, senderId)
@@ -40,7 +40,7 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	for rows.Next() {
 		var tx *model.Transaction
 		tx = &model.Transaction{}
-		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.Timestamp)
+		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)
 		}
@@ -72,9 +72,9 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	return txs, nil
 }
 
-func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
+func (r *transactionRepository) CreateDepositBank(Tx *model.TransactionBank) error {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Deposit Bank", Tx.SenderID, Tx.BankAccountID, Tx.Amount, waktu)
 	if err != nil {
 		return err
 	}
