@@ -120,9 +120,7 @@ func (r *userRepository) UpdateProfile(user *model.User) string {
 	}
 
 	query := "UPDATE mst_users SET name=$1,  phone_number=$2, address=$3, username=$4 WHERE user_id=$5"
-
 	_, err = r.db.Exec(query, user.Name, user.Phone_Number, user.Address, user.Username, user.ID)
-
 	if err != nil {
 		log.Println(err)
 		return "failed to update user"
