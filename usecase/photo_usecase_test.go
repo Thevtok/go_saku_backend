@@ -11,16 +11,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var dummyPhoto = []model.PhotoUrl {
+var dummyPhoto = []model.PhotoUrl{
 	{
 		Photo_ID: 1,
-		UserID: 1,
-		Url: "/Developments/Golang/src/final-project-inc/file/avatar1.jpg",
+		UserID:   1,
+		Url:      "/Developments/Golang/src/final-project-inc/file/avatar1.jpg",
 	},
 	{
 		Photo_ID: 2,
-		UserID: 2,
-		Url: "/Developments/Golang/src/final-project-inc/file/avatar2.jpg",
+		UserID:   2,
+		Url:      "/Developments/Golang/src/final-project-inc/file/avatar2.jpg",
 	},
 }
 
@@ -68,15 +68,15 @@ type PhotoUseCaseTestSuite struct {
 // Test Upload
 func (suite *PhotoUseCaseTestSuite) TestUpload_Success() {
 	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
-    err := photoUC.Upload(&dummyPhoto[0])
-    assert.Nil(suite.T(), err)
+	suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
+	err := photoUC.Upload(&dummyPhoto[0])
+	assert.Nil(suite.T(), err)
 }
 func (suite *PhotoUseCaseTestSuite) TestUpload_Failed() {
 	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
-    err := photoUC.Upload(&dummyPhoto[0])
-    assert.NotNil(suite.T(), err)
+	suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
+	err := photoUC.Upload(&dummyPhoto[0])
+	assert.NotNil(suite.T(), err)
 }
 
 // Test Download
