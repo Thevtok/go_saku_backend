@@ -75,14 +75,14 @@ func (suite *PhotoRepositoryTestSuite) TestGetByID_Failed() {
 
 // Test Update
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Success() {
-	photo := dummyPhoto[0]
-	suite.mockSql.ExpectQuery("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
-		photo.Url,
-		photo.UserID,
-	).WillReturnRows(sqlmock.NewRows([]string{"url_photo", "user_id"}).AddRow(photo.Url, photo.UserID))
-	photoRepository := NewPhotoRepository(suite.mockDB)
-	err := photoRepository.Update(&photo)
-	assert.NotNil(suite.T(), err)
+    photo := dummyPhoto[0]
+    suite.mockSql.ExpectExec("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
+        photo.Url,
+        photo.UserID,
+    ).WillReturnResult(sqlmock.NewResult(1, 1))
+    photoRepository := NewPhotoRepository(suite.mockDB)
+    err := photoRepository.Update(&photo)
+    assert.Nil(suite.T(), err)
 }
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Failed() {
 	photo := dummyPhoto[0]

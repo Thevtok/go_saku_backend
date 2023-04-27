@@ -109,24 +109,39 @@ type UserRepositoryTestSuite struct {
 
 // Test UpdateBalance
 func (suite *UserRepositoryTestSuite) TestUpdateBalance_Success() {
-	userID := dummyUser[0].ID
-	newBalance := dummyUser[0].Balance
-	suite.mockSql.ExpectQuery("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").WithArgs(newBalance, userID).WillReturnRows(sqlmock.NewRows([]string{"balance", "user_id"}).AddRow(newBalance, userID))
-	userRepository := NewUserRepository(suite.mockDB)
-	err := userRepository.UpdateBalance(userID, newBalance)
-	assert.NotNil(suite.T(), err)
+	// userID := dummyUser[0].ID
+	// newBalance := dummyUser[0].Balance
+	// suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = $1").WithArgs(userID).WillReturnRows(sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}))
+	// suite.mockSql.ExpectQuery("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").WithArgs(newBalance, userID).WillReturnRows(sqlmock.NewRows([]string{"balance", "user_id"}).AddRow(newBalance, userID))
+	// userRepository := NewUserRepository(suite.mockDB)
+	// err := userRepository.UpdateBalance(userID, newBalance)
+	// assert.NotNil(suite.T(), err)
+	user := dummyUser[0]
+    suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").WithArgs(user.ID).WillReturnRows(sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}))
+    suite.mockSql.ExpectExec("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").WithArgs(user.Balance, user.ID).WillReturnResult(sqlmock.NewResult(1,1))
+    userRepository := NewUserRepository(suite.mockDB)
+    err := userRepository.UpdateBalance(user.ID, user.Balance)
+    assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), nil)
 }
 func (suite *UserRepositoryTestSuite) TestUpdateBalance_Failed() {
-	userID := dummyUser[0].ID
-    newBalance := dummyUser[0].Balance
-    expectedErr := fmt.Errorf("failed to update balance")
-    suite.mockSql.ExpectQuery("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").
-        WithArgs(newBalance, userID).
-        WillReturnError(expectedErr)
+	// userID := dummyUser[0].ID
+    // newBalance := dummyUser[0].Balance
+    // expectedErr := fmt.Errorf("failed to update balance")
+    // suite.mockSql.ExpectQuery("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").
+    //     WithArgs(newBalance, userID).
+    //     WillReturnError(expectedErr)
+    // userRepository := NewUserRepository(suite.mockDB)
+    // err := userRepository.UpdateBalance(userID, newBalance)
+    // assert.NotNil(suite.T(), err)
+	user := dummyUser[0]
+    expectedError := fmt.Errorf("failed to update balance")
+    suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").WithArgs(user.ID).WillReturnRows(sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}))
+    suite.mockSql.ExpectExec("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").WithArgs(user.Balance, user.ID).WillReturnError(expectedError)
     userRepository := NewUserRepository(suite.mockDB)
-    err := userRepository.UpdateBalance(userID, newBalance)
+    err := userRepository.UpdateBalance(user.ID, user.Balance)
     assert.NotNil(suite.T(), err)
+	assert.Nil(suite.T(), nil)
 }
 
 // Test UpdatePoint

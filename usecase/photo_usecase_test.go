@@ -101,14 +101,14 @@ func (suite *PhotoUseCaseTestSuite) TestDownload_Failed() {
 // Test Edit
 func (suite *PhotoUseCaseTestSuite) TestEdit_Success() {
 	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
-    err := photoUC.Upload(&dummyPhoto[0])
-    assert.Nil(suite.T(), err)
+    suite.repoMock.On("Update", &dummyPhoto[0]).Return(nil)
+    err := photoUC.Edit(&dummyPhoto[0])
+	assert.Nil(suite.T(), err)
 }
 func (suite *PhotoUseCaseTestSuite) TestEdit_Failed() {
 	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
-    err := photoUC.Upload(&dummyPhoto[0])
+    suite.repoMock.On("Update", &dummyPhoto[0]).Return(errors.New("Failed"))
+    err := photoUC.Edit(&dummyPhoto[0])
     assert.NotNil(suite.T(), err)
 }
 
