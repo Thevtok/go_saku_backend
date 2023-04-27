@@ -84,7 +84,7 @@ func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println(err)
-			return nil, errors.New("Bank Account not found")
+			return nil, errors.New("bank account not found")
 		}
 		return nil, err
 	}
