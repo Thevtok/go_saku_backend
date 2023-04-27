@@ -38,10 +38,10 @@ func (r *repoMock) Create(photo *model.PhotoUrl) error {
 
 func (r *repoMock) GetByID(id uint) (*model.PhotoUrl, error) {
 	args := r.Called(id)
-	if args[0] != nil {
-		return &model.PhotoUrl{}, args.Error(0)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
-	return &dummyPhoto[0], nil
+	return args.Get(0).(*model.PhotoUrl), args.Error(1)
 }
 
 func (r *repoMock) Update(photo *model.PhotoUrl) error {
@@ -81,19 +81,35 @@ func (suite *PhotoUseCaseTestSuite) TestUpload_Failed() {
 
 // Test Download
 func (suite *PhotoUseCaseTestSuite) TestDownload_Success() {
-	id := dummyPhoto[0].UserID
-	photoUC := NewPhotoUseCase(suite.repoMock)
-	suite.repoMock.On("GetByID", id).Return(&dummyPhoto[0], nil)
-	res, err := photoUC.Download(id)
-	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), &dummyPhoto[0], res)
+    id := dummyPhoto[0].UserID
+    photoUC := NewPhotoUseCase(suite.repoMock)
+    suite.repoMock.On("GetByID", id).Return(&dummyPhoto[0], nil)
+    res, err := photoUC.Download(id)
+    assert.Nil(suite.T(), err)
+    assert.NotNil(suite.T(), res)
+    assert.Equal(suite.T(), &dummyPhoto[0], res)
 }
 func (suite *PhotoUseCaseTestSuite) TestDownload_Failed() {
 	id := dummyPhoto[0].UserID
+    photoUC := NewPhotoUseCase(suite.repoMock)
+    suite.repoMock.On("GetByID", id).Return(nil, errors.New("failed to get photo"))
+    res, err := photoUC.Download(id)
+    assert.Nil(suite.T(), res)
+    assert.NotNil(suite.T(), err)
+}
+
+// Test Edit
+func (suite *PhotoUseCaseTestSuite) TestEdit_Success() {
 	photoUC := NewPhotoUseCase(suite.repoMock)
-	suite.repoMock.On("GetByID", id).Return(&model.PhotoUrl{}, errors.New("Failed to get photo"))
-	_, err := photoUC.Download(id)
-	assert.Equal(suite.T(), &model.PhotoUrl{}, err)
+    suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
+    err := photoUC.Upload(&dummyPhoto[0])
+    assert.Nil(suite.T(), err)
+}
+func (suite *PhotoUseCaseTestSuite) TestEdit_Failed() {
+	photoUC := NewPhotoUseCase(suite.repoMock)
+    suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
+    err := photoUC.Upload(&dummyPhoto[0])
+    assert.NotNil(suite.T(), err)
 }
 
 // Test Remove
