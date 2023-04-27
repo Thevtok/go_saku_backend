@@ -19,6 +19,7 @@ type TransactionRepository interface {
 	CreateRedeem(tx *model.TransactionPoint) error
 	GetAllPoint() ([]*model.PointExchange, error)
 	GetBySenderId(senderId uint) ([]*model.Transaction, error)
+	GetByPeId(id uint) ([]*model.PointExchange, error)
 }
 
 type transactionRepository struct {
@@ -28,7 +29,7 @@ type transactionRepository struct {
 func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
 	var txs []*model.Transaction
 	rows, err := r.db.Query(`
-        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, timestamp
+        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date
         FROM tx_transaction
         WHERE sender_id = $1
     `, senderId)
@@ -40,7 +41,7 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	for rows.Next() {
 		var tx *model.Transaction
 		tx = &model.Transaction{}
-		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.Timestamp)
+		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)
 		}
@@ -142,6 +143,29 @@ func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 	}
 
 	return pointExchanges, nil
+}
+func (r *transactionRepository) GetByPeId(id uint) ([]*model.PointExchange, error) {
+	var peAccs []*model.PointExchange
+	query := "SELECT pe_id, reward, price FROM mst_point_exchange WHERE pe_id = $1"
+	rows, err := r.db.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var peAcc model.PointExchange
+		err = rows.Scan(&peAcc.PE_ID, &peAcc.Reward, &peAcc.Price)
+		if err != nil {
+			return nil, err
+		}
+		peAccs = append(peAccs, &peAcc)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return peAccs, nil
 }
 
 func NewTxRepository(db *sql.DB) TransactionRepository {

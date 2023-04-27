@@ -100,13 +100,13 @@ func RunServer() {
 	// TX Depedency
 	txRepo := repository.NewTxRepository(db)
 	txUsecase := usecase.NewTransactionUseCase(txRepo, userRepo)
-	txController := controller.NewTransactionController(txUsecase, userUsecase)
+	txController := controller.NewTransactionController(txUsecase, userUsecase, bankAccusecase, cardUsecase)
 
 	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
-	txRouter.POST("depo/bank/:user_id", txController.CreateDepositBank)
-	txRouter.POST("depo/card/:user_id", txController.CreateDepositCard)
-	txRouter.POST("wd/:user_id", txController.CreateWithdrawal)
-	txRouter.POST("redeem/:user_id", txController.CreateRedeemTransaction)
+	txRouter.POST("depo/bank/:user_id/:bank_account_id", txController.CreateDepositBank)
+	txRouter.POST("depo/card/:user_id/:card_id", txController.CreateDepositCard)
+	txRouter.POST("wd/:user_id/:bank_account_id", txController.CreateWithdrawal)
+	txRouter.POST("redeem/:user_id/:pe_id", txController.CreateRedeemTransaction)
 	txRouter.GET(":user_id", txController.GetTxBySenderId)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {

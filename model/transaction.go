@@ -12,7 +12,7 @@ type Transaction struct {
 	PointExchangeID *uint     `json:"pe_id"`
 	Amount          *uint     `json:"amount"`
 	Point           *uint     `json:"point"`
-	Timestamp       time.Time `json:"timestamp"`
+	TransactionDate time.Time `json:"transaction_date"`
 }
 
 type TransactionBank struct {
