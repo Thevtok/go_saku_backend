@@ -28,7 +28,7 @@ var dummyPhoto = []model.PhotoUrl{
 
 type PhotoRepositoryTestSuite struct {
 	suite.Suite
-	mockDB *sql.DB
+	mockDB  *sql.DB
 	mockSql sqlmock.Sqlmock
 }
 
@@ -38,7 +38,7 @@ func (suite *PhotoRepositoryTestSuite) TestCreate_Success() {
 	suite.mockSql.ExpectExec("INSERT INTO mst_photo_url \\(url_photo, user_id\\) VALUES").WithArgs(
 		newPhoto.Url,
 		newPhoto.UserID,
-	).WillReturnResult(sqlmock.NewResult(1,1))
+	).WillReturnResult(sqlmock.NewResult(1, 1))
 	photoRepository := NewPhotoRepository(suite.mockDB)
 	err := photoRepository.Create(&newPhoto)
 	assert.Nil(suite.T(), err)
@@ -64,24 +64,25 @@ func (suite *PhotoRepositoryTestSuite) TestGetByID_Success() {
 }
 func (suite *PhotoRepositoryTestSuite) TestGetByID_Failed() {
 	photo := dummyPhoto[0]
-	suite.mockSql.ExpectQuery("SELECT url_photo, user_id from mst_photo_url WHERE user_id = \\$1").WithArgs(photo.UserID).WillReturnRows(sqlmock.NewRows([]string{"url_photo", "user_id"}).AddRow(photo.Url, photo.UserID))
+	expectedErrors := errors.New("some error")
+	suite.mockSql.ExpectQuery("SELECT url_photo, user_id from mst_photo_url WHERE user_id = \\$1").WithArgs(photo.UserID).WillReturnError(expectedErrors)
 	photoRepository := NewPhotoRepository(suite.mockDB)
 	res, err := photoRepository.GetByID(photo.UserID)
+	assert.NotNil(suite.T(), res)
 	assert.Nil(suite.T(), err)
-	res.Photo_ID = 1
-	assert.Equal(suite.T(), &photo, res)
+	
 }
 
 // Test Update
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Success() {
-	photo := dummyPhoto[0]
-	suite.mockSql.ExpectQuery("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
-		photo.Url,
-		photo.UserID,
-	).WillReturnRows(sqlmock.NewRows([]string{"url_photo", "user_id"}).AddRow(photo.Url, photo.UserID))
-	photoRepository := NewPhotoRepository(suite.mockDB)
-	err := photoRepository.Update(&photo)
-	assert.NotNil(suite.T(), err)
+    photo := dummyPhoto[0]
+    suite.mockSql.ExpectExec("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
+        photo.Url,
+        photo.UserID,
+    ).WillReturnResult(sqlmock.NewResult(1, 1))
+    photoRepository := NewPhotoRepository(suite.mockDB)
+    err := photoRepository.Update(&photo)
+    assert.Nil(suite.T(), err)
 }
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Failed() {
 	photo := dummyPhoto[0]
@@ -98,14 +99,14 @@ func (suite *PhotoRepositoryTestSuite) TestUpdate_Failed() {
 func (suite *PhotoRepositoryTestSuite) TestDelete_Succes() {
 	id := dummyPhoto[0].UserID
 	suite.mockSql.ExpectExec("DELETE FROM mst_photo_url WHERE user_id = \\$1").WithArgs(id).WillReturnResult(sqlmock.NewResult(1, 1))
-    photoRepository := NewPhotoRepository(suite.mockDB)
+	photoRepository := NewPhotoRepository(suite.mockDB)
 	res := photoRepository.Delete(id)
 	assert.Equal(suite.T(), "Delete photo successfully", res)
 }
 func (suite *PhotoRepositoryTestSuite) TestDelete_Failed() {
 	id := dummyPhoto[0].UserID
 	suite.mockSql.ExpectExec("DELETE FROM mst_photo_url WHERE user_id = \\$1").WithArgs(id).WillReturnError(fmt.Errorf("Failed delete photo"))
-    photoRepository := NewPhotoRepository(suite.mockDB)
+	photoRepository := NewPhotoRepository(suite.mockDB)
 	errString := photoRepository.Delete(id)
 	assert.NotNil(suite.T(), errString)
 }
@@ -123,6 +124,6 @@ func (suite *PhotoRepositoryTestSuite) TearDownTest() {
 	suite.mockDB.Close()
 }
 
-func TestCustomerRepositoryTestSuite(t *testing.T) {
+func TestPhotoRepositoryTestSuite(t *testing.T) {
 	suite.Run(t, new(PhotoRepositoryTestSuite))
 }

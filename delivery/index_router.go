@@ -14,12 +14,12 @@ import (
 )
 
 func RunServer() {
-	 // Membuat file log
-	 logFile, err := utils.CreateLogFile()
-	 if err != nil {
-		 log.Fatalf("Failed to create log file: %v", err)
-	 }
-	 defer logFile.Close()
+	// Membuat file log
+	logFile, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+	defer logFile.Close()
 
 	db := config.LoadDatabase()
 	defer db.Close()
@@ -61,7 +61,7 @@ func RunServer() {
 	bankAccController := controller.NewBankAccController(bankAccusecase)
 
 	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
-	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUseerID)
+	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUserID)
 	bankAccRouter.GET("/:user_id/:account_id", bankAccController.FindBankAccByAccountID)
 	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)

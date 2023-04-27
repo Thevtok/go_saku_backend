@@ -9,7 +9,6 @@ CREATE TABLE mst_users(
     username character varying NOT NULL,
     point integer,
     role character varying,
-    tx_count integer,
     CONSTRAINT unique_username UNIQUE(username)
 );
 
@@ -59,10 +58,6 @@ CREATE TABLE tx_transaction(
   card_id integer,
   pe_id integer,
   point integer,
-  CONSTRAINT tx_bankAcc_fkey FOREIGN KEY(bank_account_id)
-  REFERENCES mst_bank_account(account_id),
-  CONSTRAINT tx_cardID_fkey FOREIGN KEY(card_id)
-  REFERENCES mst_card(card_id),
   CONSTRAINT tx_senderID_fkey FOREIGN KEY(sender_id)
   REFERENCES mst_users(user_id),
   CONSTRAINT tx_recipientID_fkey FOREIGN KEY(recipient_id)
