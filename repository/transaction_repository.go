@@ -9,7 +9,6 @@ import (
 )
 
 var now = time.Now().UTC().Truncate(time.Minute)
-var waktu = now.Format("2006-01-02 15:04")
 
 type TransactionRepository interface {
 	CreateDepositBank(tx *model.TransactionBank) error
@@ -75,7 +74,7 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 
 func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, now)
 	if err != nil {
 		return err
 	}
@@ -85,7 +84,7 @@ func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) err
 
 func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) error {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, card_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Deposit Card", tx.SenderID, tx.CardID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Deposit Card", tx.SenderID, tx.CardID, tx.Amount, now)
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) err
 
 func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) error {
 	query := "INSERT INTO tx_transaction (transaction_type, bank_account_id, sender_id, amount, transaction_date) VALUES ($1, $2, $3, $4,$5)"
-	_, err := r.db.Exec(query, "Withdraw", tx.BankAccountID, tx.SenderID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Withdraw", tx.BankAccountID, tx.SenderID, tx.Amount, now)
 	if err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) 
 
 func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransfer) (any, error) {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, recipient_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Transfer", tx.SenderID, tx.RecipientID, tx.Amount, waktu)
+	_, err := r.db.Exec(query, "Transfer", tx.SenderID, tx.RecipientID, tx.Amount, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data: %v", err)
 	}
@@ -115,7 +114,7 @@ func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransfer) (a
 
 func (r *transactionRepository) CreateRedeem(tx *model.TransactionPoint) error {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, pe_id, point, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Redeem", tx.SenderID, tx.PointExchangeID, tx.Point, waktu)
+	_, err := r.db.Exec(query, "Redeem", tx.SenderID, tx.PointExchangeID, tx.Point, now)
 	if err != nil {
 		return err
 	}

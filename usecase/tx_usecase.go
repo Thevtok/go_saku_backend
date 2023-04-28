@@ -46,7 +46,7 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	}
 
 	// check if user is eligible for bonus points
-	newPoint := user.Point + 20 // change from 20 to 100
+	newPoint := user.Point + 20
 	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	if err != nil {
 
