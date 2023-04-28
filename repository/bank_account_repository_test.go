@@ -53,14 +53,16 @@ type BankAccRepositoryTestSuite struct {
 
 func (suite *BankAccRepositoryTestSuite) TestGetAll_Success() {
 	var users = dummyBankAccResponse[0]
-	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account").WillReturnRows(sqlmock.NewRows([]string{"bank_name", "account_number", "account_holder_name"}).AddRow(users.BankName, users.AccountNumber, users.AccountHolderName))
+	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account").
+		WillReturnRows(sqlmock.NewRows([]string{"bank_name", "account_number", "account_holder_name"}).AddRow(users.BankName, users.AccountNumber, users.AccountHolderName))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	result := bankAccRepository.GetAll()
 	assert.NotNil(suite.T(), result)
 }
 
 func (suite *BankAccRepositoryTestSuite) TestGetAll_Failed() {
-	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account").WillReturnError(fmt.Errorf("no data"))
+	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account").
+		WillReturnError(fmt.Errorf("no data"))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	result := bankAccRepository.GetAll()
 	assert.NotNil(suite.T(), result)
@@ -69,7 +71,10 @@ func (suite *BankAccRepositoryTestSuite) TestGetAll_Failed() {
 
 func (suite *BankAccRepositoryTestSuite) TestGetByUserID_Success() {
 	bankAccs := dummyBankAccResponse[0]
-	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").WithArgs(bankAccs.UserID).WillReturnRows(sqlmock.NewRows([]string{"user_id", "bank_name", "account_number", "account_holder_name"}).AddRow(bankAccs.UserID, bankAccs.BankName, bankAccs.AccountNumber, bankAccs.AccountHolderName))
+	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").
+		WithArgs(bankAccs.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "bank_name", "account_number", "account_holder_name"}).
+			AddRow(bankAccs.UserID, bankAccs.BankName, bankAccs.AccountNumber, bankAccs.AccountHolderName))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	result, err := bankAccRepository.GetByUserID(bankAccs.UserID)
 	assert.NotNil(suite.T(), result)
@@ -77,7 +82,10 @@ func (suite *BankAccRepositoryTestSuite) TestGetByUserID_Success() {
 }
 
 func (suite *BankAccRepositoryTestSuite) TestGetByUserID_Failed() {
-	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account WHERE user_id = \\$1").WithArgs(1).WillReturnError(errors.New("some error"))
+	bankAccs := dummyBankAccResponse[0]
+	suite.mockSql.ExpectQuery("SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account WHERE user_id = \\$1").
+		WithArgs(bankAccs.UserID).
+		WillReturnError(errors.New("error"))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	result, err := bankAccRepository.GetByUserID(1)
 	assert.Error(suite.T(), err)
@@ -123,7 +131,8 @@ func (suite *BankAccRepositoryTestSuite) TestCreateBankA_Success() {
 func (suite *BankAccRepositoryTestSuite) TestCreate_Failed() {
 	newBankAcc := dummyBankAccResponse[0]
 	userID := uint(1)
-	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).WillReturnError(errors.New("failed to create data"))
+	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
+		WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).WillReturnError(errors.New("failed to create data"))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	result, err := bankAccRepository.Create(userID, &newBankAcc)
 	assert.NotNil(suite.T(), err)
@@ -132,8 +141,26 @@ func (suite *BankAccRepositoryTestSuite) TestCreate_Failed() {
 
 func (suite *BankAccRepositoryTestSuite) TestUpdate_Success() {
 	bankAcc := dummyBankAcc[0]
-	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").WithArgs(bankAcc.UserID).WillReturnRows(sqlmock.NewRows([]string{"account_id", "user_id", "bank_name", "account_number", "account_holder_name"}))
-	suite.mockSql.ExpectExec("UPDATE mst_bank_account SET bank_name = \\$1, account_number = \\$2, account_holder_name = \\$3 WHERE account_id = \\$4").WithArgs(bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.AccountID).WillReturnResult(sqlmock.NewResult(1, 1))
+	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").
+		WithArgs(bankAcc.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"account_id", "user_id", "bank_name", "account_number", "account_holder_name"}))
+	suite.mockSql.ExpectExec("UPDATE mst_bank_account SET bank_name = \\$1, account_number = \\$2, account_holder_name = \\$3 WHERE account_id = \\$4").
+		WithArgs(bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.AccountID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	bankAccRepository := NewBankAccRepository(suite.mockDB)
+	str := bankAccRepository.Update(&bankAcc)
+	assert.NotNil(suite.T(), str)
+}
+
+func (suite *BankAccRepositoryTestSuite) TestUpdateScanID_Failed() {
+	bankAcc := dummyBankAcc[0]
+	expectedError := fmt.Errorf("failed to update Bank Account")
+	userID := bankAcc.UserID
+	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").
+		WithArgs(userID).
+		WillReturnError(errors.New("user not found"))
+	suite.mockSql.ExpectExec("UPDATE mst_bank_account SET bank_name = \\$1, account_number = \\$2, account_holder_name = \\$3 WHERE account_id = \\$4").
+		WithArgs(bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.AccountID).WillReturnError(expectedError)
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	str := bankAccRepository.Update(&bankAcc)
 	assert.NotNil(suite.T(), str)
@@ -142,8 +169,11 @@ func (suite *BankAccRepositoryTestSuite) TestUpdate_Success() {
 func (suite *BankAccRepositoryTestSuite) TestUpdate_Failed() {
 	bankAcc := dummyBankAcc[0]
 	expectedError := fmt.Errorf("failed to update Bank Account")
-	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").WithArgs(bankAcc.UserID).WillReturnRows(sqlmock.NewRows([]string{"account_id", "user_id", "bank_name", "account_number", "account_holder_name"}))
-	suite.mockSql.ExpectExec("UPDATE mst_bank_account SET bank_name = \\$1, account_number = \\$2, account_holder_name = \\$3 WHERE account_id = \\$4").WithArgs(bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.AccountID).WillReturnError(expectedError)
+	suite.mockSql.ExpectQuery("SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = \\$1").
+		WithArgs(bankAcc.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"account_id", "user_id", "bank_name", "account_number", "account_holder_name"}))
+	suite.mockSql.ExpectExec("UPDATE mst_bank_account SET bank_name = \\$1, account_number = \\$2, account_holder_name = \\$3 WHERE account_id = \\$4").
+		WithArgs(bankAcc.BankName, bankAcc.AccountNumber, bankAcc.AccountHolderName, bankAcc.AccountID).WillReturnError(expectedError)
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	str := bankAccRepository.Update(&bankAcc)
 	assert.NotNil(suite.T(), str)
@@ -166,12 +196,17 @@ func (suite *BankAccRepositoryTestSuite) TestDeleteByUserID_Failed() {
 	assert.NotNil(suite.T(), str)
 }
 
-func (suite *BankAccRepositoryTestSuite) TestDeleteAccountID_Success() {
-	accountID := dummyBankAcc[0].AccountID
-	suite.mockSql.ExpectQuery("SELECT account_id").WithArgs(accountID).WillReturnRows(sqlmock.NewRows([]string{"account_id"}).AddRow(accountID))
-	suite.mockSql.ExpectExec("DELETE FROM mst_bank_account WHERE account_id = \\$1").WithArgs(accountID).WillReturnResult(sqlmock.NewResult(1, 1))
+func (suite *BankAccRepositoryTestSuite) TestDeleteByAccountID_Success() {
+	bankAcc := dummyBankAcc[0]
+	suite.mockSql.ExpectQuery("SELECT account_id, bank_name, account_number, account_holder_name, user_id FROM mst_bank_account WHERE account_id = \\$1").
+		WithArgs(bankAcc.AccountID).
+		WillReturnRows(sqlmock.NewRows([]string{"account_id", "user_id", "bank_name", "account_number", "account_holder_name"}))
+	accountID := uint(1)
+	suite.mockSql.ExpectExec("DELETE FROM mst_bank_account WHERE account_id = \\$1").
+		WithArgs(accountID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
-	err := bankAccRepository.DeleteByAccountID(accountID)
+	err := bankAccRepository.DeleteByAccountID(bankAcc.AccountID)
 	assert.NotNil(suite.T(), err)
 }
 
