@@ -184,7 +184,7 @@ func (suite *BankAccRepositoryTestSuite) TestDeleteByUserID_Success() {
 	suite.mockSql.ExpectExec("DELETE FROM mst_bank_account WHERE user_id = \\$1").WithArgs(userID).WillReturnResult(sqlmock.NewResult(1, 1))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
 	str := bankAccRepository.DeleteByUserID(userID)
-	assert.EqualValues(suite.T(), "Deleted All Bank Account Successfully", str)
+	assert.EqualValues(suite.T(), "All Bank Account Deleted Successfully", str)
 }
 
 func (suite *BankAccRepositoryTestSuite) TestDeleteByUserID_Failed() {
