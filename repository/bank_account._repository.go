@@ -77,7 +77,7 @@ func (r *bankAccRepository) GetByUserID(id uint) ([]*model.BankAccResponse, erro
 
 func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	var bankAcc model.BankAcc
-	query := "SELECT account_id, bank_name, account_number, account_holder_name ,user_id FROM mst_bank_account WHERE account_id = $1"
+	query := "SELECT account_id, bank_name, account_number, account_holder_name, user_id FROM mst_bank_account WHERE account_id = $1"
 	row := r.db.QueryRow(query, id)
 	err := row.Scan(&bankAcc.AccountID, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName, &bankAcc.UserID)
 

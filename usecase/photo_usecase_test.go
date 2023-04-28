@@ -24,11 +24,11 @@ var dummyPhoto = []model.PhotoUrl {
 	},
 }
 
-type repoMock struct {
+type photoRepoMock struct {
 	mock.Mock
 }
 
-func (r *repoMock) Create(photo *model.PhotoUrl) error {
+func (r *photoRepoMock) Create(photo *model.PhotoUrl) error {
 	args := r.Called(photo)
 	if args[0] != nil {
 		return args.Error(0)
@@ -36,7 +36,7 @@ func (r *repoMock) Create(photo *model.PhotoUrl) error {
 	return nil
 }
 
-func (r *repoMock) GetByID(id uint) (*model.PhotoUrl, error) {
+func (r *photoRepoMock) GetByID(id uint) (*model.PhotoUrl, error) {
 	args := r.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -44,7 +44,7 @@ func (r *repoMock) GetByID(id uint) (*model.PhotoUrl, error) {
 	return args.Get(0).(*model.PhotoUrl), args.Error(1)
 }
 
-func (r *repoMock) Update(photo *model.PhotoUrl) error {
+func (r *photoRepoMock) Update(photo *model.PhotoUrl) error {
 	args := r.Called(photo)
 	if args[0] != nil {
 		return args.Error(0)
@@ -52,7 +52,7 @@ func (r *repoMock) Update(photo *model.PhotoUrl) error {
 	return nil
 }
 
-func (r *repoMock) Delete(id uint) string {
+func (r *photoRepoMock) Delete(id uint) string {
 	args := r.Called(id)
 	if args[0] != nil {
 		return "delete failed"
@@ -61,20 +61,20 @@ func (r *repoMock) Delete(id uint) string {
 }
 
 type PhotoUseCaseTestSuite struct {
-	repoMock *repoMock
+	photoRepoMock *photoRepoMock
 	suite.Suite
 }
 
 // Test Upload
 func (suite *PhotoUseCaseTestSuite) TestUpload_Success() {
-	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("Create", &dummyPhoto[0]).Return(nil)
     err := photoUC.Upload(&dummyPhoto[0])
     assert.Nil(suite.T(), err)
 }
 func (suite *PhotoUseCaseTestSuite) TestUpload_Failed() {
-	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
     err := photoUC.Upload(&dummyPhoto[0])
     assert.NotNil(suite.T(), err)
 }
@@ -82,8 +82,8 @@ func (suite *PhotoUseCaseTestSuite) TestUpload_Failed() {
 // Test Download
 func (suite *PhotoUseCaseTestSuite) TestDownload_Success() {
     id := dummyPhoto[0].UserID
-    photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("GetByID", id).Return(&dummyPhoto[0], nil)
+    photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("GetByID", id).Return(&dummyPhoto[0], nil)
     res, err := photoUC.Download(id)
     assert.Nil(suite.T(), err)
     assert.NotNil(suite.T(), res)
@@ -91,8 +91,8 @@ func (suite *PhotoUseCaseTestSuite) TestDownload_Success() {
 }
 func (suite *PhotoUseCaseTestSuite) TestDownload_Failed() {
 	id := dummyPhoto[0].UserID
-    photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("GetByID", id).Return(nil, errors.New("failed to get photo"))
+    photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("GetByID", id).Return(nil, errors.New("failed to get photo"))
     res, err := photoUC.Download(id)
     assert.Nil(suite.T(), res)
     assert.NotNil(suite.T(), err)
@@ -100,37 +100,37 @@ func (suite *PhotoUseCaseTestSuite) TestDownload_Failed() {
 
 // Test Edit
 func (suite *PhotoUseCaseTestSuite) TestEdit_Success() {
-	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(nil)
-    err := photoUC.Upload(&dummyPhoto[0])
-    assert.Nil(suite.T(), err)
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("Update", &dummyPhoto[0]).Return(nil)
+    err := photoUC.Edit(&dummyPhoto[0])
+	assert.Nil(suite.T(), err)
 }
 func (suite *PhotoUseCaseTestSuite) TestEdit_Failed() {
-	photoUC := NewPhotoUseCase(suite.repoMock)
-    suite.repoMock.On("Create", &dummyPhoto[0]).Return(errors.New("Failed"))
-    err := photoUC.Upload(&dummyPhoto[0])
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+    suite.photoRepoMock.On("Update", &dummyPhoto[0]).Return(errors.New("Failed"))
+    err := photoUC.Edit(&dummyPhoto[0])
     assert.NotNil(suite.T(), err)
 }
 
 // Test Remove
 func (suite *PhotoUseCaseTestSuite) TestRemove_Success() {
 	id := dummyPhoto[0].UserID
-	photoUC := NewPhotoUseCase(suite.repoMock)
-	suite.repoMock.On("Delete", id).Return(nil)
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+	suite.photoRepoMock.On("Delete", id).Return(nil)
 	res := photoUC.Remove(id)
 	assert.Equal(suite.T(), "delete success", res)
 	assert.NotNil(suite.T(), res)
 }
 func (suite *PhotoUseCaseTestSuite) TestRemove_Failed() {
 	id := dummyPhoto[0].UserID
-	photoUC := NewPhotoUseCase(suite.repoMock)
-	suite.repoMock.On("Delete", id).Return("delete failed")
+	photoUC := NewPhotoUseCase(suite.photoRepoMock)
+	suite.photoRepoMock.On("Delete", id).Return("delete failed")
 	res := photoUC.Remove(id)
 	assert.Equal(suite.T(), "delete failed", res)
 }
 
 func (suite *PhotoUseCaseTestSuite) SetupTest() {
-	suite.repoMock = new(repoMock)
+	suite.photoRepoMock = new(photoRepoMock)
 }
 
 func TestPhotoUseCaseTestSuite(t *testing.T) {
