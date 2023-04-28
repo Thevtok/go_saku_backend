@@ -27,7 +27,7 @@ var dummyBankAcc = []model.BankAcc{
 	},
 }
 
-var dummyBankAccResponse = []model.BankAccResponse{
+var dummyBankAccResponse = []*model.BankAccResponse{
 	{
 		UserID:            1,
 		BankName:          "Test1",
@@ -59,7 +59,7 @@ func (r *bankaccRepoMock) GetByUserID(id uint) ([]*model.BankAccResponse, error)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*model.BankAccResponse), args.Error(1)
+	return args.Get(0).([]*model.BankAccResponse), nil
 }
 
 func (r *bankaccRepoMock) GetByAccountID(id uint) (*model.BankAcc, error) {
@@ -67,7 +67,7 @@ func (r *bankaccRepoMock) GetByAccountID(id uint) (*model.BankAcc, error) {
 	if args.Get(0) == nil {
 		return nil, errors.New("bank account not found")
 	}
-	return args.Get(0).(*model.BankAcc), args.Error(1)
+	return args.Get(0).(*model.BankAcc), nil
 }
 
 func (r *bankaccRepoMock) Create(id uint, newBankAcc *model.BankAccResponse) (any, error) {
@@ -97,7 +97,7 @@ func (r *bankaccRepoMock) DeleteByUserID(id uint) string {
 func (r *bankaccRepoMock) DeleteByAccountID(accountID uint) error {
 	args := r.Called(accountID)
 	if args.Get(0) == nil {
-		return nil
+		return errors.New("failed to delete data")
 	}
 	return nil
 }
@@ -108,46 +108,61 @@ type BankAccUsecaseTestSuite struct {
 }
 
 func (suite *BankAccUsecaseTestSuite) TestFindAllBankAcc_Success() {
-	bankAcc := NewBankAccUsecase(suite.bankaccRepoMock)
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("GetAll").Return(dummyBankAcc)
-	res := bankAcc.FindAllBankAcc()
+	res := bankAccUsecase.FindAllBankAcc()
 	assert.NotNil(suite.T(), res)
 	assert.Equal(suite.T(), dummyBankAcc, res)
 }
 
 func (suite *BankAccUsecaseTestSuite) TestFindAllBankAcc_Failed() {
-	bankAcc := NewBankAccUsecase(suite.bankaccRepoMock)
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("GetAll").Return(nil)
-	res := bankAcc.FindAllBankAcc()
+	res := bankAccUsecase.FindAllBankAcc()
 	assert.Nil(suite.T(), res)
-	assert.Empty(suite.T(), dummyBankAcc, res)
+	assert.Empty(suite.T(), res)
 }
 
-// func (suite *BankAccUsecaseTestSuite) TestFindByUserID_Success() {
-// 	bankAcc := NewBankAccUsecase(suite.bankaccRepoMock)
+func (suite *BankAccUsecaseTestSuite) TestFindByUserID_Success() {
+	userID := uint(1)
+	bankAcc := dummyBankAccResponse
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
+	suite.bankaccRepoMock.On("GetByUserID", userID).Return(bankAcc, nil)
+	result, err := bankAccUsecase.FindBankAccByUserID(userID)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), bankAcc, result)
+}
 
-// 	mockResult := []*model.BankAccResponse{
-// 		{
-// 			UserID:            1,
-// 			BankName:          "Bank A",
-// 			AccountNumber:     "1234567890",
-// 			AccountHolderName: "John Doe",
-// 		},
-// 		{
-// 			UserID:            1,
-// 			BankName:          "Bank B",
-// 			AccountNumber:     "0987654321",
-// 			AccountHolderName: "Jane Doe",
-// 		},
-// 	}
+func (suite *BankAccUsecaseTestSuite) TestFindByUserID_Failed() {
+	userID := uint(1)
+	expectedErr := errors.New("failed to get bank account")
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
+	suite.bankaccRepoMock.On("GetByUserID", userID).Return(nil, expectedErr)
+	result, err := bankAccUsecase.FindBankAccByUserID(userID)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+}
 
-// 	suite.bankaccRepoMock.On("GetByUserID", uint(1)).Return(mockResult, nil)
-// 	result, err := bankAcc.FindByUserID(1)
+func (suite *BankAccUsecaseTestSuite) TestFindAccByAccID_Success() {
+	accID := uint(1)
+	bankAcc := &dummyBankAcc[0]
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
+	suite.bankaccRepoMock.On("GetByAccountID", accID).Return(bankAcc, nil)
+	result, err := bankAccUsecase.FindBankAccByAccountID(accID)
 
-// 	assert.NoError(suite.T(), err)
-// 	assert.NotNil(suite.T(), result)
-// 	assert.Equal(suite.T(), mockResult, result)
-// }
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), bankAcc, result)
+}
+
+func (suite *BankAccUsecaseTestSuite) TestFindAccByAccID_Failed() {
+	accID := uint(1)
+	expectedErr := errors.New("bank account not found")
+	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
+	suite.bankaccRepoMock.On("GetByAccountID", accID).Return(nil, expectedErr)
+	result, err := bankAccUsecase.FindBankAccByAccountID(accID)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), result)
+}
 
 func (suite *BankAccUsecaseTestSuite) SetupTest() {
 	suite.bankaccRepoMock = new(bankaccRepoMock)

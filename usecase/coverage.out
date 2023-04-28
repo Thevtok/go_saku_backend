@@ -1,14 +1,14 @@
 mode: set
-github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:22.47,24.2 1 0
-github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:26.68,28.2 1 0
-github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:29.82,31.2 1 0
+github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:22.47,24.2 1 1
+github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:26.68,28.2 1 1
+github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:29.82,31.2 1 1
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:33.92,36.2 2 0
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:38.62,40.2 1 0
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:42.66,44.2 1 0
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:46.65,48.16 2 0
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:48.16,50.3 1 0
 github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:51.2,51.12 1 0
-github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:54.81,58.2 1 0
+github.com/ReygaFitra/inc-final-project.git/usecase/bank_account_usecase.go:54.81,58.2 1 1
 github.com/ReygaFitra/inc-final-project.git/usecase/card_usecase.go:22.41,24.2 1 0
 github.com/ReygaFitra/inc-final-project.git/usecase/card_usecase.go:26.62,28.2 1 0
 github.com/ReygaFitra/inc-final-project.git/usecase/card_usecase.go:30.70,32.2 1 0
