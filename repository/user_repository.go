@@ -61,7 +61,7 @@ func (r *userRepository) UpdatePoint(userID uint, newPoint int) error {
 
 func (r *userRepository) GetAll() any {
 	var users []model.UserResponse
-	query := "SELECT name, username, email, phone_number, address, balance, point, tx_count from mst_users"
+	query := "SELECT name, username, email, phone_number, address, balance, point from mst_users"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
@@ -73,7 +73,7 @@ func (r *userRepository) GetAll() any {
 
 	for rows.Next() {
 		var user model.UserResponse
-		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount); err != nil {
+		if err := rows.Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point); err != nil {
 			log.Println(err)
 		}
 		users = append(users, user)
@@ -91,7 +91,7 @@ func (r *userRepository) GetAll() any {
 
 func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.TxCount)
+	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -134,7 +134,7 @@ func (r *userRepository) UpdateEmailPassword(user *model.User) string {
 		return "user not found"
 	}
 
-	query := "UPDATE mst_users SET  email=$1, password=$2  WHERE user_id=$3"
+	query := "UPDATE mst_users SET email=$1, password=$2  WHERE user_id=$3"
 
 	_, err = r.db.Exec(query, user.Email, user.Password, user.ID)
 	if err != nil {
@@ -181,7 +181,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 func (r *userRepository) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {
 	var m model.Credentials
-	query := "SELECT user_id,username,password,role FROM mst_users WHERE email = $1"
+	query := "SELECT user_id, username, password, role FROM mst_users WHERE email = $1"
 	row := r.db.QueryRow(query, email)
 	var hashedPassword string
 	err := row.Scan(&m.UserID, &m.Username, &hashedPassword, &m.Role)

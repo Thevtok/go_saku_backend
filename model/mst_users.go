@@ -22,7 +22,6 @@ type UserResponse struct {
 	Address      string `json:"address"`
 	Balance      uint   `json:"balance"`
 	Point        int    `json:"point"`
-	TxCount      int    `json:"tx_count"`
 }
 
 type UserCreate struct {
