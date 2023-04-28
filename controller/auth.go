@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type LoginAuth struct {
@@ -22,6 +22,12 @@ type LoginAuth struct {
 var jwtKey = []byte(utils.DotEnv("KEY"))
 
 func generateToken(user *model.Credentials) (string, error) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	// Set token claims
 	claims := jwt.MapClaims{}
 	claims["email"] = user.Email
@@ -32,36 +38,45 @@ func generateToken(user *model.Credentials) (string, error) {
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
 	// Print out the claims
-	fmt.Printf("Claims: %+v\n", claims)
 
 	// Create token with claims and secret key
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
+		logrus.Errorf("Failed Claim: %v", err)
 		return "", err
 	}
 
-	// Print out the token string
-	fmt.Printf("Token: %s\n", tokenString)
+	logrus.Info("Claim Token Succesfully")
 
 	return tokenString, nil
 }
 
 func AuthMiddleware() gin.HandlerFunc {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
 		if tokenString == "" {
+			logrus.Errorf("unauthorized %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			logrus.Info("Claim Token Succesfully")
 			return jwtKey, nil
+
 		})
 
 		if err != nil || !token.Valid {
+			logrus.Errorf("unauthorized %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
@@ -70,24 +85,28 @@ func AuthMiddleware() gin.HandlerFunc {
 		claims := token.Claims.(*jwt.MapClaims)
 		email, ok := (*claims)["email"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim email")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
 			c.Abort()
 			return
 		}
 		password, ok := (*claims)["password"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim password ")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
 			c.Abort()
 			return
 		}
 		username, ok := (*claims)["username"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim username")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username claim"})
 			c.Abort()
 			return
 		}
 		requestedID := c.Param("username")
 		if username != requestedID {
+			logrus.Errorf("you do not have permission to access this resource")
 			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
 			c.Abort()
 			return
@@ -98,13 +117,21 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("username", username)
 
 		c.Next()
+		logrus.Info("Success parsing midleware")
 	}
 }
 
 func (l *LoginAuth) Login(c *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	var user model.Credentials
 
 	if err := c.ShouldBindJSON(&user); err != nil {
+		logrus.Errorf("invalid json")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
 		return
 	}
@@ -112,6 +139,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	// Retrieve the user by email
 	foundUser, err := l.usecase.Login(user.Email, user.Password)
 	if err != nil {
+		logrus.Errorf("server eror")
 		log.Println(err) // log the error message
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
@@ -120,6 +148,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	// Verify that the provided password matches the stored hashed password
 	err = utils.CheckPasswordHash(user.Password, foundUser.Password)
 	if err != nil {
+		logrus.Errorf("invalid credentials")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
@@ -127,6 +156,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	// Generate a token and return it to the client
 	token, err := generateToken(foundUser)
 	if err != nil {
+		logrus.Errorf("failed generate token")
 		log.Println(err) // log the error message
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
@@ -134,6 +164,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 
 	// Return the token and the user ID in the context
 	c.JSON(http.StatusOK, gin.H{"token": token})
+	logrus.Info("Success getting token")
 }
 
 func NewUserAuth(u usecase.UserUseCase) *LoginAuth {
@@ -145,60 +176,68 @@ func NewUserAuth(u usecase.UserUseCase) *LoginAuth {
 }
 
 func AuthMiddlewareID() gin.HandlerFunc {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		// Add log statement here
-		log.Println("AuthMiddlewareID called")
 
 		tokenString := c.GetHeader("Authorization")
 
 		if tokenString == "" {
+			logrus.Errorf("unauthorized %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
 		}
 
-		// Add log statement here
-		log.Println("Token string:", tokenString)
-
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			logrus.Info("Claim Token Succesfully")
 			return jwtKey, nil
 		})
 
 		if err != nil || !token.Valid {
+			logrus.Errorf("failed generate token")
+
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
 		}
 
-		// Add log statement here
-		log.Println("Token parsed successfully")
-
 		claims := token.Claims.(*jwt.MapClaims)
 		email, ok := (*claims)["email"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim email")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
 			c.Abort()
 			return
 		}
 		password, ok := (*claims)["password"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim password")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
 			c.Abort()
 			return
 		}
 		user_id, ok := (*claims)["user_id"].(float64)
 		if !ok {
+			logrus.Errorf("invalid claim user_id")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user_id claim"})
 			c.Abort()
 			return
 		}
 		requestedID, err := strconv.ParseFloat(c.Param("user_id"), 64)
 		if err != nil {
+			logrus.Errorf("invalid user_id")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 			c.Abort()
 			return
 		}
 		if user_id != requestedID {
+			logrus.Errorf("you do not have permission to access this resource")
 			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
 			c.Abort()
 			return
@@ -209,24 +248,34 @@ func AuthMiddlewareID() gin.HandlerFunc {
 		c.Set("user_id", uint(requestedID))
 
 		c.Next()
+		logrus.Info("Success parsing midleware")
 	}
 }
 
 func AuthMiddlewareRole() gin.HandlerFunc {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
 		if tokenString == "" {
+			logrus.Errorf("unauthorized %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			logrus.Info("Claim Token Succesfully")
 			return jwtKey, nil
 		})
 
 		if err != nil || !token.Valid {
+			logrus.Errorf("failed generate token")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
@@ -235,24 +284,28 @@ func AuthMiddlewareRole() gin.HandlerFunc {
 		claims := token.Claims.(*jwt.MapClaims)
 		email, ok := (*claims)["email"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim email")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
 			c.Abort()
 			return
 		}
 		password, ok := (*claims)["password"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim password")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
 			c.Abort()
 			return
 		}
 		role, ok := (*claims)["role"].(string)
 		if !ok {
+			logrus.Errorf("invalid claim role")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid role claim"})
 			c.Abort()
 			return
 		}
 
 		if role != "master" {
+			logrus.Errorf("you do not have permission to access this resource")
 			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
 			c.Abort()
 			return
@@ -263,5 +316,6 @@ func AuthMiddlewareRole() gin.HandlerFunc {
 		c.Set("role", role)
 
 		c.Next()
+		logrus.Info("Success parsing midleware")
 	}
 }
