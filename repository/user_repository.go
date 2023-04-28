@@ -91,7 +91,7 @@ func (r *userRepository) GetAll() any {
 
 func (r *userRepository) GetByUsername(username string) (*model.UserResponse, error) {
 	var user model.UserResponse
-	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point, tx_count FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
+	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")
@@ -103,7 +103,9 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 
 func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	var user model.User
+
 	err := r.db.QueryRow("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("user not found")

@@ -60,6 +60,12 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		return
 	}
 
+	// Check if bank account belongs to the given user_id
+	if bankAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "bank account does not belong to the given user_id"})
+		return
+	}
+
 	// Parse request body
 	var reqBody model.TransactionBank
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
@@ -115,6 +121,11 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	if cardAcc.UserID != uint(userID) {
 		logrus.Errorf("CardID doesn't belong to the given UserID: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "CardID doesn't belong to the given UsreID"})
+		return
+	}
+
+	if cardAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "card account does not belong to the given user_id"})
 		return
 	}
 
@@ -174,6 +185,10 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	if bankAcc.UserID != uint(userID) {
 		logrus.Errorf("Bank Account doesn't belong to the given UserID: %v", err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bank Account doesn't belong to the given UserID"})
+		return
+	}
+	if bankAcc.UserID != uint(userID) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "bank account does not belong to the given user_id"})
 		return
 	}
 
@@ -271,14 +286,18 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	}
 	peID, err := strconv.Atoi(ctx.Param("pe_id"))
 	if err != nil {
+
 		logrus.Errorf("Invalid Input: %v", err)
+
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input")
 		return
 	}
 	_, err = c.txUsecase.FindByPeId(uint(peID))
 	if err != nil {
+
 		logrus.Errorf("Invalid Bank: %v", err)
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Redeem Transaction")
+
 		return
 	}
 
