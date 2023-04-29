@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
@@ -58,7 +59,7 @@ func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
 func (uc *userUseCase) EditEmailPassword(user *model.User) string {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		print(err)
+		log.Printf("Error generating hashed password: %v", err)
 	}
 	user.Password = string(hashedPassword)
 	return uc.userRepo.UpdateEmailPassword(user)

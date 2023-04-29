@@ -121,7 +121,7 @@ func (r *userRepository) UpdateProfile(user *model.User) string {
 		return "user not found"
 	}
 
-	query := "UPDATE mst_users SET name=$1,  phone_number=$2, address=$3, username=$4 WHERE user_id=$5"
+	query := "UPDATE mst_users SET name=$1, phone_number=$2, address=$3, username=$4 WHERE user_id=$5"
 	_, err = r.db.Exec(query, user.Name, user.Phone_Number, user.Address, user.Username, user.ID)
 	if err != nil {
 		log.Println(err)
@@ -172,7 +172,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 
 	user.Password = hashedPassword
 
-	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role, point) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0)
+	_, err = r.db.Exec("INSERT INTO mst_users (name, username, email, password, phone_number, address, balance, role, point) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", user.Name, user.Username, user.Email, user.Password, user.Phone_Number, user.Address, 0, "user", 0)
 
 	if err != nil {
 		log.Println(err)
