@@ -33,18 +33,18 @@ var dummyUserRespons = []model.UserResponse{
 		Username:     "username1",
 		Email:        "email1@mail.com",
 		Phone_Number: "08111111",
-		Address: "address1",
-		Balance: 100000,
-		Point: 20,
+		Address:      "address1",
+		Balance:      100000,
+		Point:        20,
 	},
 	{
 		Name:         "name2",
 		Username:     "username2",
 		Email:        "email2@mail.com",
 		Phone_Number: "08111111",
-		Address: "address2",
-		Balance: 100000,
-		Point: 40,
+		Address:      "address2",
+		Balance:      100000,
+		Point:        40,
 	},
 }
 
@@ -126,10 +126,10 @@ func (r *userRepoMock) GetByUsername(username string) (*model.UserResponse, erro
 
 func (r *userRepoMock) GetByiD(id uint) (*model.User, error) {
 	args := r.Called(id)
-	if args[0] != nil {
+	if args[0] == nil {
 		return nil, args.Error(1)
 	}
-	return &dummyUser[0], nil
+	return args[0].(*model.User), args.Error(1)
 }
 
 func (r *userRepoMock) Create(user *model.UserCreate) (any, error) {
@@ -190,18 +190,21 @@ func (suite *UserUseCaseTestSuite) TestFindById_Success() {
 	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetByiD", user.ID).Return(user, nil)
+
 	res, err := userUC.FindById(user.ID)
+
 	assert.NoError(suite.T(), err)
-    assert.Nil(suite.T(), res)
+	assert.Equal(suite.T(), user, res)
 }
+
 func (suite *UserUseCaseTestSuite) TestFindById_Failed() {
 	user := &dummyUser[0]
 	expectedErr := errors.New("user not found")
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetByiD", user.ID).Return(nil, expectedErr)
 	res, err := userUC.FindById(user.ID)
-	assert.Nil(suite.T(), err)
-    assert.NotNil(suite.T(), res)
+	assert.Nil(suite.T(), res)
+	assert.NotNil(suite.T(), err)
 }
 
 // Test FindByUsername
@@ -211,7 +214,7 @@ func (suite *UserUseCaseTestSuite) TestFindByUsername_Success() {
 	suite.userRepoMock.On("GetByUsername", user.Username).Return(user, nil)
 	res, err := userUC.FindByUsername(user.Username)
 	assert.NoError(suite.T(), err)
-    assert.Nil(suite.T(), res)
+	assert.Nil(suite.T(), res)
 }
 func (suite *UserUseCaseTestSuite) TestFindByUsername_Failed() {
 	user := &dummyUser[0]
@@ -220,18 +223,18 @@ func (suite *UserUseCaseTestSuite) TestFindByUsername_Failed() {
 	suite.userRepoMock.On("GetByUsername", user.Username).Return(nil, expectedErr)
 	res, err := userUC.FindByUsername(user.Username)
 	assert.Nil(suite.T(), err)
-    assert.NotNil(suite.T(), res)
+	assert.NotNil(suite.T(), res)
 }
 
 // Test GetAll
-func(suite *UserUseCaseTestSuite) TestFindUsers_Success() {
+func (suite *UserUseCaseTestSuite) TestFindUsers_Success() {
 	user := &dummyUser
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetAll").Return(user)
 	res := userUC.FindUsers()
 	assert.Nil(suite.T(), res)
 }
-func(suite *UserUseCaseTestSuite) TestFindUsers_Failed() {
+func (suite *UserUseCaseTestSuite) TestFindUsers_Failed() {
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetAll").Return(nil)
 	res := userUC.FindUsers()
@@ -239,7 +242,7 @@ func(suite *UserUseCaseTestSuite) TestFindUsers_Failed() {
 }
 
 // Test EditProfile
-func(suite *UserUseCaseTestSuite) TestEditProfile_Success() {
+func (suite *UserUseCaseTestSuite) TestEditProfile_Success() {
 	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("UpdateProfile", user).Return(nil)
@@ -247,7 +250,7 @@ func(suite *UserUseCaseTestSuite) TestEditProfile_Success() {
 	assert.NotNil(suite.T(), res)
 	assert.Equal(suite.T(), "Success update profile", res)
 }
-func(suite *UserUseCaseTestSuite) TestEditProfile_Failed() {
+func (suite *UserUseCaseTestSuite) TestEditProfile_Failed() {
 	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("UpdateProfile", user).Return("Failed update profile")
@@ -256,7 +259,7 @@ func(suite *UserUseCaseTestSuite) TestEditProfile_Failed() {
 }
 
 // Test Unreg
-func(suite *UserUseCaseTestSuite) TestUnreg_Success() {
+func (suite *UserUseCaseTestSuite) TestUnreg_Success() {
 	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("Delete", user).Return(nil)
@@ -264,7 +267,7 @@ func(suite *UserUseCaseTestSuite) TestUnreg_Success() {
 	assert.NotNil(suite.T(), res)
 	assert.Equal(suite.T(), "Success Delete user", res)
 }
-func(suite *UserUseCaseTestSuite) TestUnreg_Failed() {
+func (suite *UserUseCaseTestSuite) TestUnreg_Failed() {
 	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("Delete", user).Return("Failed Delete user")
@@ -279,7 +282,7 @@ func (suite *UserUseCaseTestSuite) TestRegister_Success() {
 	suite.userRepoMock.On("Create", user).Return(user, nil)
 	res, err := userUC.Register(user)
 	assert.NoError(suite.T(), err)
-    assert.Nil(suite.T(), res)
+	assert.Nil(suite.T(), res)
 }
 func (suite *UserUseCaseTestSuite) TestRegister_Failed() {
 	user := &dummyUserCreate[0]
@@ -287,7 +290,7 @@ func (suite *UserUseCaseTestSuite) TestRegister_Failed() {
 	suite.userRepoMock.On("Create", user).Return(nil, errors.New("Failed create user"))
 	res, err := userUC.Register(user)
 	assert.NotNil(suite.T(), res)
-    assert.Nil(suite.T(), err)
+	assert.Nil(suite.T(), err)
 }
 
 // Test EditEmailPassword
@@ -317,18 +320,18 @@ func (suite *UserUseCaseTestSuite) TestEditEmailPassword_Error() {
 func (suite *UserUseCaseTestSuite) TestLogin_Success() {
 	user := &dummyCredentials[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
-	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(user.Password, user.Username, user.UserID, user.Role,  nil)
+	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(user.Password, user.Username, user.UserID, user.Role, nil)
 	res, err := userUC.Login(user.Email, user.Password)
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), res)
 
 	// user := &dummyCredentials[0]
-    // userUC := NewUserUseCase(suite.userRepoMock)
-    // expected := &model.Credentials{Email: "", Password: "password1", UserID: 0x1, Username: "username1", Role: "user"}
-    // suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(expected, nil)
-    // res, err := userUC.Login(user.Email, user.Password)
-    // assert.Nil(suite.T(), res)
-    // assert.Equal(suite.T(), expected, err)
+	// userUC := NewUserUseCase(suite.userRepoMock)
+	// expected := &model.Credentials{Email: "", Password: "password1", UserID: 0x1, Username: "username1", Role: "user"}
+	// suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(expected, nil)
+	// res, err := userUC.Login(user.Email, user.Password)
+	// assert.Nil(suite.T(), res)
+	// assert.Equal(suite.T(), expected, err)
 }
 func (suite *UserUseCaseTestSuite) TestLogin_Failed() {
 	user := &dummyCredentials[0]

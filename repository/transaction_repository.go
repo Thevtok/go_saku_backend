@@ -38,8 +38,8 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	defer rows.Close()
 
 	for rows.Next() {
-		var tx *model.Transaction
-		tx = &model.Transaction{}
+
+		tx := &model.Transaction{}
 		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)
@@ -127,7 +127,7 @@ func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 	query := "SELECT pe_id, reward, price FROM mst_point_exchange"
 	rows, err := r.db.Query(query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get data: %v", err)
 	}
 	defer rows.Close()
 
@@ -136,13 +136,14 @@ func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 		pe := &model.PointExchange{}
 		err := rows.Scan(&pe.PE_ID, &pe.Reward, &pe.Price)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan data: %v", err)
 		}
 		pointExchanges = append(pointExchanges, pe)
 	}
 
 	return pointExchanges, nil
 }
+
 func (r *transactionRepository) GetByPeId(id uint) ([]*model.PointExchange, error) {
 	var peAccs []*model.PointExchange
 	query := "SELECT pe_id, reward, price FROM mst_point_exchange WHERE pe_id = $1"
