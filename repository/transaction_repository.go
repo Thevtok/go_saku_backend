@@ -38,8 +38,8 @@ func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transacti
 	defer rows.Close()
 
 	for rows.Next() {
-		var tx *model.Transaction
-		tx = &model.Transaction{}
+
+		tx := &model.Transaction{}
 		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)

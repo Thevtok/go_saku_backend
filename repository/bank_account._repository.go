@@ -123,7 +123,7 @@ func (r *bankAccRepository) DeleteByUserID(id uint) string {
 		log.Println(err)
 		return "failed to delete Bank Account"
 	}
-	return "Deleted All Bank Account Successfully"
+	return "All Bank Account Deleted Successfully"
 }
 
 func (r *bankAccRepository) DeleteByAccountID(accountID uint) error {

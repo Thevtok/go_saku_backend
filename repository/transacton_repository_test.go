@@ -14,7 +14,13 @@ import (
 )
 
 var dummyTxBank = []*model.TransactionBank{
-	{},
+	{
+		TransactionType: "Deposit Bank",
+		SenderID:        uint(1),
+		BankAccountID:   uint(1),
+		Amount:          uint(50000),
+		TransactionDate: now,
+	},
 }
 var dummyTxCard = []*model.TransactionCard{
 	{},
@@ -44,7 +50,7 @@ var txs = []*model.Transaction{
 		TransactionDate: now,
 	},
 	{
-		SenderID:        1,
+		SenderID:        2,
 		TransactionType: "Transfer",
 		RecipientID:     &value1,
 		BankAccountID:   &value1,
