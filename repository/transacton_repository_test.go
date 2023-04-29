@@ -93,6 +93,7 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Success() {
 	// Assert that no errors occurred and all expectations were met
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), len(txs), len(result))
+	assert.NotNil(suite.T(), result)
 
 	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
 }
@@ -349,21 +350,23 @@ func (suite *TransactionRepositoryTestSuite) TestGetAllPoint_Success() {
 	// Assert that no errors occurred and all expectations were met
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), pointExchanges, results)
+	assert.NotNil(suite.T(), results)
+	assert.NotNil(suite.T(), rows)
 
 	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
 }
 func (suite *TransactionRepositoryTestSuite) TestGetAllPoint_Error() {
-	expectedErr := errors.New("database error")
+	expectedErr := fmt.Errorf("failed to get data: database error")
 
-	suite.mockSql.ExpectQuery("SELECT pe_id, reward, price FROM mst_point_exchange").WillReturnError(expectedErr)
+	suite.mockSql.ExpectQuery("SELECT pe_id, reward, price FROM mst_point_exchange").WillReturnError(errors.New("database error"))
 
 	repository := NewTxRepository(suite.mockDB)
 
 	_, err := repository.GetAllPoint()
 
 	assert.Equal(suite.T(), expectedErr, err)
-
 }
+
 func (suite *TransactionRepositoryTestSuite) TestGetByPeId_Success() {
 	// Create a mock database connection and repository
 
@@ -390,13 +393,14 @@ func (suite *TransactionRepositoryTestSuite) TestGetByPeId_Success() {
 func (suite *TransactionRepositoryTestSuite) TestGetByPeId_Error() {
 	expectedErr := errors.New("database error")
 
-	suite.mockSql.ExpectQuery("SELECT pe_id, reward, price FROM mst_point_exchange").WillReturnError(expectedErr)
+	row := suite.mockSql.ExpectQuery("SELECT pe_id, reward, price FROM mst_point_exchange").WillReturnError(expectedErr)
 
 	repository := NewTxRepository(suite.mockDB)
 
 	_, err := repository.GetByPeId(1)
 
 	assert.Equal(suite.T(), expectedErr, err)
+	assert.NotNil(suite.T(), row)
 
 }
 

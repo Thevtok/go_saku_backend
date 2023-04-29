@@ -138,7 +138,7 @@ func (suite *UserRepositoryTestSuite) TestUpdatePoint_Success() {
 	newPoint := dummyUser[0].Point
 	suite.mockSql.ExpectQuery("UPDATE mst_users SET point = \\$1 WHERE user_id = \\$2").WithArgs(newPoint, userID).WillReturnRows(sqlmock.NewRows([]string{"point", "user_id"}).AddRow(newPoint, userID))
 	userRepository := NewUserRepository(suite.mockDB)
-	err := userRepository.UpdateBalance(userID, uint(newPoint))
+	err := userRepository.UpdatePoint(userID, newPoint)
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), nil)
 }
@@ -150,7 +150,7 @@ func (suite *UserRepositoryTestSuite) TestUpdatePoint_Failed() {
 		WithArgs(newPoint, userID).
 		WillReturnError(expectedErr)
 	userRepository := NewUserRepository(suite.mockDB)
-	err := userRepository.UpdateBalance(userID, uint(newPoint))
+	err := userRepository.UpdatePoint(userID, newPoint)
 	assert.NotNil(suite.T(), err)
 }
 
