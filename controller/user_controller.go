@@ -196,9 +196,9 @@ func (c *UserController) Unreg(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
 
-func NewUserController(u usecase.UserUseCase) *UserController {
+func NewUserController(usercase usecase.UserUseCase) *UserController {
 	controller := UserController{
-		usecase: u,
+		usecase: usercase,
 	}
 	return &controller
 }
