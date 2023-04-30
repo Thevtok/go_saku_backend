@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
@@ -30,7 +29,6 @@ func (uc *transactionUseCase) FindByPeId(id uint) ([]*model.PointExchange, error
 func (uc *transactionUseCase) FindTxById(senderId uint) ([]*model.Transaction, error) {
 	return uc.transactionRepo.GetBySenderId(senderId)
 }
-
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)
 	if err != nil {
@@ -41,7 +39,6 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	newBalance := user.Balance + transaction.Amount
 	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
 	if err != nil {
-
 		return fmt.Errorf("failed to update user balance: %v", err)
 	}
 
@@ -49,13 +46,11 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	newPoint := user.Point + 20
 	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	if err != nil {
-
 		return err
 	}
 
 	err = uc.transactionRepo.CreateDepositBank(transaction)
 	if err != nil {
-
 		return fmt.Errorf("failed to create deposit transaction: %v", err)
 	}
 
@@ -100,7 +95,7 @@ func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionWit
 
 	// check user balance
 	if user.Balance < transaction.Amount {
-		return errors.New("insufficient balance")
+		return fmt.Errorf("insufficient balance")
 	}
 
 	// update user balance
@@ -128,14 +123,14 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	}
 	// validate sender balance
 	if sender.Balance < amount {
-		return nil, errors.New("insufficient balance")
+		return nil, fmt.Errorf("insufficient balance")
 	}
 
 	// update recipient balance
 	newBalanceR := recipient.Balance + amount
 	err = uc.userRepo.UpdateBalance(recipient.ID, newBalanceR)
 	if err != nil {
-		return newBalanceR, err
+		return nil, err
 	}
 
 	// check if sender is eligible for bonus points
