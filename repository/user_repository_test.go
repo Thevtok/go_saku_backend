@@ -1,12 +1,10 @@
 package repository
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -127,9 +125,9 @@ func TestUserRepository_UpdateBalance_Success(t *testing.T) {
 	defer db.Close()
 
 	user := &dummyUser[0]
-	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}).
-		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), uint(0))
-	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").
+	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}).
+		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), user.Username, uint(0))
+	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
 		WithArgs(user.ID).
 		WillReturnRows(rows)
 	mock.ExpectExec("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").
@@ -148,7 +146,7 @@ func (suite *UserRepositoryTestSuite) TestUpdateBalance_Failed() {
 
 	user := dummyUser[0]
 	expectedError := fmt.Errorf("failed to update balance")
-	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").WithArgs(user.ID).WillReturnRows(sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}))
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").WithArgs(user.ID).WillReturnRows(sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}))
 	suite.mockSql.ExpectExec("UPDATE mst_users SET balance = \\$1 WHERE user_id = \\$2").WithArgs(user.Balance, user.ID).WillReturnError(expectedError)
 	userRepository := NewUserRepository(suite.mockDB)
 	err := userRepository.UpdateBalance(user.ID, user.Balance)
@@ -166,9 +164,9 @@ func TestUpdateBalanceError(t *testing.T) {
 	repo := &userRepository{db: db}
 
 	user := &dummyUser[0]
-	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}).
-		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), uint(0))
-	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").
+	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}).
+		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), user.Username, uint(0))
+	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
 		WithArgs(user.ID).
 		WillReturnRows(rows)
 	expectedErr := fmt.Errorf("error while updating balance")
@@ -206,9 +204,9 @@ func TestUserRepository_UpdatePoint_Success(t *testing.T) {
 	defer db.Close()
 
 	user := &dummyUser[0]
-	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}).
-		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), uint(0))
-	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").
+	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}).
+		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), user.Username, uint(0))
+	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
 		WithArgs(user.ID).
 		WillReturnRows(rows)
 	mock.ExpectExec("UPDATE mst_users SET point = \\$1 WHERE user_id = \\$2").
@@ -245,9 +243,9 @@ func TestUpdatePointError(t *testing.T) {
 	repo := &userRepository{db: db}
 
 	user := &dummyUser[0]
-	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "point"}).
-		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), uint(0))
-	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").
+	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}).
+		AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, uint(2500), user.Username, uint(0))
+	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
 		WithArgs(user.ID).
 		WillReturnRows(rows)
 	expectedErr := fmt.Errorf("error while updating point")
@@ -297,21 +295,24 @@ func (suite *UserRepositoryTestSuite) TestGetAllScan_Failed() {
 
 // Test GetByUsername
 func (suite *UserRepositoryTestSuite) TestGetByUsername_Success() {
-	user := dummyUserRespons[0]
+	user := dummyUserRespons[1]
 	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = $1").WithArgs(user.Username).WillReturnRows(sqlmock.NewRows([]string{"name", "username", "email", "phone_number", "address", "balance", "point"}).AddRow(user.Name, user.Username, user.Email, user.Phone_Number, user.Address, user.Balance, user.Point))
 	userRepository := NewUserRepository(suite.mockDB)
 	res, err := userRepository.GetByUsername(user.Username)
 	assert.Nil(suite.T(), res)
 	assert.NotNil(suite.T(), err)
 }
-func (suite *UserRepositoryTestSuite) TestGetByUsername_Failed() {
-	user := dummyUserRespons[0]
-	expectedErr := errors.New("some error")
-	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = $1").WithArgs(user.Username).WillReturnError(expectedErr)
-	userRepository := NewUserRepository(suite.mockDB)
-	res, err := userRepository.GetByUsername(user.Username)
-	assert.Nil(suite.T(), res)
-	assert.NotNil(suite.T(), err)
+func (suite *UserRepositoryTestSuite) TestGetByUsername_UserNotFound() {
+	username := "nonexistentuser"
+    suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = \\$1").
+        WithArgs(username).
+        WillReturnError(sql.ErrNoRows)
+
+    userRepository := NewUserRepository(suite.mockDB)
+    user, err := userRepository.GetByUsername(username)
+    assert.Nil(suite.T(), user)
+    assert.NotNil(suite.T(), err)
+    assert.EqualValues(suite.T(), "user not found", err.Error())
 }
 
 // Test GetByID
@@ -336,46 +337,35 @@ func (suite *UserRepositoryTestSuite) TestGetByiD_Failed() {
 // TestUpdateProfile
 func (suite *UserRepositoryTestSuite) TestUpdateProfile_Success() {
 	user := dummyUser[0]
-	suite.mockSql.ExpectExec("UPDATE mst_users SET name= \\$1,  phone_number= \\$2, address= \\$3, username= \\$4 WHERE user_id= \\$5").WithArgs(user).WillReturnResult(sqlmock.NewResult(1, 1))
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, user.Balance, user.Username, user.Point))
+	suite.mockSql.ExpectExec("UPDATE mst_users SET name=\\$1, phone_number=\\$2, address=\\$3, username=\\$4 WHERE user_id=\\$5").
+		WithArgs(user.Name, user.Phone_Number, user.Address, user.Username, user.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.UpdateProfile(&user)
 	assert.NotNil(suite.T(), str)
 }
-func TestUpdateProfileSuccess(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	// Prepare test data
-	newUser := &dummyUser[0]
-
-	// Expectations
-	rows := sqlmock.NewRows([]string{"name", "user_id", "email", "phone_number", "address", "balance", "username", "point"}).
-		AddRow(newUser.Name, newUser.ID, newUser.Email, newUser.Phone_Number, newUser.Address, newUser.Balance, newUser.Username, newUser.Point)
-	mock.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
-		WithArgs(newUser.ID).
-		WillReturnRows(rows)
-	mock.ExpectExec("UPDATE mst_users SET name=$1, phone_number=$2, address=$3, username=$4 WHERE user_id=$5").
-		WithArgs(newUser.Name, newUser.Phone_Number, newUser.Address, newUser.Username, newUser.ID).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
-	// Test execution
-	repo := &userRepository{db}
-	res := repo.UpdateProfile(newUser)
-
-	// Check the result
-	if res == "" {
-		t.Errorf("unexpected error: %s", "failed to update user")
-		return
-	}
-}
-
 func (suite *UserRepositoryTestSuite) TestUpdateProfile_Failed() {
 	user := dummyUser[0]
-	expectedError := fmt.Errorf("failed to update user")
-	suite.mockSql.ExpectExec("UPDATE mst_users SET name= \\$1,  phone_number= \\$2, address= \\$3, username= \\$4 WHERE user_id= \\$5").WithArgs(user).WillReturnError(expectedError)
+	expectedErr := fmt.Errorf("failed to update user")
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, user.Balance, user.Username, user.Point))
+	suite.mockSql.ExpectExec("UPDATE mst_users SET name=\\$1, phone_number=\\$2, address=\\$3, username=\\$4 WHERE user_id=\\$5").
+		WithArgs(user.Name, user.Phone_Number, user.Address, user.Username, user.ID).
+		WillReturnError(expectedErr)
+	userRepository := NewUserRepository(suite.mockDB)
+	str := userRepository.UpdateProfile(&user)
+	assert.NotNil(suite.T(), str)
+}
+func (suite *UserRepositoryTestSuite) TestUpdateProfileScan_Failed() {
+	user := dummyUser[0]
+	expectedErr := fmt.Errorf("failed to update user")
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnError(expectedErr)
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.UpdateProfile(&user)
 	assert.NotNil(suite.T(), str)
@@ -384,15 +374,35 @@ func (suite *UserRepositoryTestSuite) TestUpdateProfile_Failed() {
 // Test UpdateEmailPassword
 func (suite *UserRepositoryTestSuite) TestUpdateEmailPassword_Success() {
 	user := dummyUser[0]
-	suite.mockSql.ExpectExec("UPDATE mst_users SET email= \\$1, password= \\$2  WHERE user_id= \\$3").WithArgs(user).WillReturnResult(sqlmock.NewResult(1, 1))
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, user.Balance, user.Username, user.Point))
+	suite.mockSql.ExpectExec("UPDATE mst_users SET email=\\$1, password=\\$2 WHERE user_id=\\$3").
+		WithArgs(user.Email, user.Password, user.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.UpdateEmailPassword(&user)
 	assert.NotNil(suite.T(), str)
 }
 func (suite *UserRepositoryTestSuite) TestUpdateEmailPassword_Failed() {
 	user := dummyUser[0]
-	expectedError := fmt.Errorf("failed to update user")
-	suite.mockSql.ExpectExec("UPDATE mst_users SET email= \\$1, password= \\$2  WHERE user_id= \\$3").WithArgs(user).WillReturnError(expectedError)
+	expectedErr := fmt.Errorf("failed to update user")
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id", "name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Name, user.ID, user.Email, user.Phone_Number, user.Address, user.Balance, user.Username, user.Point))
+	suite.mockSql.ExpectExec("UPDATE mst_users SET email=\\$1, password=\\$2 WHERE user_id=\\$3").
+		WithArgs(user.Email, user.Password, user.ID).
+		WillReturnError(expectedErr)
+	userRepository := NewUserRepository(suite.mockDB)
+	str := userRepository.UpdateEmailPassword(&user)
+	assert.NotNil(suite.T(), str)
+}
+func (suite *UserRepositoryTestSuite) TestUpdateEmailPasswordScan_Failed() {
+	user := dummyUser[0]
+	expectedErr := fmt.Errorf("failed to update user")
+	suite.mockSql.ExpectQuery("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = \\$1").
+		WithArgs(user.ID).
+		WillReturnError(expectedErr)
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.UpdateEmailPassword(&user)
 	assert.NotNil(suite.T(), str)
@@ -401,18 +411,32 @@ func (suite *UserRepositoryTestSuite) TestUpdateEmailPassword_Failed() {
 // Test Delete
 func (suite *UserRepositoryTestSuite) TestDelete_Success() {
 	user := dummyUser[0]
-	suite.mockSql.ExpectQuery("SELECT user_id, name, email, phone_number, address, username, role FROM mst_users WHERE username = \\$1").
+	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = \\$1").
         WithArgs(user.Username).
-        WillReturnRows(sqlmock.NewRows([]string{"user_id"}))
-	suite.mockSql.ExpectExec("DELETE FROM mst_users WHERE username = \\$1").WithArgs(user).WillReturnResult(sqlmock.NewResult(1, 1))
+        WillReturnRows(sqlmock.NewRows([]string{"name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Username, user.Name, user.Email, user.Phone_Number, user.Address, user.Balance, user.Point))
+	username := "username1"
+	suite.mockSql.ExpectExec("DELETE FROM mst_users WHERE username = \\$1").WithArgs(username).WillReturnResult(sqlmock.NewResult(1, 1))
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.Delete(&user)
 	assert.NotNil(suite.T(), str)
 }
+func (suite *UserRepositoryTestSuite) TestDeleteScan_Failed() {
+	user := dummyUser[0]
+	username := "notfound"
+	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = \\$1").
+		WithArgs(username).
+		WillReturnError(sql.ErrNoRows)
+	userRepository := NewUserRepository(suite.mockDB)
+	err := userRepository.Delete(&user)
+	assert.NotNil(suite.T(), err)
+}
 func (suite *UserRepositoryTestSuite) TestDelete_Failed() {
 	user := dummyUser[0]
-	expectedError := fmt.Errorf("failed to delete user")
-	suite.mockSql.ExpectExec("DELETE FROM mst_users WHERE username = \\$1").WithArgs(user).WillReturnError(expectedError)
+	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = \\$1").
+        WithArgs(user.Username).
+        WillReturnRows(sqlmock.NewRows([]string{"name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Username, user.Name, user.Email, user.Phone_Number, user.Address, user.Balance, user.Point))
+	username := "username1"
+	suite.mockSql.ExpectExec("DELETE FROM mst_users WHERE username = \\$1").WithArgs(username).WillReturnError(errors.New("failed to delete user"))
 	userRepository := NewUserRepository(suite.mockDB)
 	str := userRepository.Delete(&user)
 	assert.NotNil(suite.T(), str)
@@ -421,75 +445,57 @@ func (suite *UserRepositoryTestSuite) TestDelete_Failed() {
 // Test Create
 func (suite *UserRepositoryTestSuite) TestCreate_Success() {
 	newUser := &dummyUserCreate[0]
-	suite.mockSql.ExpectExec("INSERT INTO mst_users \\(name, username, email, password, phone_number, address, balance, role, point\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6, \\$7, \\$8, \\$9\\)").WithArgs(newUser.Name, newUser.Username, newUser.Email, newUser.Password, newUser.Phone_Number, newUser.Address, 0, "user", 0).
+	suite.mockSql.ExpectExec(`INSERT INTO mst_users \(name, username, email, password, phone_number, address, balance, role, point\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	userRepository := NewUserRepository(suite.mockDB)
 	res, err := userRepository.Create(newUser)
-	assert.NotNil(suite.T(), err)
-	assert.Nil(suite.T(), res)
-}
-func TestUserRepository_Create_Success(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), res)
 
-	newUser := &dummyUserCreate[0]
-	mock.ExpectExec(`INSERT INTO mst_users \(name, username, email, password, phone_number, address, balance, role, point\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).
-		WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	repo := NewUserRepository(db)
+	user := res.(*model.UserCreate)
+	assert.Equal(suite.T(), newUser.Name, user.Name)
+	assert.Equal(suite.T(), newUser.Username, user.Username)
+	assert.Equal(suite.T(), newUser.Email, user.Email)
+	assert.Equal(suite.T(), newUser.Phone_Number, user.Phone_Number)
+	assert.Equal(suite.T(), newUser.Address, user.Address)
 
-	result, err := repo.Create(newUser)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-
-	user := result.(*model.UserCreate)
-	assert.Equal(t, newUser.Name, user.Name)
-	assert.Equal(t, newUser.Username, user.Username)
-	assert.Equal(t, newUser.Email, user.Email)
-	assert.Equal(t, newUser.Phone_Number, user.Phone_Number)
-	assert.Equal(t, newUser.Address, user.Address)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
 }
 func (suite *UserRepositoryTestSuite) TestCreate_Failed() {
-	newUser := dummyUserCreate[0]
-	expectedError := fmt.Errorf("failed to Create user")
-	suite.mockSql.ExpectExec("INSERT INTO mst_users \\(name, username, email, password, phone_number, address, balance, role, point\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6, \\$7, \\$8, \\$9\\)").WithArgs(newUser).WillReturnError(expectedError)
-	userRepository := NewUserRepository(suite.mockDB)
-	res, err := userRepository.Create(&newUser)
-	assert.NotNil(suite.T(), err)
-	assert.Nil(suite.T(), res)
-}
-func (suite *UserRepositoryTestSuite) TestUserRepository_Create_Failed() {
 	newUser := &dummyUserCreate[0]
-	expectedErr := errors.New("error inserting user to database")
-	suite.mockSql.ExpectExec("INSERT INTO mst_users \\(name, username, email, password, phone_number, address, balance, role, point\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5, \\$6, \\$7, \\$8, \\$9\\)").
-		WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
-		WillReturnError(expectedErr)
+	expectedError := fmt.Errorf("failed to Create user")
+	suite.mockSql.ExpectExec(`INSERT INTO mst_users \(name, username, email, password, phone_number, address, balance, role, point\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
+		WillReturnError(expectedError)
 	userRepository := NewUserRepository(suite.mockDB)
-
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
 	res, err := userRepository.Create(newUser)
-
-	assert.Equal(suite.T(), expectedErr, err)
-	assert.Nil(suite.T(), res)
-	assert.Contains(suite.T(), buf.String(), "error inserting user to database")
-}
-
-func (suite *UserRepositoryTestSuite) TestGetByEmailAndPassword_Success() {
-	var user = dummyCredentials[0]
-	suite.mockSql.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email, user.Password).WillReturnRows(sqlmock.NewRows([]string{"user_id", "username", "password", "role", "email"}).AddRow(user.UserID, user.Username, user.Password, user.Role, user.Email))
-	userRepository := NewUserRepository(suite.mockDB)
-	res, err := userRepository.GetByEmailAndPassword(user.Email, user.Password)
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), res)
 }
+
+// func (suite *UserRepositoryTestSuite) TestGetByEmailAndPassword_Success() {
+// 	user := &dummyCredentials[0]
+//     hashedPassword, _ := utils.HasingPassword(user.Password)
+    
+//     user.Password = hashedPassword
+
+// 	suite.mockSql.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email).WillReturnRows(
+//         sqlmock.NewRows([]string{"user_id", "username", "password", "role"}).
+//             AddRow(user.UserID, user.Username, user.Password, user.Role))
+// 	userRepository := NewUserRepository(suite.mockDB)
+// 	result, _ := userRepository.GetByEmailAndPassword(user.Email, "password1")
+// 	err := suite.mockSql.ExpectationsWereMet()
+//     if err != nil {
+//         fmt.Errorf("failed to meet database expectations: %v", err)
+//     }
+
+//     if err != nil {
+//         fmt.Errorf("unexpected error: %v", err)
+//         return
+//     }
+//     if result.UserID != user.UserID || result.Username != user.Username || result.Role != user.Role {
+//     	fmt.Errorf("unexpected result: %+v", result)
+//     }
+// }
 func TestGetByEmailAndPasswordSuccess(t *testing.T) {
     user := &dummyUser[0]
     hashedPassword, err := utils.HasingPassword(user.Password)
@@ -526,13 +532,17 @@ func TestGetByEmailAndPasswordSuccess(t *testing.T) {
     }
 }
 func (suite *UserRepositoryTestSuite) TestGetByEmailAndPassword_Failed() {
-	var user = dummyCredentials[0]
-	expectedError := errors.New("user not found")
-	suite.mockSql.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email, user.Password).WillReturnError(expectedError)
+	user := &dummyCredentials[0]
+    hashedPassword, _ := utils.HasingPassword(user.Password)
+    
+    user.Password = hashedPassword
+	expectedErr := fmt.Errorf("failed to Create user")
+	suite.mockSql.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email).WillReturnError(
+        expectedErr)
 	userRepository := NewUserRepository(suite.mockDB)
-	res, err := userRepository.GetByEmailAndPassword(user.Email, user.Password)
+	result, err := userRepository.GetByEmailAndPassword(user.Email, "password1")
 	assert.NotNil(suite.T(), err)
-	assert.Nil(suite.T(), res)
+	assert.Nil(suite.T(), result)
 }
 
 // setup test

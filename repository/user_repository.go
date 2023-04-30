@@ -104,7 +104,7 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	var user model.User
 
-	err := r.db.QueryRow("SELECT name, user_id, email, phone_number, address, balance, point FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
+	err := r.db.QueryRow("SELECT name, user_id, email, phone_number, address, balance, username, point FROM mst_users WHERE user_id = $1", id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Username, &user.Point)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -136,7 +136,7 @@ func (r *userRepository) UpdateEmailPassword(user *model.User) string {
 		return "user not found"
 	}
 
-	query := "UPDATE mst_users SET email=$1, password=$2  WHERE user_id=$3"
+	query := "UPDATE mst_users SET email=$1, password=$2 WHERE user_id=$3"
 
 	_, err = r.db.Exec(query, user.Email, user.Password, user.ID)
 	if err != nil {
