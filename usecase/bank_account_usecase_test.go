@@ -232,22 +232,6 @@ func (suite *BankAccUsecaseTestSuite) TestUnregAll_Failed() {
 	assert.NotNil(suite.T(), err)
 }
 
-// func (suite *BankAccUsecaseTestSuite) TestDeleteBankAccByAccID_Success() {
-// 	accID := uint(1)
-// 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-// 	suite.bankaccRepoMock.On("DeleteByAccountID", accID).Return(nil)
-// 	err := bankAccUsecase.UnregByAccountID(accID)
-// 	assert.Nil(suite.T(), err)
-// }
-
-// func (suite *BankAccUsecaseTestSuite) TestDeleteBankAccByAccID_Failed() {
-// 	accID := uint(1)
-// 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-// 	suite.bankaccRepoMock.On("DeleteByAccountID", accID).Return(errors.New("failed to delete data"))
-// 	err := bankAccUsecase.UnregByAccountID(accID)
-// 	assert.NoError(suite.T(), err)
-// }
-
 func (suite *BankAccUsecaseTestSuite) TestUnregByAccountID_Success() {
 	accountID := uint(1)
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
