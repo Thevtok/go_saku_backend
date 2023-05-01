@@ -25,7 +25,7 @@ type bankAccRepository struct {
 
 func (r *bankAccRepository) GetAll() any {
 	var users []model.BankAccResponse
-	query := "SELECT bank_name, account_number, account_holder_name, user_id FROM mst_bank_account"
+	query := "SELECT user_id, account_id, bank_name, account_number, account_holder_name FROM mst_bank_account"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
@@ -38,9 +38,10 @@ func (r *bankAccRepository) GetAll() any {
 
 	for rows.Next() {
 		var user model.BankAccResponse
-		err := rows.Scan(&user.BankName, &user.AccountNumber, &user.AccountHolderName, &user.UserID)
+		err := rows.Scan(&user.UserID, &user.AccountID, &user.BankName, &user.AccountNumber, &user.AccountHolderName)
 		if err != nil {
 			log.Println(err)
+			return err
 		}
 		users = append(users, user)
 	}
@@ -50,7 +51,7 @@ func (r *bankAccRepository) GetAll() any {
 
 func (r *bankAccRepository) GetByUserID(id uint) ([]*model.BankAccResponse, error) {
 	var bankAccs []*model.BankAccResponse
-	query := "SELECT user_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = $1"
+	query := "SELECT user_id, account_id, bank_name, account_number, account_holder_name FROM mst_bank_account WHERE user_id = $1"
 	rows, err := r.db.Query(query, id)
 	if err != nil {
 		log.Println(err)
@@ -60,7 +61,7 @@ func (r *bankAccRepository) GetByUserID(id uint) ([]*model.BankAccResponse, erro
 
 	for rows.Next() {
 		var bankAcc model.BankAccResponse
-		err = rows.Scan(&bankAcc.UserID, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
+		err = rows.Scan(&bankAcc.UserID, &bankAcc.AccountID, &bankAcc.BankName, &bankAcc.AccountNumber, &bankAcc.AccountHolderName)
 		if err != nil {
 			log.Println(err)
 			return nil, err

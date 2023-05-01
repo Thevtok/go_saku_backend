@@ -25,7 +25,7 @@ type cardRepository struct {
 
 func (r *cardRepository) GetAll() any {
 	var users []model.CardResponse
-	query := "SELECT user_id, card_type, card_number, expiration_date, cvv FROM mst_card"
+	query := "SELECT user_id, card_id, card_type, card_number, expiration_date, cvv FROM mst_card"
 	rows, err := r.db.Query(query)
 	if err != nil {
 		log.Println(err)
@@ -37,7 +37,7 @@ func (r *cardRepository) GetAll() any {
 
 	for rows.Next() {
 		var user model.CardResponse
-		err := rows.Scan(&user.UserID, &user.CardType, &user.CardNumber, &user.ExpirationDate, &user.CVV)
+		err := rows.Scan(&user.UserID, &user.CardID, &user.CardType, &user.CardNumber, &user.ExpirationDate, &user.CVV)
 		if err != nil {
 			log.Println(err)
 		}
@@ -48,7 +48,7 @@ func (r *cardRepository) GetAll() any {
 
 func (r *cardRepository) GetByUserID(id uint) ([]*model.CardResponse, error) {
 	var cards []*model.CardResponse
-	query := "SELECT user_id, card_type, card_number, expiration_date, cvv FROM mst_card WHERE user_id = $1"
+	query := "SELECT user_id, card_id, card_type, card_number, expiration_date, cvv FROM mst_card WHERE user_id = $1"
 	rows, err := r.db.Query(query, id)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (r *cardRepository) GetByUserID(id uint) ([]*model.CardResponse, error) {
 
 	for rows.Next() {
 		var card model.CardResponse
-		err = rows.Scan(&card.UserID, &card.CardType, &card.CardNumber, &card.ExpirationDate, &card.CVV)
+		err = rows.Scan(&card.UserID, &card.CardID, &card.CardType, &card.CardNumber, &card.ExpirationDate, &card.CVV)
 		if err != nil {
 			return nil, err
 		}
