@@ -72,7 +72,19 @@ func (c *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	res, _ := c.usecase.Register(&newUser)
+	 if newUser.Name == "" || newUser.Username == "" || newUser.Email == "" || newUser.Password == "" || newUser.Phone_Number == "" || newUser.Address == "" {
+        logrus.Errorf("Invalid Input: Required fields are empty")
+        response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+        return
+    }
+
+    res, err := c.usecase.Register(&newUser)
+    if err != nil {
+        logrus.Errorf("Failed to Register User : %v", err)
+        response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to Register User")
+        return
+    }
+
 	logrus.Info("Success Register User")
 	response.JSONSuccess(ctx.Writer, http.StatusCreated, res)
 }
