@@ -7,11 +7,11 @@ import (
 
 type BankAccUsecase interface {
 	FindAllBankAcc() any
-	FindBankAccByUserID(id uint) (any, error)
+	FindBankAccByUserID(id uint) ([]*model.BankAccResponse, error)
 	FindBankAccByAccountID(id uint) (*model.BankAcc, error)
 	Register(id uint, newBankAcc *model.BankAccResponse) (any, error)
 	Edit(bankAcc *model.BankAcc) string
-	UnregAll(bankAcc *model.BankAcc) string
+	UnregAll(userID uint) string
 	UnregByAccountID(accountID uint) error
 }
 
@@ -23,7 +23,7 @@ func (u *bankAccUsecase) FindAllBankAcc() any {
 	return u.bankAccRepo.GetAll()
 }
 
-func (u *bankAccUsecase) FindBankAccByUserID(id uint) (any, error) {
+func (u *bankAccUsecase) FindBankAccByUserID(id uint) ([]*model.BankAccResponse, error) {
 	return u.bankAccRepo.GetByUserID(id)
 }
 func (u *bankAccUsecase) FindBankAccByAccountID(id uint) (*model.BankAcc, error) {
@@ -39,8 +39,8 @@ func (u *bankAccUsecase) Edit(bankAcc *model.BankAcc) string {
 	return u.bankAccRepo.Update(bankAcc)
 }
 
-func (u *bankAccUsecase) UnregAll(bankAcc *model.BankAcc) string {
-	return u.bankAccRepo.DeleteByUserID(bankAcc.UserID)
+func (u *bankAccUsecase) UnregAll(userID uint) string {
+	return u.bankAccRepo.DeleteByUserID(userID)
 }
 
 func (u *bankAccUsecase) UnregByAccountID(accountID uint) error {

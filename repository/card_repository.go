@@ -15,7 +15,7 @@ type CardRepository interface {
 	GetByCardID(id uint) (*model.Card, error)
 	Create(id uint, newCard *model.CardResponse) (any, error)
 	Update(card *model.Card) string
-	DeleteByUserID(id uint) string
+	DeleteByUserID(userID uint) string
 	DeleteByCardID(cardID uint) error
 }
 
@@ -85,7 +85,7 @@ func (r *cardRepository) GetByCardID(id uint) (*model.Card, error) {
 }
 
 func (r *cardRepository) Create(id uint, newCard *model.CardResponse) (any, error) {
-	query := "INSERT INTO mst_card (user_id, card_type, card_number, expiration_date, cvv) VALUES ($1, $2, $3, $4, $5)"
+	query := "INSERT INTO mst_card (user_id, card_type, card_number, expiration_date, cvv) VALUES ($1, $2, $3, $4, $5) 	RETURNING card_id"
 	_, err := r.db.Exec(query, id, newCard.CardType, newCard.CardNumber, newCard.ExpirationDate, newCard.CVV)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data")
@@ -108,9 +108,9 @@ func (r *cardRepository) Update(card *model.Card) string {
 	return "Card ID updated Successfully"
 }
 
-func (r *cardRepository) DeleteByUserID(id uint) string {
+func (r *cardRepository) DeleteByUserID(userID uint) string {
 	query := "DELETE FROM mst_card WHERE user_id = $1"
-	_, err := r.db.Exec(query, id)
+	_, err := r.db.Exec(query, userID)
 	if err != nil {
 		return "failed to delete card"
 	}

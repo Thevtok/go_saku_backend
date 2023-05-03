@@ -34,7 +34,7 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 		return
 	}
 
-	logrus.Info("Data loaded Successfully")
+	logrus.Info("Bank Account loaded Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
@@ -60,7 +60,7 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 		return
 	}
 
-	logrus.Info("Data loaded Successfully")
+	logrus.Info("Bank Account loaded Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
 }
 
@@ -86,7 +86,7 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 		return
 	}
 
-	logrus.Info("Data loaded Successfully")
+	logrus.Info("Bank Account loaded Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
 }
 
@@ -113,12 +113,19 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		return
 	}
 
+	if newBankAcc.BankName == "" || newBankAcc.AccountNumber == "" || newBankAcc.AccountHolderName == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+		return
+	}
+
 	result, err := c.bankAccUsecase.Register(userID.(uint), &newBankAcc)
 	if err != nil {
 		logrus.Errorf("Failed to create Bank Account: %v", err)
 		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Bank Account")
 		return
 	}
+
 	logrus.Info("Bank Account created Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
@@ -157,6 +164,13 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	if user.BankName == "" || user.AccountNumber == "" || user.AccountHolderName == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+		return
+	}
+
 	updateBank := c.bankAccUsecase.Edit(user)
 	logrus.Info("Bank Account edited Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, updateBank)
@@ -180,7 +194,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	user := &model.BankAcc{
 		UserID: uint(userID),
 	}
-	res := c.bankAccUsecase.UnregAll(user)
+	res := c.bankAccUsecase.UnregAll(user.UserID)
 	logrus.Info("Bank Account deleted Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }

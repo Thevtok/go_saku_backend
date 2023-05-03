@@ -26,6 +26,7 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 	}
 	defer logger.Close()
 	logrus.SetOutput(logger)
+
 	result := c.cardUsecase.FindAllCard()
 	if result == nil {
 		logrus.Errorf("Failed to get user card: %v", err)
@@ -38,11 +39,20 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 }
 
 func (c *CardController) FindCardByUserID(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid user ID")
+		return
 	}
+
 	existingUser, _ := c.cardUsecase.FindCardByUserID(uint(userID))
 	if existingUser == nil {
 		logrus.Errorf("Failed to find card: %v", err)
@@ -55,6 +65,13 @@ func (c *CardController) FindCardByUserID(ctx *gin.Context) {
 }
 
 func (c *CardController) FindCardByCardID(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	userID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get card id: %v", err)
@@ -74,6 +91,13 @@ func (c *CardController) FindCardByCardID(ctx *gin.Context) {
 }
 
 func (c *CardController) CreateCardID(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	userID, exists := ctx.Get("user_id")
 	if !exists {
 		logrus.Errorf("Failed to get user ID: %v", exists)
@@ -82,10 +106,16 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 	}
 
 	var newCard model.CardResponse
-	err := ctx.BindJSON(&newCard)
+	err = ctx.BindJSON(&newCard)
 	if err != nil {
 		logrus.Errorf("Failed to request body: %v", err)
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if newCard.CardType == "" || newCard.CardNumber == "" || newCard.ExpirationDate == "" || newCard.CVV == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input: Required fields are empty")
 		return
 	}
 
@@ -101,6 +131,13 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get card ID: %v", err)
@@ -114,6 +151,7 @@ func (c *CardController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Card not found")
 		return
 	}
+
 	user := &model.Card{}
 	if err := mapstructure.Decode(existingUser, user); err != nil {
 		logrus.Errorf("Failed to edit card: %v", err)
@@ -126,6 +164,12 @@ func (c *CardController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid input")
 		return
 	}
+
+	if user.CardType == "" || user.CardNumber == "" || user.ExpirationDate == "" || user.CVV == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+		return
+	}
 	updateCard := c.cardUsecase.Edit(user)
 
 	logrus.Infof("Success to edit card")
@@ -133,6 +177,13 @@ func (c *CardController) Edit(ctx *gin.Context) {
 }
 
 func (c *CardController) UnregAll(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get user ID: %v", err)
@@ -142,13 +193,20 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 	user := &model.Card{
 		UserID: uint(userID),
 	}
-	result := c.cardUsecase.UnregALL(user)
+	result := c.cardUsecase.UnregALL(user.UserID)
 
 	logrus.Infof("Success to get user ID")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
 func (c *CardController) UnregByCardId(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+	defer logger.Close()
+	logrus.SetOutput(logger)
+
 	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get valid account ID: %v", err)

@@ -20,40 +20,86 @@ var dummyBankAcc = []model.BankAcc{
 	},
 	{
 		AccountID:         2,
+		UserID:            1,
+		BankName:          "Test2",
+		AccountNumber:     "123412341112",
+		AccountHolderName: "Test2",
+	},
+	{
+		AccountID:         3,
+		UserID:            2,
+		BankName:          "Test3",
+		AccountNumber:     "123412341113",
+		AccountHolderName: "Test3",
+	},
+	{
+		AccountID:         4,
 		UserID:            2,
 		BankName:          "Test2",
-		AccountNumber:     "123412342222",
-		AccountHolderName: "Test2",
+		AccountNumber:     "123412341114",
+		AccountHolderName: "Test4",
 	},
 }
 
 var dummyBankAccResponse = []model.BankAccResponse{
 	{
 		UserID:            1,
+		AccountID:         1,
 		BankName:          "Test1",
 		AccountNumber:     "123412341111",
 		AccountHolderName: "Test1",
 	},
 	{
-		UserID:            2,
+		UserID:            1,
+		AccountID:         2,
 		BankName:          "Test2",
-		AccountNumber:     "123412342222",
+		AccountNumber:     "123412341112",
 		AccountHolderName: "Test2",
+	},
+	{
+		UserID:            2,
+		AccountID:         3,
+		BankName:          "Test3",
+		AccountNumber:     "123412341113",
+		AccountHolderName: "Test3",
+	},
+	{
+		UserID:            2,
+		AccountID:         4,
+		BankName:          "Test4",
+		AccountNumber:     "123412341114",
+		AccountHolderName: "Test4",
 	},
 }
 
 var dummyBankAccResponse1 = []*model.BankAccResponse{
 	{
 		UserID:            1,
+		AccountID:         1,
 		BankName:          "Test1",
 		AccountNumber:     "123412341111",
 		AccountHolderName: "Test1",
 	},
 	{
-		UserID:            2,
+		UserID:            1,
+		AccountID:         2,
 		BankName:          "Test2",
-		AccountNumber:     "123412342222",
+		AccountNumber:     "123412341112",
 		AccountHolderName: "Test2",
+	},
+	{
+		UserID:            2,
+		AccountID:         3,
+		BankName:          "Test3",
+		AccountNumber:     "123412341113",
+		AccountHolderName: "Test3",
+	},
+	{
+		UserID:            2,
+		AccountID:         4,
+		BankName:          "Test4",
+		AccountNumber:     "123412341114",
+		AccountHolderName: "Test4",
 	},
 }
 
@@ -101,8 +147,8 @@ func (r *bankaccRepoMock) Update(bankAcc *model.BankAcc) string {
 	return "Bank Account updated Successfully"
 }
 
-func (r *bankaccRepoMock) DeleteByUserID(id uint) string {
-	args := r.Called(id)
+func (r *bankaccRepoMock) DeleteByUserID(userID uint) string {
+	args := r.Called(userID)
 	if args.Get(0) == nil {
 		return "failed to delete Bank Account"
 	}
@@ -111,10 +157,10 @@ func (r *bankaccRepoMock) DeleteByUserID(id uint) string {
 
 func (r *bankaccRepoMock) DeleteByAccountID(accountID uint) error {
 	args := r.Called(accountID)
-	if args.Get(0) != nil {
-		return errors.New("failed to delete data")
+	if args.Get(0) == nil {
+		return nil
 	}
-	return nil
+	return errors.New("failed to delete data")
 }
 
 type BankAccUsecaseTestSuite struct {
@@ -216,19 +262,17 @@ func (suite *BankAccUsecaseTestSuite) TestEdit_Failed() {
 
 func (suite *BankAccUsecaseTestSuite) TestUnregAll_Success() {
 	userID := uint(1)
-	bankAcc := dummyBankAcc
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("All Bank Account deleted Successfully")
-	result := bankAccUsecase.UnregAll(&bankAcc[0])
+	result := bankAccUsecase.UnregAll(userID)
 	assert.NotNil(suite.T(), result)
 }
 
 func (suite *BankAccUsecaseTestSuite) TestUnregAll_Failed() {
 	userID := uint(1)
-	bankAcc := dummyBankAcc
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("Failed to delete Bank Account")
-	err := bankAccUsecase.UnregAll(&bankAcc[0])
+	err := bankAccUsecase.UnregAll(userID)
 	assert.NotNil(suite.T(), err)
 }
 
