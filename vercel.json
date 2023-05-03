@@ -1,0 +1,18 @@
+{
+	"version":2,
+	"builds":
+	[
+		{
+            "delivery": "delivery/index_router.go"
+        }
+	],
+    "routes":
+    [
+        {
+            "delivery":"/(.*)",
+            "destination":"/delivery/index_router.go"
+        }
+    ]
+   
+
+}

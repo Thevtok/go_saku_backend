@@ -7,7 +7,7 @@ import (
 )
 
 func CreateLogFile() (*os.File, error) {
-	logFile, err := os.OpenFile("E:/github/go-saku/log/api.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(DotEnv("LOG_LOCATION"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}

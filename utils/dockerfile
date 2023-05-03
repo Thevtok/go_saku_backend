@@ -1,0 +1,23 @@
+# Gunakan image dasar Golang
+FROM golang:1.16
+
+# Set working directory
+WORKDIR /app
+
+# Salin file go.mod dan go.sum ke dalam container
+COPY go.mod go.sum ./
+
+# Download dependency menggunakan go mod
+RUN go mod download
+
+# Salin seluruh file proyek ke dalam container
+COPY . .
+
+# Build aplikasi
+RUN go build -o main .
+
+# Expose port yang akan digunakan
+EXPOSE 8080
+
+# Menjalankan binary aplikasi ketika container dijalankan
+CMD ["/app/main"]
