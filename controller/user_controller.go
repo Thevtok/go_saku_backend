@@ -26,12 +26,14 @@ func (c *UserController) FindUsers(ctx *gin.Context) {
 	}
 	defer logger.Close()
 	logrus.SetOutput(logger)
+
 	res := c.usecase.FindUsers()
 	if res == nil {
 		logrus.Error("Failed to get users")
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get users")
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Users not found")
 		return
 	}
+
 	logrus.Info("Success to get users")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
@@ -119,7 +121,7 @@ func (c *UserController) EditEmailPassword(ctx *gin.Context) {
 	updatedUser := c.usecase.EditEmailPassword(user)
 	if updatedUser == "" {
 		logrus.Error("Failed Edit user")
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit user")
+		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Failed to edit user")
 		return
 	}
 	logrus.Info("Edit Successfully")
