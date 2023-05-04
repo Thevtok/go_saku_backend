@@ -2,11 +2,9 @@ package delivery
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/ReygaFitra/inc-final-project.git/config"
 	"github.com/ReygaFitra/inc-final-project.git/controller"
-	"github.com/ReygaFitra/inc-final-project.git/model/response"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
 
@@ -41,11 +39,6 @@ func RunServer() {
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
 	userController := controller.NewUserController(userUsecase)
-	r.GET("/", func(c *gin.Context) {
-		response.JSONSuccess(c.Writer, http.StatusOK, gin.H{
-			"message": "Welcome to my application",
-		})
-	})
 
 	// USER GROUP
 	r.POST("/login", userAuth.Login)
