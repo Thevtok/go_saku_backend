@@ -1,10 +1,14 @@
 package main
 
-import "github.com/ReygaFitra/inc-final-project.git/delivery"
+import (
+	"net/http"
+
+	"github.com/ReygaFitra/inc-final-project.git/delivery"
+)
 
 func main() {
 	delivery.RunServer()
 }
-func Handler() {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	delivery.RunServer()
 }
