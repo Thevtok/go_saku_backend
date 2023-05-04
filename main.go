@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	http.HandleFunc("/", Handler)
 	delivery.RunServer()
 }
 func Handler(w http.ResponseWriter, r *http.Request) {
