@@ -21,3 +21,6 @@ time="2023-04-29T15:15:48+07:00" level=error msg="Invalid Input : invalid reques
 time="2023-04-30T11:22:32+07:00" level=info msg="Claim Token Succesfully"
 time="2023-04-30T12:29:16+07:00" level=info msg="Claim Token Succesfully"
 time="2023-04-30T12:29:54+07:00" level=info msg="Succes to get user"
+time="2023-05-04T07:34:01+07:00" level=info msg="Claim Token Succesfully"
+time="2023-05-04T07:35:57+07:00" level=info msg="Claim Token Succesfully"
+time="2023-05-04T07:37:36+07:00" level=info msg="Claim Token Succesfully"
