@@ -1,4 +1,4 @@
-package delivery
+package api
 
 import (
 	"log"

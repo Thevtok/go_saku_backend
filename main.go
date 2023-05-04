@@ -1,7 +1,7 @@
 package main
 
-import "github.com/ReygaFitra/inc-final-project.git/delivery"
+import "github.com/ReygaFitra/inc-final-project.git/api"
 
 func main() {
-	delivery.RunServer()
+	api.RunServer()
 }
