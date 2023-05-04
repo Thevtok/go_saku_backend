@@ -1,11 +1,21 @@
 {
     "version": 2,
-    "functions": { "api": { "handler": "main.Handler" } },
     "builds": [
-      { "src": "main.go", "use": "@vercel/go" }
+      {
+        "src": "*.go",
+        "use": "@vercel/go"
+      }
     ],
     "routes": [
-      { "src": "/.*", "dest": "/" }
-    ]
+      {
+        "src": "/.*",
+        "dest": "/"
+      }
+    ],
+    "functions": {
+      "api/hello": {
+        "handler": "handler.Handler"
+      }
+    }
   }
   
