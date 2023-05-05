@@ -77,7 +77,7 @@ func RunServer() {
 	cardUsecase := usecase.NewCardUsecase(cardRepo)
 	cardController := controller.NewCardController(cardUsecase)
 
-	cardRouter.GET("user/card", cardController.FindAllCard)
+	r.GET("user/card", cardController.FindAllCard)
 	cardRouter.GET("/:user_id", cardController.FindCardByUserID)
 	cardRouter.GET("/:user_id/:card_id", cardController.FindCardByCardID)
 	cardRouter.POST("/add/:user_id", cardController.CreateCardID)

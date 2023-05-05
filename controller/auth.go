@@ -139,9 +139,9 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	// Retrieve the user by email
 	foundUser, err := l.usecase.Login(user.Email, user.Password)
 	if err != nil {
-		logrus.Errorf("server eror")
+		logrus.Errorf("invalid email or password")
 		log.Println(err) // log the error message
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
 		return
 	}
 
