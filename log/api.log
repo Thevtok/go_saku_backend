@@ -1,0 +1,6 @@
+time="2023-05-05T13:49:42+07:00" level=info msg="Claim Token Succesfully"
+time="2023-05-05T13:50:19+07:00" level=info msg="Deposit Transaction created Successfully"
+time="2023-05-05T14:21:42+07:00" level=info msg="Success to get users"
+time="2023-05-05T16:20:40+07:00" level=info msg="Claim Token Succesfully"
+time="2023-05-05T16:20:56+07:00" level=info msg="Deposit Transaction created Succesfully"
+time="2023-05-05T16:21:47+07:00" level=error msg="Bank_account_id not found: bank account not found"

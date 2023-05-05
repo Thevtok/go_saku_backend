@@ -30,12 +30,12 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	result := c.bankAccUsecase.FindAllBankAcc()
 	if result == nil {
 		logrus.Errorf("Failed to get user Bank Account: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user Bank Account")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get user Bank Account")
 		return
 	}
 
 	logrus.Info("Data loaded Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
 }
 
 func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
@@ -49,19 +49,19 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid UserID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid UserID")
 		return
 	}
 
 	existingUser, err := c.bankAccUsecase.FindBankAccByUserID(uint(userID))
 	if err != nil {
 		logrus.Errorf("Bank Account not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank Account not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Bank Account not found")
 		return
 	}
 
 	logrus.Info("Data loaded Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
 }
 
 func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
@@ -75,19 +75,19 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	userID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid AccountID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid AccountID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid AccountID")
 		return
 	}
 
 	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(userID))
 	if existingUser == nil {
 		logrus.Errorf("Bank Account not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Bank not found")
 		return
 	}
 
 	logrus.Info("Data loaded Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, existingUser)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
@@ -101,7 +101,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 	userID, exists := ctx.Get("user_id")
 	if !exists {
 		logrus.Errorf("Failed to get UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get userID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get userID")
 		return
 	}
 
@@ -109,18 +109,18 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 	err = ctx.BindJSON(&newBankAcc)
 	if err != nil {
 		logrus.Errorf("Invalid request body: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	result, err := c.bankAccUsecase.Register(userID.(uint), &newBankAcc)
 	if err != nil {
 		logrus.Errorf("Failed to create Bank Account: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to create Bank Account")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Bank Account")
 		return
 	}
 	logrus.Info("Bank Account created Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
 }
 
 func (c *BankAccController) Edit(ctx *gin.Context) {
@@ -134,32 +134,32 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid AccountID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid AccountID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid AccountID")
 		return
 	}
 
 	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(accountID))
 	if existingUser == nil {
 		logrus.Errorf("Bank Account not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Bank Account not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Bank Account not found")
 		return
 	}
 
 	user := &model.BankAcc{}
 	if err := mapstructure.Decode(existingUser, user); err != nil {
 		logrus.Errorf("Failed to edit Bank: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to edit Bank")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to edit Bank")
 		return
 	}
 
 	if err := ctx.BindJSON(user); err != nil {
 		logrus.Errorf("Invalid request body: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid request body")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 	updateBank := c.bankAccUsecase.Edit(user)
 	logrus.Info("Bank Account edited Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, updateBank)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, updateBank)
 }
 
 func (c *BankAccController) UnregAll(ctx *gin.Context) {
@@ -173,7 +173,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid UserID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid UserID")
 		return
 	}
 
@@ -182,25 +182,25 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	}
 	res := c.bankAccUsecase.UnregAll(user)
 	logrus.Info("Bank Account deleted Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
 
 func (c *BankAccController) UnregByAccountId(ctx *gin.Context) {
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid AccountID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusBadRequest, "Invalid AccountID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid AccountID")
 		return
 	}
 
 	err = c.bankAccUsecase.UnregByAccountID(uint(accountID))
 	if err != nil {
 		logrus.Errorf("Failed to delete Bank Account: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to delete Bank Account")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to delete Bank Account")
 		return
 	}
 	logrus.Info("Bank Account deleted Successfully")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, "Bank account deleted successfully")
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, "Bank account deleted successfully")
 }
 
 func NewBankAccController(u usecase.BankAccUsecase) *BankAccController {

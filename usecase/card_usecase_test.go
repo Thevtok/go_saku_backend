@@ -12,7 +12,7 @@ import (
 
 var dummyCard = []model.Card{
 	{
-		CardID: 		1,
+		CardID:         1,
 		UserID:         1,
 		CardType:       "BRI",
 		CardNumber:     "1234-5678-9101-3456",
@@ -20,7 +20,7 @@ var dummyCard = []model.Card{
 		CVV:            "123",
 	},
 	{
-		CardID: 		2,
+		CardID:         2,
 		UserID:         2,
 		CardType:       "BCA",
 		CardNumber:     "4321-8765-9101-3456",

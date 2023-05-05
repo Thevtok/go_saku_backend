@@ -2,36 +2,27 @@ package response
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
 type ErrorResponse struct {
-	Message string `json:"message"`
-	Code    int    `json:"code"`
+	Status     bool   `json:"status"`
+	StatusCode int    `json:"statusCode"`
+	Message    string `json:"message"`
+
+	Result any `json:"result"`
 }
 
-type ErrorHandler interface {
-	HandleError(w http.ResponseWriter, r *http.Request, err error)
-}
+func JSONErrorResponse(w http.ResponseWriter, status bool, statusCode int, result any) {
+	res := ErrorResponse{
+		Status:     status,
+		StatusCode: statusCode,
+		Result:     result,
 
-type MyErrorHandler struct{}
-
-func JSONErrorResponse(w http.ResponseWriter, status int, data interface{}) {
+		Message: "request failed",
+	}
+	jsonRes, _ := json.Marshal(res)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Println(err)
-		http.Error(w, "Failed to encode response data to JSON format", http.StatusInternalServerError)
-	}
-}
-
-func (h *MyErrorHandler) HandleError(w http.ResponseWriter, r *http.Request, err error) {
-	errorResponse := ErrorResponse{
-		Message: err.Error(),
-		Code:    http.StatusInternalServerError,
-	}
-
-	JSONErrorResponse(w, http.StatusInternalServerError, errorResponse)
+	w.WriteHeader(statusCode)
+	w.Write(jsonRes)
 }
