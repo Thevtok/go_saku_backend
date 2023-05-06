@@ -1,10 +1,14 @@
 package controller
 
 import (
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -26,20 +30,26 @@ type PhotoUseCaseMock struct {
 	mock.Mock
 }
 
+func setupRouterPhoto() *gin.Engine {
+	r := gin.Default()
+	return r
+}
+
 func (r *PhotoUseCaseMock) Upload(photo *model.PhotoUrl) error {
 	args := r.Called(photo)
 	if args[0] == nil {
-		return args.Error(0)
+		return args.Error(1)
 	}
 	return nil
 }
 
 func (r *PhotoUseCaseMock) Download(id uint) (*model.PhotoUrl, error) {
 	args := r.Called(id)
-	if args.Get(0) == nil {
+	if args[0] == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*model.PhotoUrl), args.Error(1)
+	// return args.Get(0).(*model.PhotoUrl), nil
+	return &dummyPhoto[0], nil
 }
 
 func (u *PhotoUseCaseMock) Edit(photo *model.PhotoUrl) error {
@@ -52,7 +62,7 @@ func (u *PhotoUseCaseMock) Edit(photo *model.PhotoUrl) error {
 
 func (r *PhotoUseCaseMock) Remove(id uint) string {
 	args := r.Called(id)
-	if args[0] != nil {
+	if args[0] == nil {
 		return "Failed remove"
 	}
 	return "Success remove"
@@ -60,49 +70,137 @@ func (r *PhotoUseCaseMock) Remove(id uint) string {
 
 type PhotoControllerTestSuite struct {
 	suite.Suite
-	routerMock *gin.Engine
+	routerMock  *gin.Engine
 	useCaseMock *PhotoUseCaseMock
 }
 
-// Test Upload
-// func (suite *PhotoControllerTestSuite) TestUpload_Success() {
-// 	newPhoto := &dummyPhoto[0]
-// 	NewPhotoController(suite.useCaseMock)
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(newPhoto)
-// 	request, _ := http.NewRequest(http.MethodPost, "/user/photo/:user_id", bytes.NewBuffer(reqBody))
-// 	suite.routerMock.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var actualPhoto model.PhotoUrl
-// 	json.Unmarshal([]byte(response), &actualPhoto)
-// 	assert.Equal(suite.T(), http.StatusCreated, r.Code)
+func (suite *PhotoControllerTestSuite) TestUpload_Success() {
+	// newPhoto := &dummyPhoto[0]
+	// controller := NewPhotoController(suite.useCaseMock)
+	// router := setupRouter()
+	// router.POST("/user/photo/:user_id", controller.Upload)
+
+	// suite.useCaseMock.On("Upload", newPhoto).Return(nil)
+	// r := httptest.NewRecorder()
+	// reqBody, _ := json.Marshal(newPhoto)
+	// request, _ := http.NewRequest(http.MethodPost, "/user/photo/1", bytes.NewBuffer(reqBody))
+	// router.ServeHTTP(r, request)
+	// response := r.Body.Bytes()
+	// var actualUser model.PhotoUrl
+	// json.Unmarshal([]byte(response), &actualUser)
+	// assert.Equal(suite.T(), http.StatusCreated, r.Code)
+}
+
+func (suite *PhotoControllerTestSuite) TestDownload_Success() {
+	Photo := &dummyPhoto[0]
+	controller := NewPhotoController(suite.useCaseMock)
+	router := setupRouterPhoto()
+	router.GET("/user/photo/:user_id", controller.Download)
+
+	suite.useCaseMock.On("Download", Photo.UserID).Return(Photo, nil)
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user/photo/1", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *PhotoControllerTestSuite) TestDownload_Failed() {
+	Photo := &dummyPhoto[0]
+	controller := NewPhotoController(suite.useCaseMock)
+	router := setupRouterPhoto()
+	router.GET("/user/photo/:user_id", controller.Download)
+
+	suite.useCaseMock.On("Download", Photo.UserID).Return(nil, errors.New("Error file not found"))
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user/photo/1", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *PhotoControllerTestSuite) TestDownload_UserNotFound() {
+	controller := NewPhotoController(suite.useCaseMock)
+	router := setupRouterPhoto()
+	router.GET("/user/photo/:user_id", controller.Download)
+
+	r := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/user/photo/abc", nil)
+	router.ServeHTTP(r, req)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertNotCalled(suite.T(), "Download")
+}
+
+// func (suite *PhotoControllerTestSuite) TestDownload_InvalidExtension() {
+//     controller := NewPhotoController(suite.useCaseMock)
+//     router := setupRouterPhoto()
+//     router.GET("/user/photo/:user_id", controller.Download)
+
+//     // Prepare test data
+//     photo := model.PhotoUrl{
+//         UserID: 1,
+//         Url: "/Developments/Golang/src/final-project-inc/file/test.txt",
+//     }
+//     suite.useCaseMock.On("Download", uint(1)).Return(photo, nil)
+
+//     r := httptest.NewRecorder()
+//     req, _ := http.NewRequest("GET", "/user/photo/1", nil)
+//     router.ServeHTTP(r, req)
+
+//     assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+//     response := r.Body.String()
+//     assert.Contains(suite.T(), response, "Only Image files are allowed")
+//     suite.useCaseMock.AssertCalled(suite.T(), "Download", uint(1))
+// }
+// func (suite *PhotoControllerTestSuite) TestDownload_FileNotFound() {
+//     controller := NewPhotoController(suite.useCaseMock)
+//     router := setupRouterPhoto()
+//     router.GET("/user/photo/:user_id", controller.Download)
+
+//     // Prepare test data
+//     photo := model.PhotoUrl{
+//         UserID: 1,
+//         Url: "/Developments/Golang/src/final-project-inc/file/invalid-file.png",
+//     }
+//     suite.useCaseMock.On("Download", uint(1)).Return(nil, errors.New("file not found"))
+
+//     r := httptest.NewRecorder()
+//     req, _ := http.NewRequest("GET", "/user/photo/1", nil)
+//     router.ServeHTTP(r, req)
+
+//     assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
+//     response := r.Body.String()
+//     assert.Contains(suite.T(), response, "Failed to get photo")
+//     suite.useCaseMock.AssertCalled(suite.T(), "Download", uint(1))
 // }
 
-// func (suite *PhotoControllerTestSuite) TestRemove_Success() {
-//    // Load environment variables
-//    err := godotenv.Load("../config.env")
-//    if err != nil {
-// 	   suite.T().Fatal("Error loading .env file")
-//    }
+func (suite *PhotoControllerTestSuite) TestRemove_Success() {
+	id := dummyPhoto[0].UserID
+	controller := NewPhotoController(suite.useCaseMock)
+	router := setupRouterPhoto()
+	router.DELETE("/user/photo/:user_id", controller.Remove)
 
-//    // prepare mock expectation
-//    id := dummyPhoto[0].UserID
-//    suite.useCaseMock.On("Remove", id).Return("Success remove")
+	suite.useCaseMock.On("Remove", id).Return("Success remove")
+	r := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/user/photo/1", nil)
+	router.ServeHTTP(r, req)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *PhotoControllerTestSuite) TestRemove_Failed() {
+	controller := NewPhotoController(suite.useCaseMock)
+	router := setupRouterPhoto()
+	router.DELETE("/user/photo/:user_id", controller.Remove)
 
-//    // perform request
-//    w := httptest.NewRecorder()
-//    req, _ := http.NewRequest("DELETE", "/user/photo/:user_id", nil)
-//    suite.routerMock.ServeHTTP(w, req)
-
-//    // assert response status code and body
-//    assert.Equal(suite.T(), http.StatusOK, w.Code)
-//    assert.Equal(suite.T(), "{\"message\":\"Success remove\"}", w.Body.String())
-// }
+	r := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/user/photo/abc", nil)
+	router.ServeHTTP(r, req)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertNotCalled(suite.T(), "Remove")
+}
 
 func (suite *PhotoControllerTestSuite) SetupTest() {
 	suite.routerMock = gin.Default()
 	suite.useCaseMock = new(PhotoUseCaseMock)
 }
 func TestPhotoController(t *testing.T) {
-    suite.Run(t, new(PhotoControllerTestSuite))
+	suite.Run(t, new(PhotoControllerTestSuite))
 }

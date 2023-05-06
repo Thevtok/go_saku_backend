@@ -24,13 +24,12 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	result := c.cardUsecase.FindAllCard()
 	if result == nil {
 		logrus.Errorf("Failed to get user card: %v", err)
-		response.JSONErrorResponse(ctx.Writer, http.StatusInternalServerError, "Failed to get user Card")
+		response.JSONErrorResponse(ctx.Writer, http.StatusNotFound, "Failed to get user Card")
 		return
 	}
 
@@ -43,7 +42,6 @@ func (c *CardController) FindCardByUserID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -69,7 +67,6 @@ func (c *CardController) FindCardByCardID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
@@ -95,7 +92,6 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	userID, exists := ctx.Get("user_id")
@@ -127,7 +123,7 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 	}
 
 	logrus.Infof("Success to create card ID")
-	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
+	response.JSONSuccess(ctx.Writer, http.StatusCreated, result)
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
@@ -135,7 +131,6 @@ func (c *CardController) Edit(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)
@@ -181,7 +176,6 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -199,12 +193,11 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, http.StatusOK, result)
 }
 
-func (c *CardController) UnregByCardId(ctx *gin.Context) {
+func (c *CardController) UnregByCardID(ctx *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
 	logrus.SetOutput(logger)
 
 	cardID, err := strconv.ParseUint(ctx.Param("card_id"), 10, 64)

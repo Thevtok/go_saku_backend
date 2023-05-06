@@ -24,7 +24,7 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	result := c.bankAccUsecase.FindAllBankAcc()
@@ -43,7 +43,7 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -69,7 +69,7 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
@@ -95,7 +95,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, exists := ctx.Get("user_id")
@@ -135,7 +135,7 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
@@ -181,7 +181,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -194,7 +194,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	user := &model.BankAcc{
 		UserID: uint(userID),
 	}
-	res := c.bankAccUsecase.UnregAll(user)
+	res := c.bankAccUsecase.UnregAll(user.UserID)
 	logrus.Info("Bank Account deleted Successfully")
 	response.JSONSuccess(ctx.Writer, http.StatusOK, res)
 }
@@ -204,7 +204,7 @@ func (c *BankAccController) UnregByAccountID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)

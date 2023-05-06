@@ -27,10 +27,10 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	// Body Form data user_id
-	userID, err := strconv.Atoi(ctx.PostForm("user_id")) 
+	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
@@ -73,19 +73,19 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write file"})
 		return
 	}
-		// Simpan informasi file ke database
-		photo := &model.PhotoUrl{
-			UserID: uint(userID),
-			Url:    path,
-		}
-    err = c.photoUsecase.Upload(photo)
-    if err != nil {
+	// Simpan informasi file ke database
+	photo := &model.PhotoUrl{
+		UserID: uint(userID),
+		Url:    path,
+	}
+	err = c.photoUsecase.Upload(photo)
+	if err != nil {
 		logrus.Errorf("Failed to upload photo: %v", err)
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload photo"})
-        return
-    }
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload photo"})
+		return
+	}
 	logrus.Info("Photo uploaded succesfully")
-    ctx.JSON(http.StatusCreated, gin.H{"message": "photo uploaded successfully"})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "photo uploaded successfully"})
 }
 
 func (c *PhotoController) Download(ctx *gin.Context) {
@@ -94,9 +94,9 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
-	userID, err := strconv.Atoi(ctx.Param("user_id")) 
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})
@@ -129,7 +129,7 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 	ctx.Header("Content-Type", contentType)
 	ctx.File(photo.Url)
 	logrus.Info("Photo get succesfully")
-    ctx.JSON(http.StatusOK, gin.H{"message": "Photo get successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"message": "Photo get successfully"})
 }
 
 func (c *PhotoController) Edit(ctx *gin.Context) {
@@ -138,10 +138,10 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	// Body Form data user_id
-	userID, err := strconv.Atoi(ctx.PostForm("user_id")) 
+	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
@@ -184,19 +184,19 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write file"})
 		return
 	}
-		// Simpan informasi file ke database
-		photo := &model.PhotoUrl{
-			UserID: uint(userID),
-			Url:    path,
-		}
-    err = c.photoUsecase.Edit(photo)
-    if err != nil {
+	// Simpan informasi file ke database
+	photo := &model.PhotoUrl{
+		UserID: uint(userID),
+		Url:    path,
+	}
+	err = c.photoUsecase.Edit(photo)
+	if err != nil {
 		logrus.Errorf("Failed to upload photo: %v", err)
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload photo"})
-        return
-    }
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload photo"})
+		return
+	}
 	logrus.Info("Photo Edit succesfully")
-    ctx.JSON(http.StatusOK, gin.H{"message": "photo Edit successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"message": "photo Edit successfully"})
 }
 
 func (c *PhotoController) Remove(ctx *gin.Context) {
@@ -205,9 +205,9 @@ func (c *PhotoController) Remove(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
-	userID, err := strconv.Atoi(ctx.Param("user_id")) 
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user_id"})

@@ -26,7 +26,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -95,7 +95,7 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -158,7 +158,7 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -224,7 +224,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	// Parse transfer data from request body
@@ -274,7 +274,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	// Parse user_id from URL parameter
@@ -328,7 +328,7 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	userId, err := strconv.Atoi(ctx.Param("user_id"))

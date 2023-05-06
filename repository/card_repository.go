@@ -85,7 +85,7 @@ func (r *cardRepository) GetByCardID(id uint) (*model.Card, error) {
 }
 
 func (r *cardRepository) Create(id uint, newCard *model.CardResponse) (any, error) {
-	query := "INSERT INTO mst_card (user_id, card_type, card_number, expiration_date, cvv) VALUES ($1, $2, $3, $4, $5) 	RETURNING card_id"
+	query := "INSERT INTO mst_card (user_id, card_type, card_number, expiration_date, cvv) VALUES ($1, $2, $3, $4, $5) RETURNING card_id"
 	_, err := r.db.Exec(query, id, newCard.CardType, newCard.CardNumber, newCard.ExpirationDate, newCard.CVV)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data")

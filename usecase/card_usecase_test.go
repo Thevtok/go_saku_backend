@@ -105,8 +105,8 @@ func (u *cardRepoMock) Update(card *model.Card) string {
 	return "Card Account updated Successfully"
 }
 
-func (u *cardRepoMock) DeleteByUserID(id uint) string {
-	args := u.Called(id)
+func (u *cardRepoMock) DeleteByUserID(userID uint) string {
+	args := u.Called(userID)
 	if args.Get(0) == nil {
 		return "failed to delete Card Account"
 	}
@@ -214,16 +214,17 @@ func (suite *CardUsecaseTestSuite) TestEdit_Failed() {
 
 func (suite *CardUsecaseTestSuite) TestUnregAll_Success() {
 	userID := uint(1)
+	card := &dummyCard[0]
 	cardUsecase := NewCardUsecase(suite.cardaccRepoMock)
 	suite.cardaccRepoMock.On("DeleteByUserID", userID).Return("All Card Account deleted Successfully")
-	result := cardUsecase.UnregALL(userID)
+	result := cardUsecase.UnregALL(card.UserID)
 	assert.NotNil(suite.T(), result)
 }
 func (suite *CardUsecaseTestSuite) TestUnregAll_Failed() {
-	userID := uint(1)
+	card := &dummyCard[0]
 	cardUsecase := NewCardUsecase(suite.cardaccRepoMock)
-	suite.cardaccRepoMock.On("DeleteByUserID", userID).Return("Failed to delete Card Account")
-	err := cardUsecase.UnregALL(userID)
+	suite.cardaccRepoMock.On("DeleteByUserID", card.UserID).Return("Failed to delete Card Account")
+	err := cardUsecase.UnregALL(card.UserID)
 	assert.NotNil(suite.T(), err)
 }
 

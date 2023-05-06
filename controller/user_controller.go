@@ -24,7 +24,7 @@ func (c *UserController) FindUsers(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 
 	res := c.usecase.FindUsers()
@@ -44,7 +44,7 @@ func (c *UserController) FindUserByUsername(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	username := ctx.Param("username")
 	res, _ := c.usecase.FindByUsername(username)
@@ -63,7 +63,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	newUser := model.UserCreate{}
 	if err := ctx.BindJSON(&newUser); err != nil {
@@ -95,7 +95,7 @@ func (c *UserController) EditEmailPassword(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	// Retrieve the user_id parameter from the request
 	user_id_str := ctx.Param("user_id")
@@ -146,7 +146,7 @@ func (c *UserController) EditProfile(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	// Retrieve the user_id parameter from the request
 	user_id_str := ctx.Param("user_id")
@@ -198,7 +198,7 @@ func (c *UserController) Unreg(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	username := ctx.Param("username")
 	user := &model.User{

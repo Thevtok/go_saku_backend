@@ -126,7 +126,7 @@ func (u *BankAccUsecaseMock) FindAllBankAcc() any {
 	return dummyBankAcc
 }
 
-func (u *BankAccUsecaseMock) FindBankAccByUserID(id uint) (any, error) {
+func (u *BankAccUsecaseMock) FindBankAccByUserID(id uint) ([]*model.BankAccResponse, error) {
 	args := u.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -158,8 +158,8 @@ func (u *BankAccUsecaseMock) Edit(bankAcc *model.BankAcc) string {
 	return "Bank Account updated Successfully"
 }
 
-func (u *BankAccUsecaseMock) UnregAll(bankAcc *model.BankAcc) string {
-	args := u.Called(bankAcc.UserID)
+func (u *BankAccUsecaseMock) UnregAll(userID uint) string {
+	args := u.Called(userID)
 	if args.Get(0) == nil {
 		return "failed to delete Bank Account"
 	}
@@ -244,11 +244,6 @@ func (suite *BankAccControllerTestSuite) TestFinBankAccByUserID_InvalidAccountID
 	router.ServeHTTP(r, request)
 	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
 	suite.usecaseMock.AssertExpectations(suite.T())
-}
-
-func (suite *BankAccControllerTestSuite) SetupTest() {
-	suite.routerMock = gin.Default()
-	suite.usecaseMock = new(BankAccUsecaseMock)
 }
 
 func (suite *BankAccControllerTestSuite) TestFindBankAccByAccountID_Success() {
@@ -344,6 +339,24 @@ func (suite *BankAccControllerTestSuite) TestEdit_AccountNotFound() {
 	suite.usecaseMock.AssertExpectations(suite.T())
 }
 
+// func (suite *BankAccControllerTestSuite) TestEdit_Failed() {
+// 	bankAcc := dummyBankAcc[0]
+// 	controller := NewBankAccController(suite.usecaseMock)
+// 	router := setupRouterBankAcc()
+// 	router.PUT("/user/bank/update/:user_id/:account_id", controller.Edit)
+
+// 	suite.usecaseMock.On("FindBankAccByAccountID", uint(1)).Return(&bankAcc, nil)
+// 	expectedErr := errors.New("Failed to edit Bank")
+// 	suite.usecaseMock.On("Edit", mock.Anything).Return(expectedErr)
+// 	reqBody, _ := json.Marshal(bankAcc)
+// 	request, _ := http.NewRequest(http.MethodPut, "/user/bank/update/1/1", bytes.NewBuffer(reqBody))
+// 	r := httptest.NewRecorder()
+// 	router.ServeHTTP(r, request)
+
+// 	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
+// 	suite.usecaseMock.AssertExpectations(suite.T())
+// }
+
 func (suite *BankAccControllerTestSuite) TestUnregAll_Success() {
 	bankAcc := dummyBankAcc[0]
 	controller := NewBankAccController(suite.usecaseMock)
@@ -410,6 +423,11 @@ func (suite *BankAccControllerTestSuite) TestUnregByAccountID_Failed() {
 	router.ServeHTTP(r, request)
 	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
 	suite.usecaseMock.AssertExpectations(suite.T())
+}
+
+func (suite *BankAccControllerTestSuite) SetupTest() {
+	suite.routerMock = gin.Default()
+	suite.usecaseMock = new(BankAccUsecaseMock)
 }
 
 func TestBankAccController(t *testing.T) {
