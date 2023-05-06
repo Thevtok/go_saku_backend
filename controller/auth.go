@@ -26,7 +26,7 @@ func generateToken(user *model.Credentials) (string, error) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	// Set token claims
 	claims := jwt.MapClaims{}
@@ -57,7 +57,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
@@ -126,7 +126,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	var user model.Credentials
 
@@ -180,7 +180,7 @@ func AuthMiddlewareID() gin.HandlerFunc {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		// Add log statement here
@@ -257,7 +257,7 @@ func AuthMiddlewareRole() gin.HandlerFunc {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+	
 	logrus.SetOutput(logger)
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")

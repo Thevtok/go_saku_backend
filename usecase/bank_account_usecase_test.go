@@ -262,18 +262,17 @@ func (suite *BankAccUsecaseTestSuite) TestEdit_Failed() {
 
 func (suite *BankAccUsecaseTestSuite) TestUnregAll_Success() {
 	userID := uint(1)
-	bankAcc := &dummyBankAcc[0]
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("All Bank Account deleted Successfully")
-	result := bankAccUsecase.UnregAll(bankAcc.UserID)
+	result := bankAccUsecase.UnregAll(userID)
 	assert.NotNil(suite.T(), result)
 }
 
 func (suite *BankAccUsecaseTestSuite) TestUnregAll_Failed() {
-	bankAcc := &dummyBankAcc[0]
+	userID := uint(1)
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("DeleteByUserID", bankAcc.UserID).Return("Failed to delete Bank Account")
-	err := bankAccUsecase.UnregAll(bankAcc.UserID)
+	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("Failed to delete Bank Account")
+	err := bankAccUsecase.UnregAll(userID)
 	assert.NotNil(suite.T(), err)
 }
 
