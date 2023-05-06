@@ -14,13 +14,6 @@ import (
 )
 
 func RunServer() {
-	// Membuat file log
-	logFile, err := utils.CreateLogFile()
-	if err != nil {
-		log.Fatalf("Failed to create log file: %v", err)
-	}
-	defer logFile.Close()
-
 	db := config.LoadDatabase()
 	defer db.Close()
 
@@ -68,7 +61,7 @@ func RunServer() {
 	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
 	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountID)
 
-	// Card Router
+	// CarDUnregByAccountID Router
 	cardRouter := r.Group("/user/card")
 	cardRouter.Use(authMiddlewareId)
 
@@ -77,13 +70,13 @@ func RunServer() {
 	cardUsecase := usecase.NewCardUsecase(cardRepo)
 	cardController := controller.NewCardController(cardUsecase)
 
-	r.GET("user/card", cardController.FindAllCard)
+	r.GET("user/card", authMiddlewareRole, cardController.FindAllCard)
 	cardRouter.GET("/:user_id", cardController.FindCardByUserID)
 	cardRouter.GET("/:user_id/:card_id", cardController.FindCardByCardID)
 	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
 	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
 	cardRouter.DELETE("/:user_id", cardController.UnregAll)
-	cardRouter.DELETE("/:user_id/card_id", cardController.UnregByCardId)
+	cardRouter.DELETE("/:user_id/:card_id", cardController.UnregByCardID)
 
 	// Photo Router
 	photoRouter := r.Group("/user/photo")

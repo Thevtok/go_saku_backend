@@ -1,10 +1,16 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -190,219 +196,220 @@ type UserControllerTestSuite struct {
 	useCaseMock *UserUseCaseMock
 }
 
-// func (suite *UserControllerTestSuite) TestFindUsers_Success() {
-// 	Users := &dummyUserRespons
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.GET("/user", controller.FindUsers)
+func (suite *UserControllerTestSuite) TestFindUsers_Success() {
+	Users := &dummyUserRespons
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.GET("/user", controller.FindUsers)
 
-// 	suite.useCaseMock.On("FindUsers").Return(Users)
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodGet, "/user", nil)
-// 	router.ServeHTTP(r, request)
-// 	assert.Equal(suite.T(), http.StatusOK, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-// func (suite *UserControllerTestSuite) TestFindUsers_Failed() {
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.GET("/user", controller.FindUsers)
+	suite.useCaseMock.On("FindUsers").Return(Users)
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestFindUsers_Failed() {
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.GET("/user", controller.FindUsers)
 
-// 	suite.useCaseMock.On("FindUsers").Return(nil)
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodGet, "/user", nil)
-// 	router.ServeHTTP(r, request)
-// 	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
+	suite.useCaseMock.On("FindUsers").Return(nil)
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
 
-// func (suite *UserControllerTestSuite) TestFindByUsername_Success() {
-// 	Users := &dummyUserRespons[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.GET("/user/:username", controller.FindUserByUsername)
+func (suite *UserControllerTestSuite) TestFindByUsername_Success() {
+	Users := &dummyUserRespons[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.GET("/user/:username", controller.FindUserByUsername)
 
-// 	suite.useCaseMock.On("FindByUsername", Users.Username).Return(Users, nil)
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodGet, "/user/username1", nil)
-// 	router.ServeHTTP(r, request)
-// 	assert.Equal(suite.T(), http.StatusOK, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-// func (suite *UserControllerTestSuite) TestFindByUsername_Failed() {
-// 	Users := &dummyUserRespons[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.GET("/user/:username", controller.FindUserByUsername)
+	suite.useCaseMock.On("FindByUsername", Users.Username).Return(Users, nil)
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user/username1", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
 
-// 	suite.useCaseMock.On("FindByUsername", Users.Username).Return(nil, errors.New("User not found"))
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodGet, "/user/username1", nil)
-// 	router.ServeHTTP(r, request)
-// 	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
+func (suite *UserControllerTestSuite) TestRegister_Success() {
+	newUser := &dummyUserCreate[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.POST("/register", controller.Register)
 
-// func (suite *UserControllerTestSuite) TestRegister_Success() {
-// 	newUser := &dummyUserCreate[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.POST("/register", controller.Register)
+	suite.useCaseMock.On("Register", newUser).Return(newUser, nil)
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(newUser)
+	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var actualUser model.UserCreate
+	json.Unmarshal([]byte(response), &actualUser)
+	assert.Equal(suite.T(), http.StatusCreated, r.Code)
+}
+func (suite *UserControllerTestSuite) TestRegister_Failed() {
+	newUser := &model.UserCreate{}
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.POST("/register", controller.Register)
 
-// 	suite.useCaseMock.On("Register", newUser).Return(newUser, nil)
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(newUser)
-// 	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var actualUser model.UserCreate
-// 	json.Unmarshal([]byte(response), &actualUser)
-// 	assert.Equal(suite.T(), http.StatusCreated, r.Code)
-// }
-// func (suite *UserControllerTestSuite) TestRegister_Failed() {
-// 	newUser := &model.UserCreate{}
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.POST("/register", controller.Register)
+	suite.useCaseMock.On("Register", newUser).Return(nil, errors.New("Invalid Input"))
 
-// 	suite.useCaseMock.On("Register", newUser).Return(nil, errors.New("Invalid Input"))
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(newUser)
+	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
 
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(newUser)
-// 	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+}
+func (suite *UserControllerTestSuite) TestRegisterBindJSON_Failed() {
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.POST("/register", controller.Register)
 
-// 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
-// }
-// func (suite *UserControllerTestSuite) TestRegisterBindJSON_Failed() {
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.POST("/register", controller.Register)
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodPost, "/register", nil)
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var actualUser model.UserCreate
+	json.Unmarshal([]byte(response), &actualUser)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+}
+func (suite *UserControllerTestSuite) TestRegister_Error() {
+	newUser := &dummyUserCreate[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.POST("/register", controller.Register)
 
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodPost, "/register", nil)
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var actualUser model.UserCreate
-// 	json.Unmarshal([]byte(response), &actualUser)
-// 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
-// }
-// func (suite *UserControllerTestSuite) TestRegister_Error() {
-// 	newUser := &dummyUserCreate[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.POST("/register", controller.Register)
+	expectedErr := errors.New("Failed to Register User")
+	suite.useCaseMock.On("Register", newUser).Return(nil, expectedErr)
 
-// 	expectedErr := errors.New("Failed to Register User")
-// 	suite.useCaseMock.On("Register", newUser).Return(nil, expectedErr)
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(newUser)
+	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
 
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(newUser)
-// 	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
+	assert.Contains(suite.T(), response, "Failed to Register User")
+}
 
-// 	response := r.Body.String()
-// 	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
-// 	assert.Contains(suite.T(), response, "Failed to Register User")
-// }
+func (suite *UserControllerTestSuite) TestUnreg_Success() {
+	user := &model.User{
+		Username: "username1",
+	}
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.DELETE("/user/:username", controller.Unreg)
 
-// func (suite *UserControllerTestSuite) TestUnreg_Success() {
-// 	user := &model.User{
-// 		Username: "username1",
-// 	}
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.DELETE("/user/:username", controller.Unreg)
+	suite.useCaseMock.On("Unreg", user).Return("Success Delete user")
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodDelete, "/user/username1", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestFindByUsername_Failed() {
+	Users := &dummyUserRespons[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.GET("/user/:username", controller.FindUserByUsername)
 
-// 	suite.useCaseMock.On("Unreg", user).Return("Success Delete user")
-// 	r := httptest.NewRecorder()
-// 	request, _ := http.NewRequest(http.MethodDelete, "/user/username1", nil)
-// 	router.ServeHTTP(r, request)
-// 	assert.Equal(suite.T(), http.StatusOK, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
+	suite.useCaseMock.On("FindByUsername", Users.Username).Return(nil, errors.New("User not found"))
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user/username1", nil)
+	router.ServeHTTP(r, request)
+	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
 
-// func (suite *UserControllerTestSuite) TestEditProfile_Success() {
-// 	user := &dummyUser[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.PUT("/user/profile/:user_id", controller.EditProfile)
+func (suite *UserControllerTestSuite) TestEditProfile_Success() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-// 	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
-// 	suite.useCaseMock.On("EditProfile", user).Return("Success update user")
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(user)
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var result map[string]string
-// 	json.Unmarshal([]byte(response), &result)
-// 	assert.Equal(suite.T(), http.StatusOK, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-// func (suite *UserControllerTestSuite) TestEditProfile_UserNotFound() {
-// 	user := &dummyUser[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.PUT("/user/profile/:user_id", controller.EditProfile)
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+	suite.useCaseMock.On("EditProfile", user).Return("Success update user")
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditProfile_UserNotFound() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-// 	suite.useCaseMock.On("FindById", uint(1)).Return(nil, errors.New("User not found"))
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(user)
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var result map[string]string
-// 	json.Unmarshal([]byte(response), &result)
-// 	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-// func (suite *UserControllerTestSuite) TestEditProfile_InvalidUserID() {
-// 	user := &dummyUser[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.PUT("/user/profile/:user_id", controller.EditProfile)
+	suite.useCaseMock.On("FindById", uint(1)).Return(nil, errors.New("User not found"))
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditProfile_InvalidUserID() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-// 	r := httptest.NewRecorder()
-// 	reqBody, _ := json.Marshal(user)
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/invalid_id", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var result map[string]string
-// 	json.Unmarshal([]byte(response), &result)
-// 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/profile/invalid_id", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+
 // func (suite *UserControllerTestSuite) TestEditProfile_InvalidExistingUser() {
 // 	controller := NewUserController(suite.useCaseMock)
 // 	router := setupRouter()
 // 	router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-// 	suite.useCaseMock.On("FindById", uint(1)).Return(nil, errors.New("user not found"))
-// 	reqBody, _ := json.Marshal(model.User{})
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-// 	w := httptest.NewRecorder()
-// 	router.ServeHTTP(w, request)
-// 	assert.Equal(suite.T(), http.StatusInternalServerError, w.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-// func (suite *UserControllerTestSuite) TestEditProfile_InvalidInput() {
-// 	user := &dummyUser[0]
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.PUT("/user/profile/:user_id", controller.EditProfile)
+//		suite.useCaseMock.On("FindById", uint(1)).Return(nil, errors.New("user not found"))
+//		reqBody, _ := json.Marshal(model.User{})
+//		request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
+//		w := httptest.NewRecorder()
+//		router.ServeHTTP(w, request)
+//		assert.Equal(suite.T(), http.StatusInternalServerError, w.Code)
+//		suite.useCaseMock.AssertExpectations(suite.T())
+//	}
+func (suite *UserControllerTestSuite) TestEditProfile_InvalidInput() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-// 	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
-// 	r := httptest.NewRecorder()
-// 	reqBody := []byte(`invalid request body`)
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-// 	router.ServeHTTP(r, request)
-// 	response := r.Body.String()
-// 	var result map[string]string
-// 	json.Unmarshal([]byte(response), &result)
-// 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+	r := httptest.NewRecorder()
+	reqBody := []byte(`invalid request body`)
+	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
 
 // func (suite *UserControllerTestSuite) TestEditProfile_Failed() {
 // 	controller := NewUserController(suite.useCaseMock)
@@ -439,6 +446,75 @@ type UserControllerTestSuite struct {
 // 	assert.Equal(suite.T(), "error", result["status"])
 // 	suite.useCaseMock.AssertExpectations(suite.T())
 // }
+
+func (suite *UserControllerTestSuite) TestEditEmailPassword_Success() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+	suite.useCaseMock.On("EditEmailPassword", user).Return("Success update user")
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusOK, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_UserNotFound() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(nil, errors.New("User not found"))
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidUserID() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	r := httptest.NewRecorder()
+	reqBody, _ := json.Marshal(user)
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/invalid_id", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidInput() {
+	user := &dummyUser[0]
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+	r := httptest.NewRecorder()
+	reqBody := []byte(`invalid request body`)
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+	response := r.Body.String()
+	var result map[string]string
+	json.Unmarshal([]byte(response), &result)
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	suite.useCaseMock.AssertExpectations(suite.T())
+}
 
 func (suite *UserControllerTestSuite) SetupTest() {
 	suite.routerMock = gin.Default()

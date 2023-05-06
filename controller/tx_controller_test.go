@@ -35,8 +35,8 @@ type TxControllerTestSuite struct {
 	bankCaseMock  *BankAccUsecaseMock
 	cardCaseMock  *CardUsecaseMock
 	txUsecaseMock *TxUseCaseMock
-	controller    *TransactionController
-	useCaseMock   *UserUseCaseMock
+
+	useCaseMock *UserUseCaseMock
 }
 
 func (suite *TxControllerTestSuite) SetupTest() {

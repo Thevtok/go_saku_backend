@@ -31,7 +31,7 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	if result == nil {
 		logrus.Errorf("Failed to get user Bank Account: %v", err)
 
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get user Bank Account")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get user Bank Account")
 		return
 	}
 

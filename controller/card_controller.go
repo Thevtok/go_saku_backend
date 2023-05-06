@@ -30,7 +30,9 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 	result := c.cardUsecase.FindAllCard()
 	if result == nil {
 		logrus.Errorf("Failed to get user card: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get user Card")
+
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get user Card")
+
 		return
 	}
 
@@ -128,7 +130,9 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 	}
 
 	logrus.Infof("Success to create card ID")
+
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
+
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
@@ -200,7 +204,7 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
 }
 
-func (c *CardController) UnregByCardId(ctx *gin.Context) {
+func (c *CardController) UnregByCardID(ctx *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
