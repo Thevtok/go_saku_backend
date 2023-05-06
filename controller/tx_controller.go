@@ -26,7 +26,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -76,7 +76,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositBank(&reqBody); err != nil {
 		logrus.Errorf("Failed to create Deposit Transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to create Deposit Transaction")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Deposit Transaction")
 		return
 	}
 
@@ -90,7 +90,7 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -109,7 +109,7 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	cardAcc, err := c.cardUsecase.FindCardByCardID(uint(cardID))
 	if err != nil {
 		logrus.Errorf("Card_id not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Card_id not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Card_id not found")
 		return
 	}
 
@@ -134,7 +134,7 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositCard(&reqBody); err != nil {
 		logrus.Errorf("Failed to create Deposit Transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to create Deposit Transaction")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Deposit Transaction")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
@@ -210,7 +210,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	// Parse transfer data from request body
@@ -239,7 +239,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	recipient, err := c.userUsecase.FindById(newTransfer.RecipientID)
 	if err != nil {
 		logrus.Errorf("Failed to get Recipient User: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to create transfer transaction")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Recipient User")
 		return
 	}
 
@@ -260,7 +260,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	// Parse user_id from URL parameter
@@ -282,7 +282,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	if err != nil {
 
 		logrus.Errorf("pe_id not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "pe_id not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "pe_id not found")
 
 		return
 	}
@@ -314,13 +314,13 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userId, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		logrus.Errorf("Invalid user_id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get UserID")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get UserID")
 		return
 	}
 
@@ -335,7 +335,7 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	txs, err := c.txUsecase.FindTxById(uint(userId))
 	if err != nil {
 		logrus.Errorf("Failed to get Transaction")
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Transaction")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get Transaction")
 		return
 	}
 

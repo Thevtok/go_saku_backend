@@ -11,7 +11,7 @@ type CardUsecase interface {
 	FindCardByCardID(id uint) (*model.Card, error)
 	Register(id uint, newCard *model.CardResponse) (any, error)
 	Edit(card *model.Card) string
-	UnregALL(card *model.Card) string
+	UnregALL(userID uint) string
 	UnregByCardID(cardID uint) error
 }
 
@@ -40,8 +40,8 @@ func (u *cardUsecase) Edit(card *model.Card) string {
 	return u.cardRepo.Update(card)
 }
 
-func (u *cardUsecase) UnregALL(card *model.Card) string {
-	return u.cardRepo.DeleteByUserID(card.UserID)
+func (u *cardUsecase) UnregALL(userID uint) string {
+	return u.cardRepo.DeleteByUserID(userID)
 }
 
 func (u *cardUsecase) UnregByCardID(cardID uint) error {

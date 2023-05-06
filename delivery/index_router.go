@@ -66,7 +66,7 @@ func RunServer() {
 	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
 	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
 	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
-	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountId)
+	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountID)
 
 	// Card Router
 	cardRouter := r.Group("/user/card")

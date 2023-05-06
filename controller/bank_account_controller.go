@@ -24,18 +24,20 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	result := c.bankAccUsecase.FindAllBankAcc()
 	if result == nil {
 		logrus.Errorf("Failed to get user Bank Account: %v", err)
+
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get user Bank Account")
 		return
 	}
 
 	logrus.Info("Data loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
+
 }
 
 func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
@@ -43,7 +45,7 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -60,8 +62,10 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 		return
 	}
 
-	logrus.Info("Data loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
+
+	logrus.Info("Bank Account loaded Successfully")
+
 }
 
 func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
@@ -69,7 +73,7 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
@@ -82,12 +86,13 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	existingUser, _ := c.bankAccUsecase.FindBankAccByAccountID(uint(userID))
 	if existingUser == nil {
 		logrus.Errorf("Bank Account not found: %v", err)
+
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Bank not found")
 		return
 	}
-
-	logrus.Info("Data loaded Successfully")
+	logrus.Info("Bank Account loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
+
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
@@ -95,7 +100,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, exists := ctx.Get("user_id")
@@ -113,12 +118,19 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		return
 	}
 
+	if newBankAcc.BankName == "" || newBankAcc.AccountNumber == "" || newBankAcc.AccountHolderName == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+		return
+	}
+
 	result, err := c.bankAccUsecase.Register(userID.(uint), &newBankAcc)
 	if err != nil {
 		logrus.Errorf("Failed to create Bank Account: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Bank Account")
 		return
 	}
+
 	logrus.Info("Bank Account created Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
 }
@@ -128,7 +140,7 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
@@ -157,6 +169,13 @@ func (c *BankAccController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	if user.BankName == "" || user.AccountNumber == "" || user.AccountHolderName == "" {
+		logrus.Errorf("Invalid Input: Required fields are empty")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input: Required fields are empty")
+		return
+	}
+
 	updateBank := c.bankAccUsecase.Edit(user)
 	logrus.Info("Bank Account edited Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, updateBank)
@@ -167,7 +186,7 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
@@ -180,12 +199,19 @@ func (c *BankAccController) UnregAll(ctx *gin.Context) {
 	user := &model.BankAcc{
 		UserID: uint(userID),
 	}
-	res := c.bankAccUsecase.UnregAll(user)
+	res := c.bankAccUsecase.UnregAll(user.UserID)
 	logrus.Info("Bank Account deleted Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
 
-func (c *BankAccController) UnregByAccountId(ctx *gin.Context) {
+func (c *BankAccController) UnregByAccountID(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+
+	logrus.SetOutput(logger)
+
 	accountID, err := strconv.ParseUint(ctx.Param("account_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Invalid AccountID: %v", err)

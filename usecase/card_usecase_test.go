@@ -65,16 +65,6 @@ type cardRepoMock struct {
 	mock.Mock
 }
 
-// type CardRepository interface {
-// 	GetAll() any
-// 	GetByUserID(id uint) ([]*model.CardResponse, error)
-// 	GetByCardID(id uint) (*model.Card, error)
-// 	Create(id uint, newCard *model.CardResponse) (any, error)
-// 	Update(card *model.Card) string
-// 	DeleteByUserID(id uint) string
-// 	DeleteByCardID(cardID uint) error
-// }
-
 func (u *cardRepoMock) GetAll() any {
 	args := u.Called()
 	if args.Get(0) == nil {
@@ -224,18 +214,16 @@ func (suite *CardUsecaseTestSuite) TestEdit_Failed() {
 
 func (suite *CardUsecaseTestSuite) TestUnregAll_Success() {
 	userID := uint(1)
-	cardAcc := dummyCard
 	cardUsecase := NewCardUsecase(suite.cardaccRepoMock)
 	suite.cardaccRepoMock.On("DeleteByUserID", userID).Return("All Card Account deleted Successfully")
-	result := cardUsecase.UnregALL(&cardAcc[0])
+	result := cardUsecase.UnregALL(userID)
 	assert.NotNil(suite.T(), result)
 }
 func (suite *CardUsecaseTestSuite) TestUnregAll_Failed() {
 	userID := uint(1)
-	cardAcc := dummyCard
 	cardUsecase := NewCardUsecase(suite.cardaccRepoMock)
 	suite.cardaccRepoMock.On("DeleteByUserID", userID).Return("Failed to delete Card Account")
-	err := cardUsecase.UnregALL(&cardAcc[0])
+	err := cardUsecase.UnregALL(userID)
 	assert.NotNil(suite.T(), err)
 }
 

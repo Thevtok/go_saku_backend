@@ -27,7 +27,7 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	// Body Form data user_id
 	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
@@ -94,7 +94,7 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
@@ -138,7 +138,7 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	// Body Form data user_id
 	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
@@ -205,7 +205,7 @@ func (c *PhotoController) Remove(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create log file: %v", err)
 	}
-	defer logger.Close()
+
 	logrus.SetOutput(logger)
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {

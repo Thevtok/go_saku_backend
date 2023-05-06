@@ -197,7 +197,7 @@ func (suite *BankAccRepositoryTestSuite) TestGetByAccountID_Error() {
 func (suite *BankAccRepositoryTestSuite) TestCreate_Success() {
 	newBankAcc := dummyBankAccResponse[0]
 	userID := uint(1)
-	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
+	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) RETURNING account_id").
 		WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
@@ -210,7 +210,7 @@ func (suite *BankAccRepositoryTestSuite) TestCreate_Success() {
 func (suite *BankAccRepositoryTestSuite) TestCreate_Failed() {
 	newBankAcc := dummyBankAccResponse[0]
 	userID := uint(1)
-	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\)").
+	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) RETURNING account_id").
 		WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).
 		WillReturnError(errors.New("failed to create data"))
 	bankAccRepository := NewBankAccRepository(suite.mockDB)
