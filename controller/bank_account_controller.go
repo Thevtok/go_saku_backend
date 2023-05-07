@@ -30,14 +30,12 @@ func (c *BankAccController) FindAllBankAcc(ctx *gin.Context) {
 	result := c.bankAccUsecase.FindAllBankAcc()
 	if result == nil {
 		logrus.Errorf("Failed to get user Bank Account: %v", err)
-
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get user Bank Account")
 		return
 	}
 
 	logrus.Info("Data loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
-
 }
 
 func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
@@ -62,10 +60,8 @@ func (c *BankAccController) FindBankAccByUserID(ctx *gin.Context) {
 		return
 	}
 
-	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
-
 	logrus.Info("Bank Account loaded Successfully")
-
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
 }
 
 func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
@@ -92,7 +88,6 @@ func (c *BankAccController) FindBankAccByAccountID(ctx *gin.Context) {
 	}
 	logrus.Info("Bank Account loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, existingUser)
-
 }
 
 func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
@@ -132,7 +127,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 	}
 
 	logrus.Info("Bank Account created Successfully")
-	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
+	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, result)
 }
 
 func (c *BankAccController) Edit(ctx *gin.Context) {

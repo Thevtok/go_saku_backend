@@ -30,9 +30,7 @@ func (c *CardController) FindAllCard(ctx *gin.Context) {
 	result := c.cardUsecase.FindAllCard()
 	if result == nil {
 		logrus.Errorf("Failed to get user card: %v", err)
-
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get user Card")
-
 		return
 	}
 
@@ -51,9 +49,8 @@ func (c *CardController) FindCardByUserID(ctx *gin.Context) {
 	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
 	if err != nil {
 		logrus.Errorf("Failed to get user id: %v", err)
-
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user ID")
-
+		return
 	}
 
 	existingUser, _ := c.cardUsecase.FindCardByUserID(uint(userID))
@@ -130,9 +127,7 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 	}
 
 	logrus.Infof("Success to create card ID")
-
-	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
-
+	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, result)
 }
 
 func (c *CardController) Edit(ctx *gin.Context) {
@@ -198,8 +193,8 @@ func (c *CardController) UnregAll(ctx *gin.Context) {
 	user := &model.Card{
 		UserID: uint(userID),
 	}
-	result := c.cardUsecase.UnregALL(user.UserID)
 
+	result := c.cardUsecase.UnregALL(user.UserID)
 	logrus.Infof("Success to get user ID")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, result)
 }
