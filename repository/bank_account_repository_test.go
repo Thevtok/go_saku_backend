@@ -75,6 +75,33 @@ var dummyBankAccResponse = []model.BankAccResponse{
 	},
 }
 
+var dummyCreateBankAcc = []model.CreateBankAcc{
+	{
+		UserID:            1,
+		BankName:          "Test1",
+		AccountNumber:     "123412341111",
+		AccountHolderName: "Test1",
+	},
+	{
+		UserID:            1,
+		BankName:          "Test2",
+		AccountNumber:     "123412341112",
+		AccountHolderName: "Test2",
+	},
+	{
+		UserID:            2,
+		BankName:          "Test3",
+		AccountNumber:     "123412341113",
+		AccountHolderName: "Test3",
+	},
+	{
+		UserID:            2,
+		BankName:          "Test4",
+		AccountNumber:     "123412341114",
+		AccountHolderName: "Test4",
+	},
+}
+
 type BankAccRepositoryTestSuite struct {
 	suite.Suite
 	mockDB  *sql.DB
@@ -195,7 +222,7 @@ func (suite *BankAccRepositoryTestSuite) TestGetByAccountID_Error() {
 }
 
 func (suite *BankAccRepositoryTestSuite) TestCreate_Success() {
-	newBankAcc := dummyBankAccResponse[0]
+	newBankAcc := dummyCreateBankAcc[0]
 	userID := uint(1)
 	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) RETURNING account_id").
 		WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).
@@ -208,7 +235,7 @@ func (suite *BankAccRepositoryTestSuite) TestCreate_Success() {
 }
 
 func (suite *BankAccRepositoryTestSuite) TestCreate_Failed() {
-	newBankAcc := dummyBankAccResponse[0]
+	newBankAcc := dummyCreateBankAcc[0]
 	userID := uint(1)
 	suite.mockSql.ExpectExec("INSERT INTO mst_bank_account \\(user_id, bank_name, account_number, account_holder_name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) RETURNING account_id").
 		WithArgs(userID, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName).

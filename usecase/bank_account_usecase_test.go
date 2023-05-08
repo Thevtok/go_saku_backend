@@ -41,7 +41,7 @@ var dummyBankAcc = []model.BankAcc{
 	},
 }
 
-var dummyBankAccResponse = []model.BankAccResponse{
+var dummyBankAccResponse1 = []*model.BankAccResponse{
 	{
 		UserID:            1,
 		AccountID:         1,
@@ -72,31 +72,27 @@ var dummyBankAccResponse = []model.BankAccResponse{
 	},
 }
 
-var dummyBankAccResponse1 = []*model.BankAccResponse{
+var dummyCreateBankAcc = []model.CreateBankAcc{
 	{
 		UserID:            1,
-		AccountID:         1,
 		BankName:          "Test1",
 		AccountNumber:     "123412341111",
 		AccountHolderName: "Test1",
 	},
 	{
 		UserID:            1,
-		AccountID:         2,
 		BankName:          "Test2",
 		AccountNumber:     "123412341112",
 		AccountHolderName: "Test2",
 	},
 	{
 		UserID:            2,
-		AccountID:         3,
 		BankName:          "Test3",
 		AccountNumber:     "123412341113",
 		AccountHolderName: "Test3",
 	},
 	{
 		UserID:            2,
-		AccountID:         4,
 		BankName:          "Test4",
 		AccountNumber:     "123412341114",
 		AccountHolderName: "Test4",
@@ -131,12 +127,12 @@ func (r *bankaccRepoMock) GetByAccountID(id uint) (*model.BankAcc, error) {
 	return args.Get(0).(*model.BankAcc), nil
 }
 
-func (r *bankaccRepoMock) Create(id uint, newBankAcc *model.BankAccResponse) (any, error) {
+func (r *bankaccRepoMock) Create(id uint, newBankAcc *model.CreateBankAcc) (any, error) {
 	args := r.Called(id, newBankAcc)
 	if args.Get(0) == nil {
 		return nil, errors.New("failed to create data")
 	}
-	return dummyBankAccResponse, nil
+	return dummyCreateBankAcc, nil
 }
 
 func (r *bankaccRepoMock) Update(bankAcc *model.BankAcc) string {
@@ -228,8 +224,8 @@ func (suite *BankAccUsecaseTestSuite) TestFindAccByAccID_Failed() {
 func (suite *BankAccUsecaseTestSuite) TestRegister_Success() {
 	userID := uint(1)
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Create", userID, &dummyBankAccResponse[0]).Return(dummyBankAccResponse, nil)
-	result, err := bankAccUsecase.Register(userID, &dummyBankAccResponse[0])
+	suite.bankaccRepoMock.On("Create", userID, &dummyCreateBankAcc[0]).Return(dummyCreateBankAcc, nil)
+	result, err := bankAccUsecase.Register(userID, &dummyCreateBankAcc[0])
 	assert.NotNil(suite.T(), result)
 	assert.Nil(suite.T(), err)
 }
@@ -238,8 +234,8 @@ func (suite *BankAccUsecaseTestSuite) TestRegister_Failed() {
 	userID := uint(1)
 	expectedErr := errors.New("failed to create data")
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Create", userID, &dummyBankAccResponse[0]).Return(nil, expectedErr)
-	result, err := bankAccUsecase.Register(userID, &dummyBankAccResponse[0])
+	suite.bankaccRepoMock.On("Create", userID, &dummyCreateBankAcc[0]).Return(nil, expectedErr)
+	result, err := bankAccUsecase.Register(userID, &dummyCreateBankAcc[0])
 	assert.Nil(suite.T(), result)
 	assert.NotNil(suite.T(), err)
 }

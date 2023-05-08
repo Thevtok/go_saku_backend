@@ -109,6 +109,33 @@ var dummyBankAccResponse1 = []*model.BankAccResponse{
 	},
 }
 
+var dummyCreateBankAcc = []model.CreateBankAcc{
+	{
+		UserID:            1,
+		BankName:          "Test1",
+		AccountNumber:     "123412341111",
+		AccountHolderName: "Test1",
+	},
+	{
+		UserID:            1,
+		BankName:          "Test2",
+		AccountNumber:     "123412341112",
+		AccountHolderName: "Test2",
+	},
+	{
+		UserID:            2,
+		BankName:          "Test3",
+		AccountNumber:     "123412341113",
+		AccountHolderName: "Test3",
+	},
+	{
+		UserID:            2,
+		BankName:          "Test4",
+		AccountNumber:     "123412341114",
+		AccountHolderName: "Test4",
+	},
+}
+
 type BankAccUsecaseMock struct {
 	mock.Mock
 }
@@ -142,12 +169,12 @@ func (u *BankAccUsecaseMock) FindBankAccByAccountID(id uint) (*model.BankAcc, er
 	return args.Get(0).(*model.BankAcc), nil
 }
 
-func (u *BankAccUsecaseMock) Register(id uint, newBankAcc *model.BankAccResponse) (any, error) {
+func (u *BankAccUsecaseMock) Register(id uint, newBankAcc *model.CreateBankAcc) (any, error) {
 	args := u.Called(id, newBankAcc)
 	if args.Get(0) == nil {
 		return nil, errors.New("failed to create data")
 	}
-	return dummyBankAccResponse, nil
+	return dummyCreateBankAcc, nil
 }
 
 func (u *BankAccUsecaseMock) Edit(bankAcc *model.BankAcc) string {

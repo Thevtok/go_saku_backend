@@ -105,7 +105,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		return
 	}
 
-	var newBankAcc model.BankAccResponse
+	var newBankAcc model.CreateBankAcc
 	err = ctx.BindJSON(&newBankAcc)
 	if err != nil {
 		logrus.Errorf("Invalid request body: %v", err)
