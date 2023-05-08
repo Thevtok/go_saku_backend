@@ -44,7 +44,7 @@ CREATE TABLE mst_photo_url(
 CREATE TABLE mst_point_exchange(
     pe_id serial NOT NULL PRIMARY KEY,
     reward character varying(100) NOT NULL,
-    price_reward integer NOT NULL
+    price integer NOT NULL
 );
 
 CREATE TABLE tx_transaction(

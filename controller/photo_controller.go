@@ -46,6 +46,12 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 	// url photo location
 	filename := file.Filename
 	path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
+    // Cek apakah file dengan nama yang sama sudah ada
+    if _, err := os.Stat(path); err == nil {
+		logrus.Errorf("File with the same name already exists: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "File with the same name already exists")
+		return
+	}
 	out, err := os.Create(path)
 	if err != nil {
 		logrus.Errorf("Failed to create file: %v", err)
@@ -178,13 +184,14 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Extension file is not image file")
 		return
 	}
-	_, err = io.Copy(out, fileIn)
+	
+	// Simpan informasi file ke database
+	oldPhoto, err := c.photoUsecase.Download(uint(userID))
 	if err != nil {
-		logrus.Errorf("Failed to write file: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to write file")
+		logrus.Errorf("Failed to download photo: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to download photo")
 		return
 	}
-	// Simpan informasi file ke database
 	photo := &model.PhotoUrl{
 		UserID: uint(userID),
 		Url:    path,
@@ -193,6 +200,17 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 	if err != nil {
 		logrus.Errorf("Failed to upload photo: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to upload photo")
+		return
+	}
+	if oldPhoto != nil {
+		if err = os.Remove(oldPhoto.Url); err != nil {
+			logrus.Errorf("Failed to delete file photo: %v", err)
+		}
+	}
+	_, err = io.Copy(out, fileIn)
+	if err != nil {
+		logrus.Errorf("Failed to write file: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to write file")
 		return
 	}
 	logrus.Info("Photo Edit succesfully")
@@ -213,7 +231,20 @@ func (c *PhotoController) Remove(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get user id")
 		return
 	}
-	res := c.photoUsecase.Remove(uint(userID))
+
+	photo, err := c.photoUsecase.Download(uint(userID))
+	if err != nil {
+		logrus.Errorf("Something went wrong when downloading file: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Something went wrong when downloading file")
+		return
+	}
+	err = os.Remove(photo.Url)
+	if err != nil {
+		logrus.Errorf("Failed to get photo: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to remove photo")
+		return
+	}
+	res := c.photoUsecase.Remove(photo.UserID)
 	logrus.Info("Remove Photo Succesfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
