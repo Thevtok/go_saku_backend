@@ -2,136 +2,113 @@ package controller
 
 import (
 	"net/http"
+	"net/http/httptest"
+	"testing"
 
+	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// func TestAuthMiddlewareID_Success(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
 
-// 	// Generate a valid token for a master role user
-// 	token, err := generateToken(&model.Credentials{
-// 		Email:    "master@myapp.com",
-// 		Password: "password",
-// 		UserID:   1,
-// 		Username: "masteruser",
-// 		Role:     "master",
-// 	})
-// 	require.NoError(t, err, "Failed to generate a valid token")
-// 	headers := map[string]string{
-// 		"Authorization": token,
-// 	}
 
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank/:user_id", nil)
-// 	req.Header.Set("Authorization", headers["Authorization"])
-// 	w := httptest.NewRecorder()
+func TestAuthMiddlewareRole_Success(t *testing.T) {
+	// Set up the test
+	r := setupTest()
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
+	// Generate a valid token for a master role user
+	token, err := generateToken(&model.Credentials{
+		Email:    "master@myapp.com",
+		Password: "password",
+		UserID:   1,
+		Username: "masteruser",
+		Role:     "master",
+	})
+	require.NoError(t, err, "Failed to generate a valid token")
+	headers := map[string]string{
+		"Authorization": token,
+	}
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
+	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
+	req.Header.Set("Authorization", headers["Authorization"])
+	w := httptest.NewRecorder()
 
-// }
-// func TestAuthMiddlewareID_MissingAuthorizationHeader(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank/:user_id", nil)
-// 	w := httptest.NewRecorder()
+	// Perform the request
+	r.ServeHTTP(w, req)
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
+	// Check the response
+	assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
+	assert.JSONEq(t, `{"message":"Hello, World!"}`, w.Body.String(), "Response body should be a JSON success message")
+}
+func TestAuthMiddleware_Success(t *testing.T) {
+    // Set up the test
+    r := setupTest()
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
-// 	assert.JSONEq(t, `{"error":"unauthorized"}`, w.Body.String(), "Response body should be a JSON error message")
-//  }
-//  func TestAuthMiddlewareID_InvalidToken(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank/:user_id", nil)
-// 	req.Header.Set("Authorization", "Bearer invalidtoken")
-// 	w := httptest.NewRecorder()
+    // Generate a valid token
+    token, err := generateToken(&model.Credentials{
+        Email:    "user@test.com",
+        Password: "password",
+        UserID:   1,
+        Username: "user1",
+        Role:     "user",
+    })
+    if err != nil {
+        t.Errorf("Failed to generate a valid token: %v", err)
+    }
+    headers := map[string]string{
+        "Authorization": token,
+    }
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
+    req, _ := http.NewRequest(http.MethodGet, "/user/user1", nil)
+    req.Header.Set("Authorization", headers["Authorization"])
+    w := httptest.NewRecorder()
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
-// 	assert.JSONEq(t, `{"error":"unauthorized"}`, w.Body.String(), "Response body should be a JSON error message")
-//  }
+    // Perform the request
+    r.ServeHTTP(w, req)
 
-// func TestAuthMiddlewareRole_Success(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
+    // Check the response
+    assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
+    assert.JSONEq(t, `{"message":"Hello, World!"}`, w.Body.String(), "Response body should be a JSON success message")
+}
+func TestAuthMiddleware_MissingToken(t *testing.T) {
+    // Set up the test
+    r := setupTest()
 
-// 	// Generate a valid token for a master role user
-// 	token, err := generateToken(&model.Credentials{
-// 		Email:    "master@myapp.com",
-// 		Password: "password",
-// 		UserID:   1,
-// 		Username: "masteruser",
-// 		Role:     "master",
-// 	})
-// 	require.NoError(t, err, "Failed to generate a valid token")
-// 	headers := map[string]string{
-// 		"Authorization": token,
-// 	}
+    req, _ := http.NewRequest(http.MethodGet, "/user/:username", nil)
+    w := httptest.NewRecorder()
 
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
-// 	req.Header.Set("Authorization", headers["Authorization"])
-// 	w := httptest.NewRecorder()
+    // Perform the request
+    r.ServeHTTP(w, req)
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
+    // Check the response
+    assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
+    assert.JSONEq(t, `{"status":false,"statusCode":401,"result":"unauthorized","message":"request failed"}`, w.Body.String(), "Response body should be a JSON unauthorized message")
+}
+func TestAuthMiddleware_InvalidToken(t *testing.T) {
+    // Set up the test
+    r := setupTest()
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
-// 	assert.JSONEq(t, `{"message":"Hello, World!"}`, w.Body.String(), "Response body should be a JSON success message")
-// }
-// func TestAuthMiddlewareRole_MissingAuthorizationHeader(t *testing.T) {
-//    // Set up the test
-//    r := setupTest()
-//    req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
-//    w := httptest.NewRecorder()
+    // Generate an invalid token
+    token := "invalid_token"
+    headers := map[string]string{
+        "Authorization": token,
+    }
 
-//    // Perform the request
-//    r.ServeHTTP(w, req)
+    req, _ := http.NewRequest(http.MethodGet, "/user/:username", nil)
+    req.Header.Set("Authorization", headers["Authorization"])
+    w := httptest.NewRecorder()
 
-//    // Check the response
-//    assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
-//    assert.JSONEq(t, `{"error":"unauthorized"}`, w.Body.String(), "Response body should be a JSON error message")
-// }
-// func TestAuthMiddlewareRole_InvalidToken(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
-// 	req.Header.Set("Authorization", "Bearer invalidtoken")
-// 	w := httptest.NewRecorder()
+    // Perform the request
+    r.ServeHTTP(w, req)
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
+    // Check the response
+    assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
+    assert.JSONEq(t, `{"status":false,"statusCode":401,"result":"unauthorized","message":"request failed"}`, w.Body.String(), "Response body should be a JSON unauthorized message")
+}
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
-// 	assert.JSONEq(t, `{"error":"unauthorized"}`, w.Body.String(), "Response body should be a JSON error message")
-//  }
-//  func TestAuthMiddlewareRole_UnauthorizedRole(t *testing.T) {
-// 	// Set up the test
-// 	r := setupTest()
-// 	token, _ := generateToken(&model.Credentials{Email: "admin@mail.com", Password: "admin123", UserID: 1, Username: "admin", Role: "admin"})
-// 	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
-// 	req.Header.Set("Authorization", headers["Authorization"])
-// 	w := httptest.NewRecorder()
 
-// 	// Perform the request
-// 	r.ServeHTTP(w, req)
 
-// 	// Check the response
-// 	assert.Equal(t, http.StatusForbidden, w.Code, "Response status code should be 403 Forbidden")
-// 	assert.JSONEq(t, `{"error":"you do not have permission to access this resource"}`, w.Body.String(), "Response body should be a JSON error message")
-//  }
 
 func setupTest() *gin.Engine {
 	// Set Gin to Test Mode
@@ -139,15 +116,15 @@ func setupTest() *gin.Engine {
 
 	r := gin.New()
 
+	authMiddleware := AuthMiddleware()
 	authMiddlewareRole := AuthMiddlewareRole()
-	authMiddlewareID := AuthMiddlewareID()
 
 	r.GET("/user/bank", authMiddlewareRole, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
 	})
-	r.GET("/user/bank/:user_id", authMiddlewareID, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
-	})
+	r.GET("/user/:username", authMiddleware, func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
+    })
 
 	return r
 }
