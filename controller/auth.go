@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
+	"github.com/ReygaFitra/inc-final-project.git/model/response"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
 	"github.com/ReygaFitra/inc-final-project.git/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -64,7 +65,8 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if tokenString == "" {
 			logrus.Errorf("unauthorized %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
 			return
 		}
@@ -77,7 +79,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			logrus.Errorf("unauthorized %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
 			return
 		}
@@ -86,28 +88,27 @@ func AuthMiddleware() gin.HandlerFunc {
 		email, ok := (*claims)["email"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim email")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid email claim")
 			c.Abort()
 			return
 		}
 		password, ok := (*claims)["password"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim password ")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid password claim")
 			c.Abort()
 			return
 		}
 		username, ok := (*claims)["username"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim username")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid userId claim")
 			c.Abort()
 			return
 		}
 		requestedID := c.Param("username")
 		if username != requestedID {
-			logrus.Errorf("you do not have permission to access this resource")
-			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusForbidden, "you do not have permission to access this resource")
 			c.Abort()
 			return
 		}
@@ -132,7 +133,8 @@ func (l *LoginAuth) Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		logrus.Errorf("invalid json")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+		response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid json")
+
 		return
 	}
 
@@ -140,8 +142,8 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	foundUser, err := l.usecase.Login(user.Email, user.Password)
 	if err != nil {
 		logrus.Errorf("invalid email or password")
-		log.Println(err) // log the error message
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
+		response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid email or password")
+
 		return
 	}
 
@@ -149,7 +151,8 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	err = utils.CheckPasswordHash(user.Password, foundUser.Password)
 	if err != nil {
 		logrus.Errorf("invalid credentials")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+
+		response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
@@ -157,13 +160,13 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	token, err := generateToken(foundUser)
 	if err != nil {
 		logrus.Errorf("failed generate token")
-		log.Println(err) // log the error message
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		response.JSONErrorResponse(c.Writer, false, http.StatusInternalServerError, "failed generate token")
 		return
 	}
 
+	response.JSONSuccess(c.Writer, true, http.StatusOK, gin.H{"token": token})
 	// Return the token and the user ID in the context
-	c.JSON(http.StatusOK, gin.H{"token": token})
+
 	logrus.Info("Success getting token")
 }
 
@@ -264,9 +267,8 @@ func AuthMiddlewareRole() gin.HandlerFunc {
 
 		if tokenString == "" {
 			logrus.Errorf("unauthorized %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
-			return
 		}
 
 		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -276,37 +278,36 @@ func AuthMiddlewareRole() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			logrus.Errorf("failed generate token")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
-			return
 		}
 
 		claims := token.Claims.(*jwt.MapClaims)
 		email, ok := (*claims)["email"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim email")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid email claim")
 			c.Abort()
 			return
 		}
 		password, ok := (*claims)["password"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim password")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid password claim")
 			c.Abort()
 			return
 		}
 		role, ok := (*claims)["role"].(string)
 		if !ok {
 			logrus.Errorf("invalid claim role")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid role claim"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid role claim")
 			c.Abort()
 			return
 		}
 
 		if role != "master" {
 			logrus.Errorf("you do not have permission to access this resource")
-			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this resource"})
+			response.JSONErrorResponse(c.Writer, false, http.StatusForbidden, "you do not have permission to access this resource")
 			c.Abort()
 			return
 		}

@@ -193,7 +193,7 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	if err := c.txUsecase.CreateWithdrawal(&reqBody); err != nil {
 		if err.Error() == "insufficient balance" {
 			logrus.Errorf("Failed to create Withdrawal Transaction: %v", err)
-			response.JSONErrorResponse(ctx.Writer, false, http.StatusUnprocessableEntity, "Incorrect request body")
+			response.JSONErrorResponse(ctx.Writer, false, http.StatusUnprocessableEntity, "insufficient balance")
 			return
 		} else {
 			logrus.Errorf("Failed to create Withdrawal Transaction: %v", err)
@@ -214,7 +214,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	logrus.SetOutput(logger)
 
 	// Parse transfer data from request body
-	newTransfer := model.TransactionTransfer{}
+	var newTransfer model.TransactionTransferResponse
 	if err := ctx.BindJSON(&newTransfer); err != nil {
 		logrus.Errorf("Failed to parse transfer data: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid input")
@@ -243,6 +243,11 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		return
 	}
 
+	if sender.Balance < newTransfer.Amount {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "insufficient balance")
+		return
+	}
+
 	// Create transfer transaction in use case layer
 	result, err := c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
 	if err != nil {
@@ -254,11 +259,10 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	logrus.Info("Transfer Transaction created Succesfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, result)
 }
-
 func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
-		log.Fatalf("Fatal to create log file: %v", err)
+		logrus.Fatalf("Fatal to create log file: %v", err)
 	}
 
 	logrus.SetOutput(logger)
@@ -272,41 +276,61 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	}
 	peID, err := strconv.Atoi(ctx.Param("pe_id"))
 	if err != nil {
-
 		logrus.Errorf("Invalid pe_id: %v", err)
-
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid pe_id")
 		return
 	}
-	_, err = c.txUsecase.FindByPeId(uint(peID))
+
+	user, err := c.userUsecase.FindById(uint(userID))
+
 	if err != nil {
+		logrus.Errorf("Failed to get user: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get user")
+		return
+	}
 
-		logrus.Errorf("pe_id not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "pe_id not found")
-
+	pointExchange, err := c.txUsecase.FindByPeId(peID)
+	if err != nil {
+		logrus.Errorf("Failed to find point exchange: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to find point exchange")
 		return
 	}
 
 	// Parse redeem data from request body
 	var txData model.TransactionPoint
 	if err := ctx.ShouldBindJSON(&txData); err != nil {
-		logrus.Errorf("invalid input: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid input")
+		logrus.Info(txData)
+		logrus.Errorf("Invalid input: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid input")
 		return
 	}
+	price := pointExchange.Price
+	if txData.Point != price {
+		logrus.Info(txData)
+		logrus.Errorf("Reward or price on point exchange data doesn't match with the transaction data")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Reward or price on point exchange data doesn't match with the transaction data")
+		return
+	}
+	if user.Point < txData.Point {
+		logrus.Info(txData)
+		logrus.Errorf("your point is not enough to redeem")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "your point is not enough to redeem")
+		return
+	}
+
 	txData.SenderID = uint(userID)
 	txData.PointExchangeID = peID
 
 	// Create redeem transaction in use case layer
 	err = c.txUsecase.CreateRedeem(&txData)
 	if err != nil {
-		logrus.Errorf("Failed to create Redeem Transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Redeem Transaction")
+		logrus.Errorf("Failed to create redeem transaction: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create redeem transaction")
 		return
 	}
 
-	logrus.Info("Redeem Transaction created Succesfully")
-	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Redeem Transaction created successfully")
+	logrus.Info("Redeem transaction created successfully")
+	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Redeem transaction created successfully")
 }
 
 func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {

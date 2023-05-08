@@ -56,7 +56,7 @@ var dummyTxPointExchange = []*model.PointExchange{
 		Price:  20,
 	},
 }
-var dummyTxTransfer = []model.TransactionTransfer{
+var dummyTxTransfer = []model.TransactionTransferResponse{
 	{TransactionType: "Transfer",
 		SenderID:        uint(1),
 		RecipientID:     uint(1),
@@ -143,7 +143,7 @@ func (m *transactionRepoMock) CreateWithdrawal(tx *model.TransactionWithdraw) er
 	return nil
 }
 
-func (m *transactionRepoMock) CreateTransfer(tx *model.TransactionTransfer) (any, error) {
+func (m *transactionRepoMock) CreateTransfer(tx *model.TransactionTransferResponse) (any, error) {
 	args := m.Called(tx)
 
 	if err := args.Error(1); err != nil {
@@ -167,7 +167,7 @@ func (m *transactionRepoMock) GetAllPoint() ([]*model.PointExchange, error) {
 	return args.Get(0).([]*model.PointExchange), args.Error(1)
 
 }
-func (m *transactionRepoMock) GetByPeId(id uint) ([]*model.PointExchange, error) {
+func (m *transactionRepoMock) GetByPeId(id int) (*model.PointExchange, error) {
 	args := m.Called(id)
 
 	// check if the first argument is nil or not
@@ -175,7 +175,7 @@ func (m *transactionRepoMock) GetByPeId(id uint) ([]*model.PointExchange, error)
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).([]*model.PointExchange), args.Error(1)
+	return args.Get(0).(*model.PointExchange), args.Error(1)
 }
 
 var senderID = uint(1)
@@ -200,12 +200,12 @@ func (suite *TransactionUseCaseTestSuite) TestFindTxById_Success() {
 
 func (suite *TransactionUseCaseTestSuite) TestFindByPeId_Success() {
 	// set up expectations
-	expectedPEs := dummyTxPointExchange
-	suite.transactionRepoMock.On("GetByPeId", uint(1)).Return(expectedPEs, nil)
+	expectedPEs := dummyTxPointExchange[0]
+	suite.transactionRepoMock.On("GetByPeId", 1).Return(expectedPEs, nil)
 
 	// call the method being tested
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
-	actualPEs, err := uc.FindByPeId(uint(1))
+	actualPEs, err := uc.FindByPeId(1)
 
 	// assert the expected results
 	assert.NoError(suite.T(), err)
@@ -510,7 +510,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateTransfer_Success() {
 	suite.userRepoMock.On("GetByiD", sender.ID).Return(sender, nil)
 	suite.userRepoMock.On("UpdateBalance", recipient.ID, recipient.Balance+amount).Return(nil)
 	suite.userRepoMock.On("UpdatePoint", sender.ID, sender.Point+20).Return(nil)
-	suite.transactionRepoMock.On("CreateTransfer", mock.AnythingOfType("*model.TransactionTransfer")).Return(&model.TransactionTransfer{}, nil)
+	suite.transactionRepoMock.On("CreateTransfer", mock.AnythingOfType("*model.TransactionTransferResponse")).Return(&model.TransactionTransferResponse{}, nil)
 
 	result, err := uc.CreateTransfer(sender, recipient, amount)
 
@@ -648,7 +648,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateTransfer_RecipientUpdatePoin
 	assert.NotNil(suite.T(), err)
 	assert.Equal(suite.T(), "failed to update point", err.Error())
 }
-func (suite *TransactionUseCaseTestSuite) TestCreateRedeem() {
+func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_Success() {
 	// set up test data
 	sender := &model.User{
 		ID:      1,
@@ -671,8 +671,8 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem() {
 	// set up mock repository behavior
 	suite.userRepoMock.On("GetByiD", transaction.SenderID).
 		Return(sender, nil)
-	suite.transactionRepoMock.On("GetAllPoint").
-		Return([]*model.PointExchange{pointExchange}, nil)
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).
+		Return(pointExchange, nil)
 	suite.userRepoMock.On("UpdatePoint", sender.ID, sender.Point-transaction.Point).
 		Return(nil)
 	suite.transactionRepoMock.On("CreateRedeem", transaction).
@@ -687,6 +687,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem() {
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), sender.Point-transaction.Point, 0)
 }
+
 func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_UserRepoGetByIDError() {
 	// set up test data
 	transaction := &model.TransactionPoint{
@@ -705,27 +706,6 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_UserRepoGetByIDError(
 	assert.NotNil(suite.T(), err)
 	assert.Equal(suite.T(), "failed to get user by ID", err.Error())
 }
-func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_GetAllPointError() {
-	// set up test data
-	transaction := &model.TransactionPoint{
-		SenderID:        1,
-		PointExchangeID: 1,
-		Point:           10,
-	}
-	suite.userRepoMock.On("GetByiD", transaction.SenderID).
-		Return(&model.User{ID: transaction.SenderID, Name: "Sender", Balance: 100, Point: 20}, nil)
-	// set up mock repository behavior
-	suite.transactionRepoMock.On("GetAllPoint").
-		Return(nil, errors.New("failed to get all point exchanges"))
-	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
-
-	// call the use case
-	err := uc.CreateRedeem(transaction)
-
-	// check the result and error
-	assert.NotNil(suite.T(), err)
-	assert.Equal(suite.T(), "failed to get all point exchanges", err.Error())
-}
 func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangeNotFound() {
 	// set up test data
 	user := &model.User{
@@ -740,7 +720,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangeNotFound
 		Point:           10,
 	}
 	suite.userRepoMock.On("GetByiD", user.ID).Return(user, nil)
-	suite.transactionRepoMock.On("GetAllPoint").Return([]*model.PointExchange{}, nil)
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).Return(nil, fmt.Errorf("point exchange with pe_id %d not found", transaction.PointExchangeID))
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
 	// call the use case
 	err := uc.CreateRedeem(transaction)
@@ -749,6 +729,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangeNotFound
 	assert.NotNil(suite.T(), err)
 	assert.Equal(suite.T(), "point exchange with pe_id 999 not found", err.Error())
 }
+
 func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangePriceNotMatch() {
 	// set up test data
 	user := &model.User{
@@ -767,10 +748,10 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangePriceNot
 		Price:  30,
 	}
 
+	// set up mock repository behavior
 	suite.userRepoMock.On("GetByiD", transaction.SenderID).Return(user, nil)
-	suite.transactionRepoMock.On("GetAllPoint").Return([]*model.PointExchange{pointExchange}, nil)
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).Return(pointExchange, nil)
 
-	// create the use case instance
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
 
 	// call the use case
@@ -780,6 +761,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_PointExchangePriceNot
 	assert.NotNil(suite.T(), err)
 	assert.Equal(suite.T(), "reward or price on point exchange data doesn't match with the transaction data", err.Error())
 }
+
 func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_InsufficientPoint() {
 	// set up test data
 	sender := &model.User{
@@ -801,7 +783,7 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_InsufficientPoint() {
 
 	// set up mock repository behavior
 	suite.userRepoMock.On("GetByiD", transaction.SenderID).Return(sender, nil)
-	suite.transactionRepoMock.On("GetAllPoint").Return([]*model.PointExchange{pe}, nil)
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).Return(pe, nil)
 
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
 
@@ -812,13 +794,14 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_InsufficientPoint() {
 	assert.NotNil(suite.T(), err)
 	assert.Equal(suite.T(), "your point is not enough to redeem", err.Error())
 }
+
 func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_UpdatePointError() {
 	// set up test data
 	transaction := &model.TransactionPoint{
 		SenderID:        1,
 		PointExchangeID: 2,
 		Point:           30,
-		Reward:          "bakso",
+
 		TransactionType: "REDEEM",
 	}
 	user := &model.User{
@@ -829,13 +812,10 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_UpdatePointError() {
 
 	// set up mock repository behavior
 	suite.userRepoMock.On("GetByiD", transaction.SenderID).Return(user, nil)
-	suite.transactionRepoMock.On("GetAllPoint").Return([]*model.PointExchange{
-		{
-			PE_ID:  2,
-			Reward: "bakso",
-
-			Price: 30,
-		},
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).Return(&model.PointExchange{
+		PE_ID:  2,
+		Reward: "bakso",
+		Price:  30,
 	}, nil)
 	suite.userRepoMock.On("UpdatePoint", user.ID, user.Point-transaction.Point).Return(errors.New("failed to update point"))
 
@@ -849,39 +829,42 @@ func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_UpdatePointError() {
 	assert.Equal(suite.T(), "failed to update point", err.Error())
 }
 
-func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_Success() {
+func (suite *TransactionUseCaseTestSuite) TestCreateRedeem_Error() {
 	// set up test data
-	user := &model.User{
-		ID:    1,
-		Name:  "User",
-		Point: 100,
-	}
-	transaction := &model.TransactionPoint{
-		SenderID:        user.ID,
-		PointExchangeID: 1,
-		Point:           100,
+	sender := &model.User{
+		ID:      1,
+		Name:    "Sender",
+		Balance: 0,
+		Point:   100,
 	}
 	pointExchange := &model.PointExchange{
 		PE_ID: 1,
 
-		Price: 100,
+		Reward: "10K Pulsa",
+		Price:  100,
+	}
+	transaction := &model.TransactionPoint{
+		SenderID:        sender.ID,
+		PointExchangeID: pointExchange.PE_ID,
+		Point:           pointExchange.Price,
 	}
 
 	// set up mock repository behavior
-	suite.userRepoMock.On("GetByiD", user.ID).
-		Return(user, nil)
-	suite.transactionRepoMock.On("GetAllPoint").
-		Return([]*model.PointExchange{pointExchange}, nil)
-	suite.userRepoMock.On("UpdatePoint", user.ID, user.Point-transaction.Point).
+	suite.userRepoMock.On("GetByiD", transaction.SenderID).
+		Return(sender, nil)
+	suite.transactionRepoMock.On("GetByPeId", transaction.PointExchangeID).
+		Return(pointExchange, nil)
+	suite.userRepoMock.On("UpdatePoint", sender.ID, sender.Point-transaction.Point).
 		Return(nil)
 	suite.transactionRepoMock.On("CreateRedeem", transaction).
-		Return(errors.New("gagal"))
+		Return(errors.New("err"))
 
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
+
 	// call the use case
 	err := uc.CreateRedeem(transaction)
 
 	// check the result and error
 	assert.NotNil(suite.T(), err)
-	assert.Equal(suite.T(), "gagal", err.Error())
+	assert.Equal(suite.T(), "err", err.Error())
 }

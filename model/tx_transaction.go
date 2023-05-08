@@ -49,10 +49,17 @@ type TransactionTransfer struct {
 	Amount          uint      `json:"amount"`
 	TransactionDate time.Time `json:"transaction_date"`
 }
+type TransactionTransferResponse struct {
+	TransactionType string    `json:"transaction_type"`
+	SenderID        uint      `json:"sender_id"`
+	RecipientID     uint      `json:"recipient_id"`
+	Amount          uint      `json:"amount"`
+	TransactionDate time.Time `json:"transaction_date"`
+}
 
 type TransactionPoint struct {
-	ID              uint      `json:"tx_id"`
-	Reward          string    `json:"reward"`
+	ID uint `json:"tx_id"`
+
 	TransactionType string    `json:"transaction_type"`
 	SenderID        uint      `json:"sender_id"`
 	Point           int       `json:"point"`
