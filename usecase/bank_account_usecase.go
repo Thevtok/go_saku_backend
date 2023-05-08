@@ -9,7 +9,7 @@ type BankAccUsecase interface {
 	FindAllBankAcc() any
 	FindBankAccByUserID(id uint) ([]*model.BankAccResponse, error)
 	FindBankAccByAccountID(id uint) (*model.BankAcc, error)
-	Register(id uint, newBankAcc *model.BankAccResponse) (any, error)
+	Register(id uint, newBankAcc *model.CreateBankAcc) (any, error)
 	Edit(bankAcc *model.BankAcc) string
 	UnregAll(userID uint) string
 	UnregByAccountID(accountID uint) error
@@ -30,7 +30,7 @@ func (u *bankAccUsecase) FindBankAccByAccountID(id uint) (*model.BankAcc, error)
 	return u.bankAccRepo.GetByAccountID(id)
 }
 
-func (u *bankAccUsecase) Register(id uint, newBankAcc *model.BankAccResponse) (any, error) {
+func (u *bankAccUsecase) Register(id uint, newBankAcc *model.CreateBankAcc) (any, error) {
 	newBankAcc.UserID = id
 	return u.bankAccRepo.Create(id, newBankAcc)
 }

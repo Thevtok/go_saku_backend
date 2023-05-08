@@ -13,7 +13,7 @@ type BankAccRepository interface {
 	GetAll() any
 	GetByUserID(id uint) ([]*model.BankAccResponse, error)
 	GetByAccountID(id uint) (*model.BankAcc, error)
-	Create(id uint, newBankAcc *model.BankAccResponse) (any, error)
+	Create(id uint, newBankAcc *model.CreateBankAcc) (any, error)
 	Update(bankAcc *model.BankAcc) string
 	DeleteByUserID(userID uint) string
 	DeleteByAccountID(accountID uint) error
@@ -92,7 +92,7 @@ func (r *bankAccRepository) GetByAccountID(id uint) (*model.BankAcc, error) {
 	return &bankAcc, nil
 }
 
-func (r *bankAccRepository) Create(id uint, newBankAcc *model.BankAccResponse) (any, error) {
+func (r *bankAccRepository) Create(id uint, newBankAcc *model.CreateBankAcc) (any, error) {
 	query := "INSERT INTO mst_bank_account (user_id, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4) RETURNING account_id"
 	_, err := r.db.Exec(query, id, newBankAcc.BankName, newBankAcc.AccountNumber, newBankAcc.AccountHolderName)
 	if err != nil {
