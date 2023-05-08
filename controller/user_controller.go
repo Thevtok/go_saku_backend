@@ -9,6 +9,7 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
 	"github.com/ReygaFitra/inc-final-project.git/usecase"
 	"github.com/ReygaFitra/inc-final-project.git/utils"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
@@ -215,4 +216,92 @@ func NewUserController(usercase usecase.UserUseCase) *UserController {
 		usecase: usercase,
 	}
 	return &controller
+}
+
+func (ctx *UserController) AuthMiddlewareIDExist() gin.HandlerFunc {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+
+	logrus.SetOutput(logger)
+	return func(c *gin.Context) {
+		// Add log statement here
+		logrus.Info("Authenticating user...")
+
+		tokenString := c.GetHeader("Authorization")
+
+		if tokenString == "" {
+			logrus.Errorf("unauthorized %v", err)
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			logrus.Errorf("failed generate token")
+
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "unauthorized")
+			c.Abort()
+			return
+		}
+
+		claims := token.Claims.(*jwt.MapClaims)
+		email, ok := (*claims)["email"].(string)
+		if !ok {
+			logrus.Errorf("invalid claim email")
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid email claim")
+			c.Abort()
+			return
+		}
+		password, ok := (*claims)["password"].(string)
+		if !ok {
+			logrus.Errorf("invalid claim password ")
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid password claim")
+			c.Abort()
+			return
+		}
+		userID := uint((*claims)["user_id"].(float64))
+
+		if !ok {
+			logrus.Errorf("invalid claim user_id")
+			response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid userId claim")
+			c.Abort()
+			return
+		}
+
+		requestedID, err := strconv.ParseUint(c.Param("user_id"), 10, 32)
+		if err != nil {
+			logrus.Errorf("invalid user_id")
+			response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid user_id")
+			c.Abort()
+			return
+		}
+
+		exist, _ := ctx.usecase.FindById(uint(requestedID))
+		if exist == nil {
+			response.JSONErrorResponse(c.Writer, false, http.StatusNotFound, "User Not Found")
+			c.Abort()
+			return
+		}
+
+		if userID != uint(requestedID) {
+			logrus.Errorf("you do not have permission to access this resource")
+
+			response.JSONErrorResponse(c.Writer, false, http.StatusForbidden, "you do not have permission to access this resource")
+			c.Abort()
+			return
+		}
+
+		c.Set("email", email)
+		c.Set("password", password)
+		c.Set("user_id", userID)
+
+		c.Next()
+		logrus.Info("Success parsing middleware")
+	}
 }

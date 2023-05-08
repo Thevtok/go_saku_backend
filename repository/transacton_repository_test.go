@@ -31,7 +31,7 @@ var dummyTxWd = []*model.TransactionWithdraw{
 var dummyTxRd = []*model.TransactionPoint{
 	{},
 }
-var dummyTxTf = []*model.TransactionTransfer{
+var dummyTxTf = []*model.TransactionTransferResponse{
 	{},
 }
 
@@ -288,7 +288,7 @@ func (suite *TransactionRepositoryTestSuite) TestCreateRedeem_Error() {
 
 func (suite *TransactionRepositoryTestSuite) TestCreateTransfer_Success() {
 	// Create some test data
-	tx := &model.TransactionTransfer{
+	tx := &model.TransactionTransferResponse{
 		TransactionType: "Transfer",
 		SenderID:        1,
 		RecipientID:     2,
@@ -379,7 +379,7 @@ func (suite *TransactionRepositoryTestSuite) TestGetByPeId_Success() {
 	repo := NewTxRepository(suite.mockDB)
 
 	// Create some test data
-	peID := uint(1)
+	peID := 1
 	reward := "10k"
 	price := 100
 

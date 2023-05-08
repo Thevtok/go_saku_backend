@@ -18,7 +18,7 @@ func RunServer() {
 	defer db.Close()
 
 	authMiddlewareUsername := controller.AuthMiddleware()
-	authMiddlewareId := controller.AuthMiddlewareID()
+
 	authMiddlewareRole := controller.AuthMiddlewareRole()
 
 	r := gin.Default()
@@ -32,6 +32,7 @@ func RunServer() {
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
 	userController := controller.NewUserController(userUsecase)
+	authMiddlewareIdExist := userController.AuthMiddlewareIDExist()
 
 	// USER GROUP
 	r.POST("/login", userAuth.Login)
@@ -40,13 +41,13 @@ func RunServer() {
 	r.GET("user", authMiddlewareRole, userController.FindUsers)
 	userRouter.GET("/:username", userController.FindUserByUsername)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
-	r.PUT("user/pass/:user_id", authMiddlewareId, userController.EditEmailPassword)
-	r.PUT("user/profile/:user_id", authMiddlewareId, userController.EditProfile)
+	r.PUT("user/pass/:user_id", authMiddlewareIdExist, userController.EditEmailPassword)
+	r.PUT("user/profile/:user_id", authMiddlewareIdExist, userController.EditProfile)
 	userRouter.DELETE("/:username", userController.Unreg)
 
 	// Bank Accont Router
 	bankAccRouter := r.Group("/user/bank")
-	bankAccRouter.Use(authMiddlewareId)
+	bankAccRouter.Use(authMiddlewareIdExist)
 
 	// Bank Acc Depedency
 	bankAccRepo := repository.NewBankAccRepository(db)
@@ -63,7 +64,7 @@ func RunServer() {
 
 	// CarDUnregByAccountID Router
 	cardRouter := r.Group("/user/card")
-	cardRouter.Use(authMiddlewareId)
+	cardRouter.Use(authMiddlewareIdExist)
 
 	// Card Depedency
 	cardRepo := repository.NewCardRepository(db)
@@ -80,7 +81,7 @@ func RunServer() {
 
 	// Photo Router
 	photoRouter := r.Group("/user/photo")
-	photoRouter.Use(authMiddlewareId)
+	photoRouter.Use(authMiddlewareIdExist)
 
 	// Photo Depedency
 	photoRepo := repository.NewPhotoRepository(db)
@@ -94,7 +95,7 @@ func RunServer() {
 
 	//TX Router
 	txRouter := r.Group("/user/tx")
-	txRouter.Use(authMiddlewareId)
+	txRouter.Use(authMiddlewareIdExist)
 
 	// TX Depedency
 	txRepo := repository.NewTxRepository(db)

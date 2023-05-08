@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/repository"
 )
+
+var now = time.Now().Local().Truncate(time.Minute)
 
 type TransactionUseCase interface {
 	CreateDepositBank(transaction *model.TransactionBank) error
@@ -14,7 +17,7 @@ type TransactionUseCase interface {
 	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
 	CreateRedeem(transaction *model.TransactionPoint) error
 	FindTxById(senderId uint) ([]*model.Transaction, error)
-	FindByPeId(id uint) ([]*model.PointExchange, error)
+	FindByPeId(id int) (*model.PointExchange, error)
 }
 
 type transactionUseCase struct {
@@ -22,7 +25,7 @@ type transactionUseCase struct {
 	userRepo        repository.UserRepository
 }
 
-func (uc *transactionUseCase) FindByPeId(id uint) ([]*model.PointExchange, error) {
+func (uc *transactionUseCase) FindByPeId(id int) (*model.PointExchange, error) {
 	return uc.transactionRepo.GetByPeId(id)
 }
 
@@ -141,38 +144,24 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	}
 
 	// insert transaction
-	newTransfer := model.TransactionTransfer{
-		SenderID:    sender.ID,
-		RecipientID: recipient.ID,
-		Amount:      amount,
+	newTransfer := model.TransactionTransferResponse{
+		SenderID:        sender.ID,
+		RecipientID:     recipient.ID,
+		Amount:          amount,
+		TransactionType: "Transfer",
+		TransactionDate: now,
 	}
 	return uc.transactionRepo.CreateTransfer(&newTransfer)
 }
-
 func (uc *transactionUseCase) CreateRedeem(transaction *model.TransactionPoint) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)
 	if err != nil {
 		return err
 	}
-
-	// Get all point exchanges
-	pointExchanges, err := uc.transactionRepo.GetAllPoint()
+	// Get point exchange by ID
+	pointExchange, err := uc.transactionRepo.GetByPeId(transaction.PointExchangeID)
 	if err != nil {
 		return err
-	}
-
-	// Find the point exchange with matching pe_id
-	var pointExchange *model.PointExchange
-	for _, pe := range pointExchanges {
-		if pe.PE_ID == transaction.PointExchangeID {
-			pointExchange = pe
-			break
-		}
-	}
-
-	// Check if point exchange was found
-	if pointExchange == nil {
-		return fmt.Errorf("point exchange with pe_id %d not found", transaction.PointExchangeID)
 	}
 
 	// Check if point exchange reward and price match with transaction data
