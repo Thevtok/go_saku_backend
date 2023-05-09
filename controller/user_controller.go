@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
@@ -78,6 +80,23 @@ func (c *UserController) Register(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input: Required fields are empty")
 		return
 	}
+	if !strings.HasSuffix(newUser.Email, "@gmail.com") {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "email must be a gmail address")
+		return
+	}
+	if len(newUser.Password) < 8 {
+		logrus.Errorf("Invalid Input: password must have at least 8 characters")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input: password must have at least 8 characters")
+		return
+	}
+	if !isValidPassword(newUser.Password) {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "password must contain at least one uppercase letter and one number")
+		return
+	}
+	if len(newUser.Phone_Number) < 11 || len(newUser.Phone_Number) > 13 {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "phone_number must be 11 - 13 digit")
+		return
+	}
 
 	res, err := c.usecase.Register(&newUser)
 	if err != nil {
@@ -122,13 +141,26 @@ func (c *UserController) EditEmailPassword(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to edit user")
 		return
 	}
-
-	// Parse the request body to update the user
 	if err := ctx.BindJSON(user); err != nil {
 		logrus.Errorf("Invalid input : %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid input")
 		return
 	}
+	if !strings.HasSuffix(user.Email, "@gmail.com") {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "email must be a gmail address")
+		return
+	}
+	if len(user.Password) < 8 {
+		logrus.Errorf("Invalid Input: password must have at least 8 characters")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input: password must have at least 8 characters")
+		return
+	}
+	if !isValidPassword(user.Password) {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "password must contain at least one uppercase letter and one number")
+		return
+	}
+
+	// Parse the request body to update the user
 
 	// Update the user and save changes
 	updatedUser := c.usecase.EditEmailPassword(user)
@@ -178,6 +210,10 @@ func (c *UserController) EditProfile(ctx *gin.Context) {
 	if err := ctx.BindJSON(user); err != nil {
 		logrus.Errorf("Invalid input : %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid input")
+		return
+	}
+	if len(user.Phone_Number) < 11 || len(user.Phone_Number) > 13 {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "phone_number must be 11 - 13 digit")
 		return
 	}
 
@@ -304,4 +340,19 @@ func (ctx *UserController) AuthMiddlewareIDExist() gin.HandlerFunc {
 		c.Next()
 		logrus.Info("Success parsing middleware")
 	}
+}
+
+func isValidPassword(password string) bool {
+	hasNum := false
+	hasUpper := false
+
+	for _, char := range password {
+		if unicode.IsNumber(char) {
+			hasNum = true
+		} else if unicode.IsUpper(char) {
+			hasUpper = true
+		}
+	}
+
+	return hasNum && hasUpper
 }
