@@ -101,7 +101,7 @@ func (c *CardUsecaseMock) FindCardByCardID(id uint) (*model.Card, error) {
 	return &dummyCard[0], nil
 }
 
-func (c *CardUsecaseMock) Register(id uint, newCard *model.CardResponse) (any, error) {
+func (c *CardUsecaseMock) Register(id uint, newCard *model.CreateCard) (any, error) {
 	args := c.Called(id, newCard)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

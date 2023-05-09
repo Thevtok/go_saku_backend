@@ -9,7 +9,7 @@ type CardUsecase interface {
 	FindAllCard() any
 	FindCardByUserID(id uint) ([]*model.CardResponse, error)
 	FindCardByCardID(id uint) (*model.Card, error)
-	Register(id uint, newCard *model.CardResponse) (any, error)
+	Register(id uint, newCard *model.CreateCard) (any, error)
 	Edit(card *model.Card) string
 	UnregALL(userID uint) string
 	UnregByCardID(cardID uint) error
@@ -31,7 +31,7 @@ func (u *cardUsecase) FindCardByCardID(id uint) (*model.Card, error) {
 	return u.cardRepo.GetByCardID(id)
 }
 
-func (u *cardUsecase) Register(id uint, newCard *model.CardResponse) (any, error) {
+func (u *cardUsecase) Register(id uint, newCard *model.CreateCard) (any, error) {
 	newCard.UserID = id
 	return u.cardRepo.Create(id, newCard)
 }

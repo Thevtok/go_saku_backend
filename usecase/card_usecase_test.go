@@ -61,6 +61,30 @@ var dummyCardResponse1 = []*model.CardResponse{
 	},
 }
 
+var dummyCreateCard = []model.CreateCard{
+	{
+		UserID:         1,
+		CardType:       "BRI",
+		CardNumber:     "123456789",
+		ExpirationDate: "08/26",
+		CVV:            "123",
+	},
+	{
+		UserID:         1,
+		CardType:       "BCA",
+		CardNumber:     "123456345",
+		ExpirationDate: "02/27",
+		CVV:            "012",
+	},
+	{
+		UserID:         2,
+		CardType:       "Mandiri",
+		CardNumber:     "987654321",
+		ExpirationDate: "04/25",
+		CVV:            "321",
+	},
+}
+
 type cardRepoMock struct {
 	mock.Mock
 }
@@ -89,7 +113,7 @@ func (u *cardRepoMock) GetByCardID(id uint) (*model.Card, error) {
 	return args.Get(0).(*model.Card), nil
 }
 
-func (u *cardRepoMock) Create(id uint, newCard *model.CardResponse) (any, error) {
+func (u *cardRepoMock) Create(id uint, newCard *model.CreateCard) (any, error) {
 	args := u.Called(id, newCard)
 	if args.Get(0) == nil {
 		return nil, errors.New("failed to create data")
@@ -183,7 +207,7 @@ func (suite *CardUsecaseTestSuite) TestRegister_Success() {
 	userID := uint(1)
 	cardUsecaseMock := NewCardUsecase(suite.cardaccRepoMock)
 	suite.cardaccRepoMock.On("Create", userID, &dummyCardResponse[0]).Return(dummyCardResponse, nil)
-	result, err := cardUsecaseMock.Register(userID, &dummyCardResponse[0])
+	result, err := cardUsecaseMock.Register(userID, &dummyCreateCard[0])
 	assert.NotNil(suite.T(), result)
 	assert.Nil(suite.T(), err)
 }
@@ -192,7 +216,7 @@ func (suite *CardUsecaseTestSuite) TestRegister_Failed() {
 	expectedError := errors.New("failed to create data")
 	cardUsecaseMock := NewCardUsecase(suite.cardaccRepoMock)
 	suite.cardaccRepoMock.On("Create", userID, &dummyCardResponse[0]).Return(nil, expectedError)
-	result, err := cardUsecaseMock.Register(userID, &dummyCardResponse[0])
+	result, err := cardUsecaseMock.Register(userID, &dummyCreateCard[0])
 	assert.Nil(suite.T(), result)
 	assert.NotNil(suite.T(), err)
 }

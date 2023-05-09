@@ -13,7 +13,7 @@ type CardRepository interface {
 	GetAll() any
 	GetByUserID(id uint) ([]*model.CardResponse, error)
 	GetByCardID(id uint) (*model.Card, error)
-	Create(id uint, newCard *model.CardResponse) (any, error)
+	Create(id uint, newCard *model.CreateCard) (any, error)
 	Update(card *model.Card) string
 	DeleteByUserID(userID uint) string
 	DeleteByCardID(cardID uint) error
@@ -84,7 +84,7 @@ func (r *cardRepository) GetByCardID(id uint) (*model.Card, error) {
 	return &card, nil
 }
 
-func (r *cardRepository) Create(id uint, newCard *model.CardResponse) (any, error) {
+func (r *cardRepository) Create(id uint, newCard *model.CreateCard) (any, error) {
 	query := "INSERT INTO mst_card (user_id, card_type, card_number, expiration_date, cvv) VALUES ($1, $2, $3, $4, $5) RETURNING card_id"
 	_, err := r.db.Exec(query, id, newCard.CardType, newCard.CardNumber, newCard.ExpirationDate, newCard.CVV)
 	if err != nil {

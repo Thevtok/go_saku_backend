@@ -67,6 +67,30 @@ var dummyCardResponse = []model.CardResponse{
 	},
 }
 
+var dummyCreateCard = []model.CreateCard{
+	{
+		UserID:         1,
+		CardType:       "BRI",
+		CardNumber:     "123456789",
+		ExpirationDate: "08/26",
+		CVV:            "123",
+	},
+	{
+		UserID:         1,
+		CardType:       "BCA",
+		CardNumber:     "123456345",
+		ExpirationDate: "02/27",
+		CVV:            "012",
+	},
+	{
+		UserID:         2,
+		CardType:       "Mandiri",
+		CardNumber:     "987654321",
+		ExpirationDate: "04/25",
+		CVV:            "321",
+	},
+}
+
 type CardRepositoryTestSuite struct {
 	suite.Suite
 	mockDB  *sql.DB
@@ -158,7 +182,7 @@ func (suite *CardRepositoryTestSuite) TestGetByCardID_Failed() {
 }
 
 func (suite *CardRepositoryTestSuite) TestCreateCard_Success() {
-	newCard := dummyCardResponse[0]
+	newCard := dummyCreateCard[0]
 	userID := uint(1)
 	suite.mockSql.ExpectExec("INSERT INTO mst_card \\(user_id, card_type, card_number, expiration_date, cvv\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5\\)").
 		WithArgs(userID, newCard.CardType, newCard.CardNumber, newCard.ExpirationDate, newCard.CVV).
@@ -171,7 +195,7 @@ func (suite *CardRepositoryTestSuite) TestCreateCard_Success() {
 }
 
 func (suite *CardRepositoryTestSuite) TestCreate_Failed() {
-	newCard := dummyCardResponse[0]
+	newCard := dummyCreateCard[0]
 	userID := uint(1)
 	suite.mockSql.ExpectExec("INSERT INTO mst_card \\(user_id, card_type, card_number, expiration_date, cvv\\) VALUES \\(\\$1, \\$2, \\$3, \\$4, \\$5\\)").
 		WithArgs(userID, newCard.CardType, newCard.CardNumber, newCard.ExpirationDate, newCard.CVV).WillReturnError(errors.New("failed to create data"))

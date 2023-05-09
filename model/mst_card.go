@@ -17,3 +17,11 @@ type CardResponse struct {
 	ExpirationDate string `json:"expiration_date"`
 	CVV            string `json:"cvv"`
 }
+
+type CreateCard struct {
+	UserID         uint   `json:"user_id"`
+	CardType       string `json:"card_type"`
+	CardNumber     string `json:"card_number"`
+	ExpirationDate string `json:"expiration_date"`
+	CVV            string `json:"cvv"`
+}

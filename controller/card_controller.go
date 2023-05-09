@@ -105,7 +105,7 @@ func (c *CardController) CreateCardID(ctx *gin.Context) {
 		return
 	}
 
-	var newCard model.CardResponse
+	var newCard model.CreateCard
 	err = ctx.BindJSON(&newCard)
 	if err != nil {
 		logrus.Errorf("Failed to request body: %v", err)
