@@ -61,7 +61,7 @@ CREATE TABLE tx_transaction(
   CONSTRAINT tx_senderID_fkey FOREIGN KEY(sender_id)
   REFERENCES mst_users(user_id),
   CONSTRAINT tx_recipientID_fkey FOREIGN KEY(recipient_id)
-  REFERENCES mst_users(user_id)
+  REFERENCES mst_users(user_id),
   CONSTRAINT tx_peID_fkey FOREIGN KEY(pe_id)
   REFERENCES mst_point_exchange(pe_id)
 );

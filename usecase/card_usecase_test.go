@@ -28,22 +28,6 @@ var dummyCard = []model.Card{
 		CVV:            "321",
 	},
 }
-var dummyCardResponse = []model.CardResponse{
-	{
-		UserID:         1,
-		CardType:       "BRI",
-		CardNumber:     "1234-5678-9101-3456",
-		ExpirationDate: "07/25",
-		CVV:            "123",
-	},
-	{
-		UserID:         2,
-		CardType:       "BCA",
-		CardNumber:     "4321-8765-9101-3456",
-		ExpirationDate: "03/26",
-		CVV:            "321",
-	},
-}
 var dummyCardResponse1 = []*model.CardResponse{
 	{
 		UserID:         1,
@@ -118,7 +102,7 @@ func (u *cardRepoMock) Create(id uint, newCard *model.CreateCard) (any, error) {
 	if args.Get(0) == nil {
 		return nil, errors.New("failed to create data")
 	}
-	return dummyCardResponse, nil
+	return dummyCreateCard, nil
 }
 
 func (u *cardRepoMock) Update(card *model.Card) string {
@@ -206,7 +190,7 @@ func (suite *CardUsecaseTestSuite) TestFindCardByCardID_Failed() {
 func (suite *CardUsecaseTestSuite) TestRegister_Success() {
 	userID := uint(1)
 	cardUsecaseMock := NewCardUsecase(suite.cardaccRepoMock)
-	suite.cardaccRepoMock.On("Create", userID, &dummyCardResponse[0]).Return(dummyCardResponse, nil)
+	suite.cardaccRepoMock.On("Create", userID, &dummyCreateCard[0]).Return(dummyCreateCard, nil)
 	result, err := cardUsecaseMock.Register(userID, &dummyCreateCard[0])
 	assert.NotNil(suite.T(), result)
 	assert.Nil(suite.T(), err)
@@ -215,7 +199,7 @@ func (suite *CardUsecaseTestSuite) TestRegister_Failed() {
 	userID := uint(1)
 	expectedError := errors.New("failed to create data")
 	cardUsecaseMock := NewCardUsecase(suite.cardaccRepoMock)
-	suite.cardaccRepoMock.On("Create", userID, &dummyCardResponse[0]).Return(nil, expectedError)
+	suite.cardaccRepoMock.On("Create", userID, &dummyCreateCard[0]).Return(nil, expectedError)
 	result, err := cardUsecaseMock.Register(userID, &dummyCreateCard[0])
 	assert.Nil(suite.T(), result)
 	assert.NotNil(suite.T(), err)
