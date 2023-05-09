@@ -41,6 +41,64 @@ func TestAuthMiddlewareRole_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code, "Response status code should be 200 OK")
 	assert.JSONEq(t, `{"message":"Hello, World!"}`, w.Body.String(), "Response body should be a JSON success message")
 }
+func TestAuthMiddlewareRole_NotMaster(t *testing.T) {
+	// Set up the test
+	r := setupTest()
+
+	// Generate a valid token for a non-master role user
+	token, err := generateToken(&model.Credentials{
+		Email:    "regular@myapp.com",
+		Password: "password",
+		UserID:   2,
+		Username: "regularuser",
+		Role:     "user",
+	})
+	require.NoError(t, err, "Failed to generate a valid token")
+	headers := map[string]string{
+		"Authorization": token,
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
+	req.Header.Set("Authorization", headers["Authorization"])
+	w := httptest.NewRecorder()
+
+	// Perform the request
+	r.ServeHTTP(w, req)
+
+	// Check the response
+	assert.Equal(t, http.StatusForbidden, w.Code, "Response status code should be 403 Forbidden")
+	assert.JSONEq(t, `{"message":"request failed", "result":"you do not have permission to access this resource", "status":false, "statusCode":403}`, w.Body.String(), "Response body should be a JSON error message")
+}
+func TestAuthMiddlewareRole_Unauthorized(t *testing.T) {
+	// Set up the test
+	r := setupTest()
+
+	// Generate a valid token for a user with a different role than 'master'
+	token, err := generateToken(&model.Credentials{
+		Email:    "user@myapp.com",
+		Password: "password",
+		UserID:   2,
+		Username: "user",
+		Role:     "user",
+	})
+	require.NoError(t, err, "Failed to generate a valid token")
+	headers := map[string]string{
+		"Authorization": token,
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "/user/bank", nil)
+	req.Header.Set("Authorization", headers["Authorization"])
+	w := httptest.NewRecorder()
+
+	// Perform the request
+	r.ServeHTTP(w, req)
+
+	// Check the response
+	assert.Equal(t, http.StatusForbidden, w.Code, "Response status code should be 403 Forbidden")
+	assert.JSONEq(t, `{"message":"request failed", "result":"you do not have permission to access this resource", "status":false, "statusCode":403}`, w.Body.String(), "Response body should be a JSON error message")
+}
+
+
 func TestAuthMiddleware_Success(t *testing.T) {
     // Set up the test
     r := setupTest()
@@ -106,6 +164,32 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
     assert.Equal(t, http.StatusUnauthorized, w.Code, "Response status code should be 401 Unauthorized")
     assert.JSONEq(t, `{"status":false,"statusCode":401,"result":"unauthorized","message":"request failed"}`, w.Body.String(), "Response body should be a JSON unauthorized message")
 }
+// func TestAuthMiddleware_RoleUnauthorized(t *testing.T) {
+//     // Initialize router and authMiddleware
+//     router := gin.New()
+//     authMiddleware := NewAuthMiddleware(mockAuthService)
+
+//     // Set up a route that requires an admin role
+//     router.GET("/admin", authMiddleware.ValidateRole("admin"), func(c *gin.Context) {
+//         c.JSON(http.StatusOK, gin.H{"status": true})
+//     })
+
+//     // Create a request with a valid token but with a role that is not authorized
+//     req, _ := http.NewRequest("GET", "/admin", nil)
+//     req.Header.Set("Authorization", "Bearer "+invalidRoleToken)
+
+//     // Make the request and check the response
+//     resp := httptest.NewRecorder()
+//     router.ServeHTTP(resp, req)
+
+//     assert.Equal(t, http.StatusUnauthorized, resp.Code)
+//     assertJSONResponse(t, gin.H{
+//         "status":     false,
+//         "statusCode": http.StatusUnauthorized,
+//         "result":     "unauthorized",
+//         "message":    "user does not have required role",
+//     }, resp.Body)
+// }
 
 
 

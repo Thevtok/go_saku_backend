@@ -237,19 +237,33 @@ func (suite *UserControllerTestSuite) TestFindByUsername_Success() {
 }
 
 func (suite *UserControllerTestSuite) TestRegister_Success() {
-	newUser := &dummyUserCreate[0]
+	newUser := &model.UserCreate{
+		Name:         "John Doe",
+		Username:     "johndoe",
+		Email:        "johndoe@gmail.com",
+		Password:     "password1A",
+		Phone_Number: "081234567890",
+		Address:      "Jakarta",
+	}
 	controller := NewUserController(suite.useCaseMock)
 	router := setupRouter()
 	router.POST("/register", controller.Register)
 
-	suite.useCaseMock.On("Register", newUser).Return(newUser, nil)
+	expectedResult := &model.UserResponse{
+		Name:         "John Doe",
+		Username:     "johndoe",
+		Email:        "johndoe@gmail.com",
+		Phone_Number: "081234567890",
+		Address:      "Jakarta",
+	}
+
+	suite.useCaseMock.On("Register", newUser).Return(expectedResult, nil)
+
 	r := httptest.NewRecorder()
 	reqBody, _ := json.Marshal(newUser)
 	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
 	router.ServeHTTP(r, request)
-	response := r.Body.String()
-	var actualUser model.UserCreate
-	json.Unmarshal([]byte(response), &actualUser)
+
 	assert.Equal(suite.T(), http.StatusCreated, r.Code)
 }
 func (suite *UserControllerTestSuite) TestRegister_Failed() {
@@ -280,24 +294,94 @@ func (suite *UserControllerTestSuite) TestRegisterBindJSON_Failed() {
 	json.Unmarshal([]byte(response), &actualUser)
 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
 }
-func (suite *UserControllerTestSuite) TestRegister_Error() {
-	newUser := &dummyUserCreate[0]
+func (suite *UserControllerTestSuite) TestRegister_EmailInvalid() {
+	newUser := &model.UserCreate{
+	Name: "Dummy",
+	Username: "dummy123",
+	Email: "dummyemail.com",
+	Password: "Password123",
+	Phone_Number: "081234567890",
+	Address: "Dummy Address",
+	}
 	controller := NewUserController(suite.useCaseMock)
 	router := setupRouter()
 	router.POST("/register", controller.Register)
-
-	expectedErr := errors.New("Failed to Register User")
-	suite.useCaseMock.On("Register", newUser).Return(nil, expectedErr)
-
 	r := httptest.NewRecorder()
-	reqBody, _ := json.Marshal(newUser)
-	request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
-	router.ServeHTTP(r, request)
+reqBody, _ := json.Marshal(newUser)
+request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+router.ServeHTTP(r, request)
 
-	response := r.Body.String()
-	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
-	assert.Contains(suite.T(), response, "Failed to Register User")
+response := r.Body.String()
+assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+assert.Contains(suite.T(), response, "email must be a gmail address")
 }
+func (suite *UserControllerTestSuite) TestRegister_InvalidPassword() {
+    newUser := &model.UserCreate{
+        Name:         "Dummy User",
+        Username:     "dummyuser",
+        Email:        "dummyuser@gmail.com",
+        Password:     "1234567", // password kurang dari 8 karakter
+        Phone_Number: "081234567890",
+        Address:      "Jalan Dummy No. 123",
+    }
+    controller := NewUserController(suite.useCaseMock)
+    router := setupRouter()
+    router.POST("/register", controller.Register)
+
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(newUser)
+    request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+
+    response := r.Body.String()
+    assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+    assert.Contains(suite.T(), response, "Invalid Input: password must have at least 8 characters")
+}
+func (suite *UserControllerTestSuite) TestRegister_InvalidPasswordUppercase() {
+	newUser := &model.UserCreate{
+        Name:         "Dummy User",
+        Username:     "dummyuser",
+        Email:        "dummyuser@gmail.com",
+        Password:     "dummypassword",
+        Phone_Number: "081234567890",
+        Address:      "Jalan Dummy No. 123",
+    }
+    controller := NewUserController(suite.useCaseMock)
+    router := setupRouter()
+    router.POST("/register", controller.Register)
+
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(newUser)
+    request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+
+    response := r.Body.String()
+    assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+    assert.Contains(suite.T(), response, "password must contain at least one uppercase letter and one number")
+}
+func (suite *UserControllerTestSuite) TestRegister_InvalidPhoneNumber() {
+    newUser := &model.UserCreate{
+        Name:         "Dummy User",
+        Username:     "dummyuser",
+        Email:        "dummyuser@gmail.com",
+        Password:     "Password123",
+        Phone_Number: "0812345",
+        Address:      "Jalan Dummy No. 123",
+    }
+    controller := NewUserController(suite.useCaseMock)
+    router := setupRouter()
+    router.POST("/register", controller.Register)
+
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(newUser)
+    request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+
+    response := r.Body.String()
+    assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+    assert.Contains(suite.T(), response, "phone_number must be 11 - 13 digit")
+}
+
 
 func (suite *UserControllerTestSuite) TestUnreg_Success() {
 	user := &model.User{
@@ -329,22 +413,27 @@ func (suite *UserControllerTestSuite) TestFindByUsername_Failed() {
 }
 
 func (suite *UserControllerTestSuite) TestEditProfile_Success() {
-	user := &dummyUser[0]
-	controller := NewUserController(suite.useCaseMock)
-	router := setupRouter()
-	router.PUT("/user/profile/:user_id", controller.EditProfile)
+    userID := "1"
+    updatedUser := &model.User{
+        Name:         "Updated User",
+        Username:     "updateduser",
+        Email:        "updateduser@gmail.com",
+        Phone_Number: "081234567890",
+        Address:      "Jalan Updated No. 123",
+    }
+    mockUseCase := &UserUseCaseMock{}
+    mockUseCase.On("FindById", uint(1)).Return(&model.User{}, nil)
+    mockUseCase.On("EditProfile", updatedUser).Return(updatedUser)
+    controller := NewUserController(mockUseCase)
+    router := setupRouter()
+    router.PUT("/user/profile/:user_id", controller.EditProfile)
 
-	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
-	suite.useCaseMock.On("EditProfile", user).Return("Success update user")
-	r := httptest.NewRecorder()
-	reqBody, _ := json.Marshal(user)
-	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-	router.ServeHTTP(r, request)
-	response := r.Body.String()
-	var result map[string]string
-	json.Unmarshal([]byte(response), &result)
-	assert.Equal(suite.T(), http.StatusOK, r.Code)
-	suite.useCaseMock.AssertExpectations(suite.T())
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(updatedUser)
+    request, _ := http.NewRequest(http.MethodPut, "/user/profile/"+userID, bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+
+    assert.Equal(suite.T(), http.StatusOK, r.Code)
 }
 func (suite *UserControllerTestSuite) TestEditProfile_UserNotFound() {
 	user := &dummyUser[0]
@@ -379,6 +468,27 @@ func (suite *UserControllerTestSuite) TestEditProfile_InvalidUserID() {
 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
 	suite.useCaseMock.AssertExpectations(suite.T())
 }
+func (suite *UserControllerTestSuite) TestEditProfile_InvalidPhoneNumber() {
+    userID := "1"
+    updatedUser := &model.User{
+        Phone_Number: "0812345",
+    }
+    mockUseCase := &UserUseCaseMock{}
+    mockUseCase.On("FindById", uint(1)).Return(&model.User{}, nil)
+    controller := NewUserController(mockUseCase)
+    router := setupRouter()
+    router.PUT("/user/profile/:user_id", controller.EditProfile)
+
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(updatedUser)
+    request, _ := http.NewRequest(http.MethodPut, "/user/profile/"+userID, bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+
+    response := r.Body.String()
+    assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+    assert.Contains(suite.T(), response, "phone_number must be 11 - 13 digit")
+}
+
 
 // func (suite *UserControllerTestSuite) TestEditProfile_InvalidExistingUser() {
 // 	controller := NewUserController(suite.useCaseMock)
@@ -411,59 +521,35 @@ func (suite *UserControllerTestSuite) TestEditProfile_InvalidInput() {
 	suite.useCaseMock.AssertExpectations(suite.T())
 }
 
-// func (suite *UserControllerTestSuite) TestEditProfile_Failed() {
-// 	controller := NewUserController(suite.useCaseMock)
-// 	router := setupRouter()
-// 	router.PUT("/user/profile/:user_id", controller.EditProfile)
-
-// 	existingUser := &model.User{
-// 		ID:           1,
-// 		Name:         "name1",
-// 		Username:     "username1",
-// 		Email:        "email1@mail.com",
-// 		Password:     "password1",
-// 		Phone_Number: "08111111",
-// 		Address:      "address1",
-// 		Balance:      100000,
-// 		Role:         "user",
-// 		Point:        10,
-// 	}
-
-// 	reqBody, _ := json.Marshal(existingUser)
-// 	request, _ := http.NewRequest(http.MethodPut, "/user/profile/1", bytes.NewBuffer(reqBody))
-// 	request.Header.Set("Content-Type", "application/json")
-
-// 	suite.useCaseMock.On("FindById", uint(1)).Return(existingUser, nil)
-// 	suite.useCaseMock.On("EditProfile", existingUser).Return("", errors.New("failed to update user"))
-
-// 	w := httptest.NewRecorder()
-// 	router.ServeHTTP(w, request)
-
-// 	assert.Equal(suite.T(), http.StatusInternalServerError, w.Code)
-// 	var result map[string]string
-// 	json.Unmarshal(w.Body.Bytes(), &result)
-// 	assert.Equal(suite.T(), "Failed to update user", result["message"])
-// 	assert.Equal(suite.T(), "error", result["status"])
-// 	suite.useCaseMock.AssertExpectations(suite.T())
-// }
-
 func (suite *UserControllerTestSuite) TestEditEmailPassword_Success() {
-	user := &dummyUser[0]
-	controller := NewUserController(suite.useCaseMock)
-	router := setupRouter()
-	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+    user := &model.User{
+        ID:       1,
+        Name:     "John",
+        Email:    "john@gmail.com",
+        Password: "Password123",
+    }
+    updatedUser := &model.User{
+        ID:       1,
+        Name:     "John",
+        Email:    "john@gmail.com",
+        Password: "Password123",
+    }
+    controller := NewUserController(suite.useCaseMock)
+    router := setupRouter()
+    router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
 
-	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
-	suite.useCaseMock.On("EditEmailPassword", user).Return("Success update user")
-	r := httptest.NewRecorder()
-	reqBody, _ := json.Marshal(user)
-	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
-	router.ServeHTTP(r, request)
-	response := r.Body.String()
-	var result map[string]string
-	json.Unmarshal([]byte(response), &result)
-	assert.Equal(suite.T(), http.StatusOK, r.Code)
-	suite.useCaseMock.AssertExpectations(suite.T())
+    suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+    suite.useCaseMock.On("EditEmailPassword", user).Return(updatedUser)
+    r := httptest.NewRecorder()
+    reqBody, _ := json.Marshal(user)
+    request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+    router.ServeHTTP(r, request)
+    response := r.Body.String()
+    var result map[string]interface{}
+    json.Unmarshal([]byte(response), &result)
+    assert.Equal(suite.T(), http.StatusOK, r.Code)
+    assert.Equal(suite.T(), true, result["status"])
+    suite.useCaseMock.AssertExpectations(suite.T())
 }
 func (suite *UserControllerTestSuite) TestEditEmailPassword_UserNotFound() {
 	user := &dummyUser[0]
@@ -514,6 +600,118 @@ func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidInput() {
 	json.Unmarshal([]byte(response), &result)
 	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
 	suite.useCaseMock.AssertExpectations(suite.T())
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidEmail() {
+	user := &model.User{
+		ID:       1,
+		Name:     "John Doe",
+		Email:    "johndoe@yahoo.com",
+		Password: "password123",
+	}
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+
+	reqBody, _ := json.Marshal(map[string]string{
+		"email":    "johndoe@yahoo.com",
+		"password": "newpassword",
+	})
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	r := httptest.NewRecorder()
+	router.ServeHTTP(r, request)
+
+	response := r.Body.String()
+	var result map[string]interface{}
+	json.Unmarshal([]byte(response), &result)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	assert.Contains(suite.T(), response, "email must be a gmail address")
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidPassword() {
+	user := &model.User{
+		ID:       1,
+		Name:     "John Doe",
+		Email:    "johndoe@gmail.com",
+		Password: "Pas1",
+	}
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+
+	reqBody, _ := json.Marshal(map[string]string{
+		"email":    "johndoe@gmail.com",
+		"password": "Pas1",
+	})
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	r := httptest.NewRecorder()
+	router.ServeHTTP(r, request)
+
+	response := r.Body.String()
+	var result map[string]interface{}
+	json.Unmarshal([]byte(response), &result)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	assert.Contains(suite.T(), response, "Invalid Input: password must have at least 8 characters")
+}
+func (suite *UserControllerTestSuite) TestEditEmailPassword_InvalidPasswordFormat() {
+	user := &model.User{
+		ID:       1,
+		Name:     "John Doe",
+		Email:    "johndoe@gmail.com",
+		Password: "password",
+	}
+	controller := NewUserController(suite.useCaseMock)
+	router := setupRouter()
+	router.PUT("/user/pass/:user_id", controller.EditEmailPassword)
+
+	suite.useCaseMock.On("FindById", uint(1)).Return(user, nil)
+
+	reqBody, _ := json.Marshal(map[string]string{
+		"email":    "johndoe@gmail.com",
+		"password": "password",
+	})
+	request, _ := http.NewRequest(http.MethodPut, "/user/pass/1", bytes.NewBuffer(reqBody))
+	request.Header.Set("Content-Type", "application/json")
+
+	r := httptest.NewRecorder()
+	router.ServeHTTP(r, request)
+
+	response := r.Body.String()
+	var result map[string]interface{}
+	json.Unmarshal([]byte(response), &result)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, r.Code)
+	assert.Contains(suite.T(), response, "password must contain at least one uppercase letter and one number")
+}
+
+func TestIsValidPassword(t *testing.T) {
+    cases := []struct {
+        password string
+        expected bool
+    }{
+        {"Abcdef123", true},
+        {"Abcdef", false},
+        {"abcdef123", false},
+        {"ABCDEF123", true},
+        {"123456", false},
+        {"abcxyz", false},
+        {"", false},
+    }
+
+    for _, c := range cases {
+        actual := isValidPassword(c.password)
+        if actual != c.expected {
+            t.Errorf("isValidPassword(%q) == %t, expected %t", c.password, actual, c.expected)
+        }
+    }
 }
 
 func (suite *UserControllerTestSuite) SetupTest() {

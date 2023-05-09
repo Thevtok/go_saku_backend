@@ -35,7 +35,7 @@ CREATE TABLE mst_card(
 
 CREATE TABLE mst_photo_url(
     photo_id serial NOT NULL PRIMARY KEY,
-    url_photo character varying,
+    url_photo character varying UNIQUE,
     user_id integer,
     CONSTRAINT photo_userID_fkey FOREIGN KEY(user_id)
     REFERENCES mst_users(user_id)
