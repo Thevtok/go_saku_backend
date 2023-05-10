@@ -17,7 +17,7 @@ type TransactionRepository interface {
 	CreateTransfer(tx *model.TransactionTransferResponse) (any, error)
 	CreateRedeem(tx *model.TransactionPoint) error
 	GetAllPoint() ([]*model.PointExchange, error)
-	GetBySenderId(senderId uint) ([]*model.Transaction, error)
+	GetBySenderId(senderId, recipientId uint) ([]*model.Transaction, error)
 	GetByPeId(id int) (*model.PointExchange, error)
 }
 
@@ -25,13 +25,13 @@ type transactionRepository struct {
 	db *sql.DB
 }
 
-func (r *transactionRepository) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
+func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*model.Transaction, error) {
 	var txs []*model.Transaction
 	rows, err := r.db.Query(`
         SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date
         FROM tx_transaction
-        WHERE sender_id = $1
-    `, senderId)
+        WHERE sender_id = $1 OR recipient_id = $2
+    `, senderId, recipientId)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
 	}

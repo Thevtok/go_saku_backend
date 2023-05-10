@@ -16,7 +16,7 @@ type TransactionUseCase interface {
 	CreateWithdrawal(transaction *model.TransactionWithdraw) error
 	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
 	CreateRedeem(transaction *model.TransactionPoint) error
-	FindTxById(senderId uint) ([]*model.Transaction, error)
+	FindTxById(senderId, recipientId uint) ([]*model.Transaction, error)
 	FindByPeId(id int) (*model.PointExchange, error)
 }
 
@@ -29,8 +29,8 @@ func (uc *transactionUseCase) FindByPeId(id int) (*model.PointExchange, error) {
 	return uc.transactionRepo.GetByPeId(id)
 }
 
-func (uc *transactionUseCase) FindTxById(senderId uint) ([]*model.Transaction, error) {
-	return uc.transactionRepo.GetBySenderId(senderId)
+func (uc *transactionUseCase) FindTxById(senderId, recipientId uint) ([]*model.Transaction, error) {
+	return uc.transactionRepo.GetBySenderId(senderId, recipientId)
 }
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
 	user, err := uc.userRepo.GetByiD(transaction.SenderID)

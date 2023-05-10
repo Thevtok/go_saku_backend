@@ -31,7 +31,16 @@ func RunServer() {
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUseCase(userRepo)
 	userAuth := controller.NewUserAuth(userUsecase)
-	userController := controller.NewUserController(userUsecase)
+	bankAccRepo := repository.NewBankAccRepository(db)
+	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
+	bankAccController := controller.NewBankAccController(bankAccusecase)
+	cardRepo := repository.NewCardRepository(db)
+	cardUsecase := usecase.NewCardUsecase(cardRepo)
+	cardController := controller.NewCardController(cardUsecase)
+	photoRepo := repository.NewPhotoRepository(db)
+	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
+	photoController := controller.NewPhotoController(photoUsecase)
+	userController := controller.NewUserController(userUsecase, bankAccusecase, cardUsecase, photoUsecase)
 	authMiddlewareIdExist := userController.AuthMiddlewareIDExist()
 
 	// USER GROUP
@@ -43,16 +52,13 @@ func RunServer() {
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
 	r.PUT("user/pass/:user_id", authMiddlewareIdExist, userController.EditEmailPassword)
 	r.PUT("user/profile/:user_id", authMiddlewareIdExist, userController.EditProfile)
-	userRouter.DELETE("/:username", userController.Unreg)
+	r.DELETE("user/:user_id", authMiddlewareIdExist, userController.Unreg)
 
 	// Bank Accont Router
 	bankAccRouter := r.Group("/user/bank")
 	bankAccRouter.Use(authMiddlewareIdExist)
 
 	// Bank Acc Depedency
-	bankAccRepo := repository.NewBankAccRepository(db)
-	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
-	bankAccController := controller.NewBankAccController(bankAccusecase)
 
 	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
 	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUserID)
@@ -67,9 +73,6 @@ func RunServer() {
 	cardRouter.Use(authMiddlewareIdExist)
 
 	// Card Depedency
-	cardRepo := repository.NewCardRepository(db)
-	cardUsecase := usecase.NewCardUsecase(cardRepo)
-	cardController := controller.NewCardController(cardUsecase)
 
 	r.GET("user/card", authMiddlewareRole, cardController.FindAllCard)
 	cardRouter.GET("/:user_id", cardController.FindCardByUserID)
@@ -84,9 +87,6 @@ func RunServer() {
 	photoRouter.Use(authMiddlewareIdExist)
 
 	// Photo Depedency
-	photoRepo := repository.NewPhotoRepository(db)
-	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
-	photoController := controller.NewPhotoController(photoUsecase)
 
 	photoRouter.POST("/:user_id", photoController.Upload)
 	photoRouter.GET("/:user_id", photoController.Download)

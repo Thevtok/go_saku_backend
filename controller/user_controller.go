@@ -18,7 +18,10 @@ import (
 )
 
 type UserController struct {
-	usecase usecase.UserUseCase
+	usecase      usecase.UserUseCase
+	bankusecase  usecase.BankAccUsecase
+	cardusecase  usecase.CardUsecase
+	photousecase usecase.PhotoUsecase
 }
 
 func (c *UserController) FindUsers(ctx *gin.Context) {
@@ -237,19 +240,31 @@ func (c *UserController) Unreg(ctx *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	username := ctx.Param("username")
-	user := &model.User{
-		Username: username,
+	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
+	if err != nil {
+		logrus.Errorf("Invalid user ID : %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user ID")
+		return
 	}
+	user := &model.User{
+		ID: uint(userID),
+	}
+
+	_ = c.bankusecase.UnregAll(user.ID)
+	_ = c.cardusecase.UnregALL(user.ID)
+	_ = c.photousecase.Remove(user.ID)
 
 	res := c.usecase.Unreg(user)
 	logrus.Info("Delete Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
 
-func NewUserController(usercase usecase.UserUseCase) *UserController {
+func NewUserController(usercase usecase.UserUseCase, bank usecase.BankAccUsecase, card usecase.CardUsecase, photo usecase.PhotoUsecase) *UserController {
 	controller := UserController{
-		usecase: usercase,
+		usecase:      usercase,
+		bankusecase:  bank,
+		cardusecase:  card,
+		photousecase: photo,
 	}
 	return &controller
 }

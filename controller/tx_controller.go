@@ -247,6 +247,10 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "insufficient balance")
 		return
 	}
+	if sender.ID == recipient.ID {
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusForbidden, "Input the recipient correctly")
+		return
+	}
 
 	// Create transfer transaction in use case layer
 	result, err := c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
@@ -356,7 +360,7 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 		return
 	}
 
-	txs, err := c.txUsecase.FindTxById(uint(userId))
+	txs, err := c.txUsecase.FindTxById(uint(userId), uint(userId))
 	if err != nil {
 		logrus.Errorf("Failed to get Transaction")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get Transaction")

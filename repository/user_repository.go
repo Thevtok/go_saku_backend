@@ -148,14 +148,14 @@ func (r *userRepository) UpdateEmailPassword(user *model.User) string {
 
 func (r *userRepository) Delete(user *model.User) string {
 	// Check if the user exists
-	_, err := r.GetByUsername(user.Username)
+	_, err := r.GetByiD(user.ID)
 	if err != nil {
 		return "user not found"
 	}
 
 	// Execute the delete query
-	query := "DELETE FROM mst_users WHERE username = $1"
-	_, err = r.db.Exec(query, user.Username)
+	query := "DELETE FROM mst_users WHERE user_id = $1"
+	_, err = r.db.Exec(query, user.ID)
 	if err != nil {
 		log.Println(err)
 		return "failed to delete user"
