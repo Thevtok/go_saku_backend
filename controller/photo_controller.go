@@ -52,13 +52,6 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "File with the same name already exists")
 		return
 	}
-	out, err := os.Create(path)
-	if err != nil {
-		logrus.Errorf("Failed to create file: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create file")
-		return
-	}
-	defer out.Close()
 	fileIn, err := file.Open()
 	if err != nil {
 		logrus.Errorf("Failed to open file: %v", err)
@@ -73,6 +66,13 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Extension file is not image file")
 		return
 	}
+	out, err := os.Create(path)
+	if err != nil {
+		logrus.Errorf("Failed to create file: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create file")
+		return
+	}
+	defer out.Close()
 	_, err = io.Copy(out, fileIn)
 	if err != nil {
 		logrus.Errorf("Failed to write file: %v", err)
@@ -160,6 +160,13 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get file from request")
 		return
 	}
+	// Validasi ekstensi file
+	ext := filepath.Ext(file.Filename)
+	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		logrus.Errorf("Extension file is not image file: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Extension file is not image file")
+		return
+	}
 	// url photo location
 	filename := file.Filename
 	path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
@@ -177,13 +184,7 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		return
 	}
 	defer fileIn.Close()
-	// Validasi ekstensi file
-	ext := filepath.Ext(filename)
-	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-		logrus.Errorf("Extension file is not image file: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Extension file is not image file")
-		return
-	}
+	
 	
 	// Simpan informasi file ke database
 	oldPhoto, err := c.photoUsecase.Download(uint(userID))
