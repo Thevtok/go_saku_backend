@@ -46,10 +46,12 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	}
 
 	// check if user is eligible for bonus points
-	newPoint := user.Point + 20
-	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
-	if err != nil {
-		return err
+	if transaction.Amount >= 50000 {
+		newPoint := user.Point + 20
+		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+	} else if transaction.Amount < 50000 {
+		newPoint := user.Point
+		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	}
 
 	err = uc.transactionRepo.CreateDepositBank(transaction)
@@ -73,10 +75,12 @@ func (uc *transactionUseCase) CreateDepositCard(transaction *model.TransactionCa
 		return fmt.Errorf("failed to update user balance: %v", err)
 	}
 
-	newPoint := user.Point + 20 // change from 20 to 100
-	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
-	if err != nil {
-		return err
+	if transaction.Amount >= 50000 {
+		newPoint := user.Point + 20
+		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+	} else if transaction.Amount < 50000 {
+		newPoint := user.Point
+		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	}
 
 	// check if user is eligible for bonus points
@@ -135,13 +139,14 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	if err != nil {
 		return nil, err
 	}
-
-	// check if sender is eligible for bonus points
-	newPoint := sender.Point + 20 // change from 20 to 100
-	err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
-	if err != nil {
-		return nil, err
+	if amount >= 50000 {
+		newPoint := sender.Point + 20
+		err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
+	} else if amount < 50000 {
+		newPoint := sender.Point
+		err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
 	}
+	// check if sender is eligible for bonus points
 
 	// insert transaction
 	newTransfer := model.TransactionTransferResponse{

@@ -39,9 +39,9 @@ var value = uint(2)
 var value1 = uint(3)
 var txs = []*model.Transaction{
 	{
-		SenderID:        1,
+		SenderID:        &value,
 		TransactionType: "Transfer",
-		RecipientID:     1,
+		RecipientID:     &value,
 		BankAccountID:   &value,
 		CardID:          &value,
 		PointExchangeID: &value,
@@ -50,9 +50,9 @@ var txs = []*model.Transaction{
 		TransactionDate: now,
 	},
 	{
-		SenderID:        2,
+		SenderID:        &value1,
 		TransactionType: "Transfer",
-		RecipientID:     1,
+		RecipientID:     &value1,
 		BankAccountID:   &value1,
 		CardID:          &value1,
 		PointExchangeID: &value1,
@@ -95,7 +95,7 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Success() {
 			AddRow(txs[1].TransactionType, txs[1].SenderID, txs[1].RecipientID, txs[1].BankAccountID, txs[1].CardID, txs[1].PointExchangeID, txs[1].Amount, txs[1].Point, txs[1].TransactionDate))
 
 	// Call the GetBySenderId method
-	result, err := repo.GetBySenderId(senderID, recipientId)
+	result, err := repo.GetBySenderId(*senderID, *recipientId)
 
 	// Assert that no errors occurred and all expectations were met
 	assert.NoError(suite.T(), err)

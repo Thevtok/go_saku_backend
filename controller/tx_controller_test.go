@@ -196,14 +196,14 @@ func (suite *TxControllerTestSuite) TestCreateTransfer_Success() {
 	tf := &model.TransactionTransferResponse{
 		SenderID:    uint(1),
 		RecipientID: uint(2),
-		Amount:      uint(5000),
+		Amount:      uint(50000),
 	}
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
 	suite.useCaseMock.On("FindById", uint(1)).Return(&model.User{
 		ID:      uint(1),
-		Balance: 10000,
+		Balance: 100000,
 	}, nil)
 	suite.useCaseMock.On("FindById", uint(2)).Return(&model.User{
 		ID:      uint(2),
@@ -212,11 +212,11 @@ func (suite *TxControllerTestSuite) TestCreateTransfer_Success() {
 
 	suite.txUsecaseMock.On("CreateTransfer", &model.User{
 		ID:      uint(1),
-		Balance: 10000,
+		Balance: 100000,
 	}, &model.User{
 		ID:      uint(2),
 		Balance: 0,
-	}, uint(5000)).Return(tf, nil)
+	}, uint(50000)).Return(tf, nil)
 
 	router.POST("/user/tx/tf/:user_id", controller.CreateTransferTransaction)
 	reqBody, _ := json.Marshal(tf)
@@ -258,20 +258,22 @@ func (suite *TxControllerTestSuite) TestCreateRedeem_Success() {
 	assert.Equal(suite.T(), http.StatusCreated, r.Code)
 }
 
+var value = uint(1)
+
 func (suite *TxControllerTestSuite) TestGetTxBySenderId_Success() {
 
 	tx := &model.Transaction{
-		SenderID: uint(1),
+		SenderID: &value,
 	}
-	recip := uint(1)
+
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
-	suite.useCaseMock.On("FindById", tx.SenderID).Return(&model.User{
+	suite.useCaseMock.On("FindById", uint(1)).Return(&model.User{
 		ID: uint(1),
 	}, nil)
 
-	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return([]*model.Transaction{}, nil)
+	suite.txUsecaseMock.On("FindTxById", uint(1), uint(1)).Return([]*model.Transaction{}, nil)
 
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(tx)
@@ -384,7 +386,7 @@ func (suite *TxControllerTestSuite) TestGetTx_InvalidUserID() {
 	invalidUserID := "invalidUserID"
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(&model.Transaction{
-		SenderID: uint(1),
+		SenderID: &value,
 	})
 
 	r := httptest.NewRecorder()
@@ -665,7 +667,7 @@ func (suite *TxControllerTestSuite) TestCreateTransfer_FailedToGetSenderUser() {
 func (suite *TxControllerTestSuite) TestGetTx_FailedToGetSenderUser() {
 	// Prepare
 	tx := &model.Transaction{
-		SenderID: uint(1),
+		SenderID: &value,
 	}
 
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
@@ -1085,14 +1087,14 @@ func (suite *TxControllerTestSuite) TestCreateTransfer_Failed() {
 	tf := &model.TransactionTransferResponse{
 		SenderID:    uint(1),
 		RecipientID: uint(2),
-		Amount:      uint(5000),
+		Amount:      uint(50000),
 	}
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
 	suite.useCaseMock.On("FindById", uint(1)).Return(&model.User{
 		ID:      uint(1),
-		Balance: 10000,
+		Balance: 100000,
 	}, nil)
 	suite.useCaseMock.On("FindById", uint(2)).Return(&model.User{
 		ID:      uint(2),
@@ -1101,11 +1103,11 @@ func (suite *TxControllerTestSuite) TestCreateTransfer_Failed() {
 
 	suite.txUsecaseMock.On("CreateTransfer", &model.User{
 		ID:      uint(1),
-		Balance: 10000,
+		Balance: 100000,
 	}, &model.User{
 		ID:      uint(2),
 		Balance: 0,
-	}, uint(5000)).Return(nil, errors.New("err"))
+	}, uint(50000)).Return(nil, errors.New("err"))
 
 	router.POST("/user/tx/tf/:user_id", controller.CreateTransferTransaction)
 	reqBody, _ := json.Marshal(tf)
@@ -1148,18 +1150,17 @@ func (suite *TxControllerTestSuite) TestCreateRedeem_Failed() {
 func (suite *TxControllerTestSuite) TestGetTxBySenderId_Failed() {
 
 	tx := &model.Transaction{
-		SenderID: uint(1),
+		SenderID: &value,
 	}
-	recip := uint(1)
 
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
-	suite.useCaseMock.On("FindById", tx.SenderID).Return(&model.User{
+	suite.useCaseMock.On("FindById", uint(1)).Return(&model.User{
 		ID: uint(1),
 	}, nil)
 
-	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return(nil, errors.New("err"))
+	suite.txUsecaseMock.On("FindTxById", uint(1), uint(1)).Return(nil, errors.New("err"))
 
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(tx)
@@ -1175,18 +1176,17 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Failed() {
 func (suite *TxControllerTestSuite) TestGetTxBySenderId_Nil() {
 
 	tx := &model.Transaction{
-		SenderID: uint(1),
+		SenderID: &value,
 	}
-	recip := uint(1)
 
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
-	suite.useCaseMock.On("FindById", tx.SenderID).Return(&model.User{
+	suite.useCaseMock.On("FindById", uint(1)).Return(&model.User{
 		ID: uint(1),
 	}, nil)
 
-	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return(nil, nil)
+	suite.txUsecaseMock.On("FindTxById", uint(1), uint(1)).Return(nil, nil)
 
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(tx)

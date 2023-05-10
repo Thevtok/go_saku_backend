@@ -44,7 +44,12 @@ func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*mo
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)
 		}
-
+		if tx.SenderID == nil {
+			tx.SenderID = new(uint)
+		}
+		if tx.RecipientID == nil {
+			tx.RecipientID = new(uint)
+		}
 		if tx.BankAccountID == nil {
 			tx.BankAccountID = new(uint)
 		}

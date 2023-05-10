@@ -72,6 +72,11 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	// Set the sender ID to the user ID
 	reqBody.SenderID = uint(userID)
 	reqBody.BankAccountID = uint(bankAccID)
+	if reqBody.Amount < 10000 {
+		logrus.Errorf("Minimum deposit 10.000: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum deposit 10.000")
+		return
+	}
 
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositBank(&reqBody); err != nil {
@@ -124,6 +129,11 @@ func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
 		logrus.Errorf("Incorrect request body: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
+		return
+	}
+	if reqBody.Amount < 10000 {
+		logrus.Errorf("Minimum deposit 10.000: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum deposit 10.000")
 		return
 	}
 
@@ -183,6 +193,11 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
 		logrus.Errorf("Incorrect request body: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
+		return
+	}
+	if reqBody.Amount < 20000 {
+		logrus.Errorf("Minimum withdraw 20.000: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum withdraw 20.000")
 		return
 	}
 
@@ -250,6 +265,14 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	if sender.ID == recipient.ID {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusForbidden, "Input the recipient correctly")
 		return
+	}
+
+	if newTransfer.Amount < 10000 {
+
+		logrus.Errorf("Minimum transfer 10.000: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum transfer 10.000")
+		return
+
 	}
 
 	// Create transfer transaction in use case layer
