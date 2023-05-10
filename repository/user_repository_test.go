@@ -418,7 +418,7 @@ func (suite *UserRepositoryTestSuite) TestUpdateEmailPasswordScan_Failed() {
 // Test Delete
 func (suite *UserRepositoryTestSuite) TestDelete_Success() {
 	user := dummyUser[0]
-	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = \\$1").
+	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE user_id = \\$1").
 		WithArgs(user.Username).
 		WillReturnRows(sqlmock.NewRows([]string{"name", "email", "phone_number", "address", "balance", "username", "point"}).AddRow(user.Username, user.Name, user.Email, user.Phone_Number, user.Address, user.Balance, user.Point))
 	username := "username1"

@@ -107,8 +107,8 @@ func TestTransactionUseCaseTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionUseCaseTestSuite))
 }
 
-func (m *transactionRepoMock) GetBySenderId(senderId uint) ([]*model.Transaction, error) {
-	args := m.Called(senderId)
+func (m *transactionRepoMock) GetBySenderId(senderId, recipient_id uint) ([]*model.Transaction, error) {
+	args := m.Called(senderId, recipient_id)
 
 	if args.Error(1) != nil {
 		return nil, args.Error(1)
@@ -179,16 +179,17 @@ func (m *transactionRepoMock) GetByPeId(id int) (*model.PointExchange, error) {
 }
 
 var senderID = uint(1)
+var recipient_id = uint(1)
 
 func (suite *TransactionUseCaseTestSuite) TestFindTxById_Success() {
 	// set up expectations
 
 	expectedTxs := dummyTX
-	suite.transactionRepoMock.On("GetBySenderId", senderID).Return(expectedTxs, nil)
+	suite.transactionRepoMock.On("GetBySenderId", senderID, recipient_id).Return(expectedTxs, nil)
 
 	// call the method being tested
 	uc := NewTransactionUseCase(suite.transactionRepoMock, suite.userRepoMock)
-	actualTxs, err := uc.FindTxById(senderID)
+	actualTxs, err := uc.FindTxById(senderID, recipient_id)
 
 	// assert the expected results
 	assert.NoError(suite.T(), err)

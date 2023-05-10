@@ -60,8 +60,8 @@ func (m *TxUseCaseMock) FindByPeId(id int) (*model.PointExchange, error) {
 	return args.Get(0).(*model.PointExchange), nil
 }
 
-func (uc *TxUseCaseMock) FindTxById(txId uint) ([]*model.Transaction, error) {
-	args := uc.Called(txId)
+func (uc *TxUseCaseMock) FindTxById(sId, rId uint) ([]*model.Transaction, error) {
+	args := uc.Called(sId, rId)
 	if args[0] == nil {
 		return nil, args.Error(1)
 	}
@@ -263,7 +263,7 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Success() {
 	tx := &model.Transaction{
 		SenderID: uint(1),
 	}
-
+	recip := uint(1)
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
 
@@ -271,7 +271,7 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Success() {
 		ID: uint(1),
 	}, nil)
 
-	suite.txUsecaseMock.On("FindTxById", tx.SenderID).Return([]*model.Transaction{}, nil)
+	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return([]*model.Transaction{}, nil)
 
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(tx)
@@ -1150,6 +1150,7 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Failed() {
 	tx := &model.Transaction{
 		SenderID: uint(1),
 	}
+	recip := uint(1)
 
 	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
 	router := setupRouterTx()
@@ -1158,7 +1159,7 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Failed() {
 		ID: uint(1),
 	}, nil)
 
-	suite.txUsecaseMock.On("FindTxById", tx.SenderID).Return(nil, errors.New("err"))
+	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return(nil, errors.New("err"))
 
 	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
 	reqBody, _ := json.Marshal(tx)
