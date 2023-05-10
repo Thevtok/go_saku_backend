@@ -366,6 +366,11 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get Transaction")
 		return
 	}
+	if txs == nil {
+		logrus.Errorf("Transaction not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Transaction not found")
+		return
+	}
 
 	logrus.Info("Transaction Log loaded Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, txs)

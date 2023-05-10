@@ -1171,3 +1171,30 @@ func (suite *TxControllerTestSuite) TestGetTxBySenderId_Failed() {
 	assert.Equal(suite.T(), http.StatusInternalServerError, r.Code)
 
 }
+
+func (suite *TxControllerTestSuite) TestGetTxBySenderId_Nil() {
+
+	tx := &model.Transaction{
+		SenderID: uint(1),
+	}
+	recip := uint(1)
+
+	controller := NewTransactionController(suite.txUsecaseMock, suite.useCaseMock, suite.bankCaseMock, suite.cardCaseMock)
+	router := setupRouterTx()
+
+	suite.useCaseMock.On("FindById", tx.SenderID).Return(&model.User{
+		ID: uint(1),
+	}, nil)
+
+	suite.txUsecaseMock.On("FindTxById", tx.SenderID, recip).Return(nil, nil)
+
+	router.GET("/user/tx/:user_id", controller.GetTxBySenderId)
+	reqBody, _ := json.Marshal(tx)
+
+	r := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/user/tx/1", bytes.NewBuffer(reqBody))
+	router.ServeHTTP(r, request)
+
+	assert.Equal(suite.T(), http.StatusNotFound, r.Code)
+
+}
