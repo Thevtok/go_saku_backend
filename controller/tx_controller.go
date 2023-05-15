@@ -232,14 +232,14 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	var newTransfer model.TransactionTransferResponse
 	if err := ctx.BindJSON(&newTransfer); err != nil {
 		logrus.Errorf("Failed to parse transfer data: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid input")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to parse transfer data: invalid JSON format")
 		return
 	}
 
 	userID, err := strconv.Atoi(ctx.Param("user_id"))
 	if err != nil {
 		logrus.Errorf("Invalid user_id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid user_id")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user_id")
 		return
 	}
 
@@ -251,7 +251,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		return
 	}
 
-	recipient, err := c.userUsecase.FindById(newTransfer.RecipientID)
+	recipient, err := c.userUsecase.FindByPhone(newTransfer.RecipientNumber)
 	if err != nil {
 		logrus.Errorf("Failed to get Recipient User: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Recipient User")
@@ -259,20 +259,18 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	}
 
 	if sender.Balance < newTransfer.Amount {
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "insufficient balance")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Insufficient balance")
 		return
 	}
-	if sender.ID == recipient.ID {
+	if sender.Phone_Number == recipient.Phone_Number {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusForbidden, "Input the recipient correctly")
 		return
 	}
 
 	if newTransfer.Amount < 10000 {
-
-		logrus.Errorf("Minimum transfer 10.000: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum transfer 10.000")
+		logrus.Errorf("Minimum transfer amount is 10,000")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum transfer amount is 10,000")
 		return
-
 	}
 
 	// Create transfer transaction in use case layer
@@ -283,9 +281,10 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		return
 	}
 
-	logrus.Info("Transfer Transaction created Succesfully")
+	logrus.Info("Transfer Transaction created Successfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, result)
 }
+
 func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {

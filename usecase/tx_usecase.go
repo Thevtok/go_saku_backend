@@ -152,9 +152,13 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 	newTransfer := model.TransactionTransferResponse{
 		SenderID:        sender.ID,
 		RecipientID:     recipient.ID,
+		SenderNumber:    sender.Phone_Number,
+		RecipientNumber: recipient.Phone_Number,
 		Amount:          amount,
 		TransactionType: "Transfer",
 		TransactionDate: now,
+		SenderName:      sender.Username,
+		RecipientName:   recipient.Username,
 	}
 	return uc.transactionRepo.CreateTransfer(&newTransfer)
 }

@@ -15,6 +15,7 @@ type User struct {
 
 // Define the table name for the User struct
 type UserResponse struct {
+	UserID       uint   `json:"user_id"`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
 	Email        string `json:"email"`

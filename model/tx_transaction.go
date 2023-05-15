@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Transaction struct {
 	TransactionType string    `json:"transaction_type"`
@@ -12,6 +14,10 @@ type Transaction struct {
 	Amount          *uint     `json:"amount"`
 	Point           *uint     `json:"point"`
 	TransactionDate time.Time `json:"transaction_date"`
+	SenderNumber    *string   `json:"sender_phone_number"`
+	RecipientNumber *string   `json:"recipient_phone_number"`
+	SenderName      *string   `json:"sender_name"`
+	RecipientName   *string   `json:"recipient_name"`
 }
 
 type TransactionBank struct {
@@ -21,6 +27,7 @@ type TransactionBank struct {
 	BankAccountID   uint      `json:"bank_account_id"`
 	Amount          uint      `json:"amount"`
 	TransactionDate time.Time `json:"transaction_date"`
+	SenderName      string    `json:"sender_name"`
 }
 
 type TransactionCard struct {
@@ -55,6 +62,10 @@ type TransactionTransferResponse struct {
 	RecipientID     uint      `json:"recipient_id"`
 	Amount          uint      `json:"amount"`
 	TransactionDate time.Time `json:"transaction_date"`
+	SenderNumber    string    `json:"sender_phone_number"`
+	RecipientNumber string    `json:"recipient_phone_number"`
+	SenderName      string    `json:"sender_name"`
+	RecipientName   string    `json:"recipient_name"`
 }
 
 type TransactionPoint struct {

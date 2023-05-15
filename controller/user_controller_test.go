@@ -141,6 +141,13 @@ func (r *UserUseCaseMock) FindByUsername(username string) (*model.UserResponse, 
 	}
 	return &dummyUserRespons[0], nil
 }
+func (r *UserUseCaseMock) FindByPhone(username string) (*model.User, error) {
+	args := r.Called(username)
+	if args[0] == nil {
+		return nil, args.Error(1)
+	}
+	return &dummyUser[0], nil
+}
 
 func (r *UserUseCaseMock) FindById(id uint) (*model.User, error) {
 	args := r.Called(id)

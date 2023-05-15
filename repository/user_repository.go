@@ -22,6 +22,7 @@ type UserRepository interface {
 	Delete(user *model.User) string
 	UpdateBalance(userID uint, newBalance uint) error
 	UpdatePoint(userID uint, newPoint int) error
+	GetByPhone(phoneNumber string) (*model.User, error)
 }
 
 type userRepository struct {
@@ -94,7 +95,18 @@ func (r *userRepository) GetByUsername(username string) (*model.UserResponse, er
 	err := r.db.QueryRow("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = $1", username).Scan(&user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("user not found")
+			return nil, errors.New("username not found")
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+func (r *userRepository) GetByPhone(phoneNumber string) (*model.User, error) {
+	var user model.User
+	err := r.db.QueryRow("SELECT user_id,name, username, email, phone_number, address, balance, point FROM mst_users WHERE phone_number = $1", phoneNumber).Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("phone not found")
 		}
 		return nil, err
 	}
@@ -108,7 +120,7 @@ func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("user not found")
+			return nil, errors.New("id not found")
 		}
 		return nil, err
 	}
@@ -178,7 +190,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 		log.Println(err)
 		return nil, err
 	}
-	return user, nil
+	return "user created successfully", nil
 }
 
 func (r *userRepository) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {

@@ -123,6 +123,13 @@ func (r *userRepoMock) GetByUsername(username string) (*model.UserResponse, erro
 	}
 	return &dummyUserRespons[0], nil
 }
+func (r *userRepoMock) GetByPhone(username string) (*model.User, error) {
+	args := r.Called(username)
+	if args[0] != nil {
+		return nil, args.Error(1)
+	}
+	return &dummyUser[0], nil
+}
 
 func (r *userRepoMock) GetByiD(id uint) (*model.User, error) {
 	args := r.Called(id)

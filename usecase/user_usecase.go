@@ -19,6 +19,7 @@ type UserUseCase interface {
 	EditProfile(user *model.User) string
 	EditEmailPassword(user *model.User) string
 	Unreg(user *model.User) string
+	FindByPhone(phoneNumber string) (*model.User, error)
 }
 
 type userUseCase struct {
@@ -46,6 +47,9 @@ func (uc *userUseCase) FindUsers() any {
 
 func (uc *userUseCase) FindByUsername(username string) (*model.UserResponse, error) {
 	return uc.userRepo.GetByUsername(username)
+}
+func (uc *userUseCase) FindByPhone(phone string) (*model.User, error) {
+	return uc.userRepo.GetByPhone(phone)
 }
 
 func (uc *userUseCase) FindById(id uint) (*model.User, error) {
