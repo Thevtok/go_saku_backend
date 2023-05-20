@@ -63,6 +63,25 @@ func (c *UserController) FindUserByUsername(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
 
+func (c *UserController) FindUserByPhone(ctx *gin.Context) {
+	// Logging
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+
+	logrus.SetOutput(logger)
+	phone := ctx.Param("phone_number")
+	res, _ := c.usecase.FindByPhone(phone)
+	if res == nil {
+		logrus.Error("User not found")
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "User not found")
+		return
+	}
+	logrus.Info("Succes to get user")
+	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
+}
+
 func (c *UserController) Register(ctx *gin.Context) {
 	// Logging
 	logger, err := utils.CreateLogFile()

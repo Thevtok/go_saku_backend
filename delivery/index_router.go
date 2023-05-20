@@ -48,7 +48,8 @@ func RunServer() {
 	r.POST("/register", userController.Register)
 
 	r.GET("user", authMiddlewareRole, userController.FindUsers)
-	userRouter.GET("/:username", userController.FindUserByUsername)
+	userRouter.GET("username/:username", userController.FindUserByUsername)
+	r.GET("user/:phone_number", userController.FindUserByPhone)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
 	r.PUT("user/pass/:user_id", authMiddlewareIdExist, userController.EditEmailPassword)
 	r.PUT("user/profile/:user_id", authMiddlewareIdExist, userController.EditProfile)

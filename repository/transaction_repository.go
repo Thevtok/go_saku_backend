@@ -8,7 +8,8 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/model"
 )
 
-var now = time.Now().UTC().Truncate(time.Minute)
+var now = time.Now().Local()
+var date = now.Format("2006-01-02")
 
 type TransactionRepository interface {
 	CreateDepositBank(tx *model.TransactionBank) error
@@ -28,9 +29,10 @@ type transactionRepository struct {
 func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*model.Transaction, error) {
 	var txs []*model.Transaction
 	rows, err := r.db.Query(`
-        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date,sender_phone_number,recipient_phone_number,sender_name,recipient_name
+        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date,sender_phone_number,recipient_phone_number,sender_name,recipient_name,bank_name,bank_account_number
         FROM tx_transaction
-        WHERE sender_id = $1 OR recipient_id = $2
+        WHERE sender_id = $1 OR recipient_id = $2 ORDER BY
+		tx_id DESC
     `, senderId, recipientId)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
@@ -40,7 +42,7 @@ func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*mo
 	for rows.Next() {
 
 		tx := &model.Transaction{}
-		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate, &tx.SenderNumber, &tx.RecipientNumber, &tx.SenderName, &tx.RecipientName)
+		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate, &tx.SenderNumber, &tx.RecipientNumber, &tx.SenderName, &tx.RecipientName, &tx.BankName, &tx.BankAccountNumber)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning transaction: %v", err)
 		}
@@ -77,6 +79,12 @@ func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*mo
 		if tx.RecipientName == nil {
 			tx.RecipientName = nil
 		}
+		if tx.BankName == nil {
+			tx.BankName = nil
+		}
+		if tx.BankAccountNumber == nil {
+			tx.BankAccountNumber = nil
+		}
 		txs = append(txs, tx)
 	}
 
@@ -88,8 +96,8 @@ func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*mo
 }
 
 func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
-	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date,sender_name) VALUES ($1, $2, $3, $4, $5,$6)"
-	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, now, tx.SenderName)
+	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date,sender_name,bank_name,bank_account_number) VALUES ($1, $2, $3, $4, $5,$6,$7,$8)"
+	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, date, tx.SenderName, tx.BankName, tx.BankAccountNumber)
 	if err != nil {
 		return err
 	}
@@ -119,7 +127,7 @@ func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) 
 
 func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransferResponse) (any, error) {
 	query := "INSERT INTO tx_transaction (transaction_type, sender_id, recipient_id, amount, transaction_date,sender_phone_number,recipient_phone_number,sender_name,recipient_name) VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9)"
-	_, err := r.db.Exec(query, "Transfer", tx.SenderID, tx.RecipientID, tx.Amount, now, tx.SenderNumber, tx.RecipientNumber, tx.SenderName, tx.RecipientName)
+	_, err := r.db.Exec(query, "Transfer", tx.SenderID, tx.RecipientID, tx.Amount, date, tx.SenderNumber, tx.RecipientNumber, tx.SenderName, tx.RecipientName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data: %v", err)
 	}

@@ -8,7 +8,8 @@ import (
 	"github.com/ReygaFitra/inc-final-project.git/repository"
 )
 
-var now = time.Now().Local().Truncate(time.Minute)
+var now = time.Now().Local()
+var date = now.Format("2006-01-02")
 
 type TransactionUseCase interface {
 	CreateDepositBank(transaction *model.TransactionBank) error
@@ -156,9 +157,10 @@ func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *mode
 		RecipientNumber: recipient.Phone_Number,
 		Amount:          amount,
 		TransactionType: "Transfer",
-		TransactionDate: now,
-		SenderName:      sender.Username,
-		RecipientName:   recipient.Username,
+		TransactionDate: date,
+
+		SenderName:    sender.Username,
+		RecipientName: recipient.Username,
 	}
 	return uc.transactionRepo.CreateTransfer(&newTransfer)
 }
