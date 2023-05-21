@@ -116,8 +116,8 @@ func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) err
 }
 
 func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) error {
-	query := "INSERT INTO tx_transaction (transaction_type, bank_account_id, sender_id, amount, transaction_date) VALUES ($1, $2, $3, $4,$5)"
-	_, err := r.db.Exec(query, "Withdraw", tx.BankAccountID, tx.SenderID, tx.Amount, now)
+	query := "INSERT INTO tx_transaction (transaction_type, bank_account_id, sender_id, amount, transaction_date,sender_name,bank_name,bank_account_number) VALUES ($1, $2, $3, $4,$5,$6,$7,$8)"
+	_, err := r.db.Exec(query, "Withdraw", tx.BankAccountID, tx.SenderID, tx.Amount, date, tx.SenderName, tx.BankName, tx.BankAccountNumber)
 	if err != nil {
 		return err
 	}

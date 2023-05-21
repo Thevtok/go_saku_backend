@@ -118,7 +118,7 @@ func (r *UserUseCaseMock) Register(user *model.UserCreate) (any, error) {
 	return &dummyUserCreate[0], nil
 }
 
-func (r *UserUseCaseMock) Login(email string, password string) (*model.Credentials, error) {
+func (r *UserUseCaseMock) Login(email string, password string, token string) (*model.Credentials, error) {
 	args := r.Called(email, password)
 	if args[0] == nil {
 		return nil, args.Error(1)
@@ -134,6 +134,13 @@ func (r *UserUseCaseMock) FindUsers() any {
 	return dummyUserRespons
 }
 
+func (r *UserUseCaseMock) SaveDeviceToken(userId uint, token string) error {
+	args := r.Called(userId, token)
+	if args[0] == nil {
+		return nil
+	}
+	return nil
+}
 func (r *UserUseCaseMock) FindByUsername(username string) (*model.UserResponse, error) {
 	args := r.Called(username)
 	if args[0] == nil {
@@ -150,6 +157,13 @@ func (r *UserUseCaseMock) FindByPhone(username string) (*model.User, error) {
 }
 
 func (r *UserUseCaseMock) FindById(id uint) (*model.User, error) {
+	args := r.Called(id)
+	if user, ok := args.Get(0).(*model.User); ok {
+		return user, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+func (r *UserUseCaseMock) FindByiDToken(id uint) (*model.User, error) {
 	args := r.Called(id)
 	if user, ok := args.Get(0).(*model.User); ok {
 		return user, args.Error(1)

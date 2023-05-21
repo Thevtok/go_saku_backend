@@ -120,7 +120,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		logrus.Info("Success parsing midleware")
 	}
 }
-
 func (l *LoginAuth) Login(c *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
@@ -133,16 +132,14 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&user); err != nil {
 		logrus.Errorf("invalid json")
 		response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid json")
-
 		return
 	}
 
-	// Retrieve the user by email
-	foundUser, err := l.usecase.Login(user.Email, user.Password)
+	// Retrieve the user by email and password
+	foundUser, err := l.usecase.Login(user.Email, user.Password, "")
 	if err != nil {
 		logrus.Errorf("invalid email or password")
 		response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid email or password")
-
 		return
 	}
 
@@ -150,7 +147,6 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	err = utils.CheckPasswordHash(user.Password, foundUser.Password)
 	if err != nil {
 		logrus.Errorf("invalid credentials")
-
 		response.JSONErrorResponse(c.Writer, false, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
@@ -161,6 +157,13 @@ func (l *LoginAuth) Login(c *gin.Context) {
 		logrus.Errorf("failed generate token")
 		response.JSONErrorResponse(c.Writer, false, http.StatusInternalServerError, "failed generate token")
 		return
+	}
+
+	// Save the device token to the user's record in the database
+	err = l.usecase.SaveDeviceToken(foundUser.UserID, user.Token)
+	if err != nil {
+		logrus.Errorf("failed to save device token")
+		// Handle the error as per your application's requirements
 	}
 
 	response.JSONSuccess(c.Writer, true, http.StatusOK, gin.H{"token": token})

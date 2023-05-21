@@ -100,7 +100,7 @@ type userRepoMock struct {
 	mock.Mock
 }
 
-func (r *userRepoMock) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {
+func (r *userRepoMock) GetByEmailAndPassword(email string, password string, token string) (*model.Credentials, error) {
 	args := r.Called(email, password)
 	if args[0] == nil {
 		return nil, args.Error(1)
@@ -138,6 +138,13 @@ func (r *userRepoMock) GetByiD(id uint) (*model.User, error) {
 	}
 	return args[0].(*model.User), args.Error(1)
 }
+func (r *userRepoMock) GetByIDToken(id uint) (*model.User, error) {
+	args := r.Called(id)
+	if args[0] == nil {
+		return nil, args.Error(1)
+	}
+	return args[0].(*model.User), args.Error(1)
+}
 
 func (r *userRepoMock) Create(user *model.UserCreate) (any, error) {
 	args := r.Called(user)
@@ -145,6 +152,13 @@ func (r *userRepoMock) Create(user *model.UserCreate) (any, error) {
 		return nil, args.Error(1)
 	}
 	return &dummyUserCreate[0], nil
+}
+func (r *userRepoMock) SaveDeviceToken(userID uint, token string) error {
+	args := r.Called(userID, token)
+	if args[0] != nil {
+
+	}
+	return nil
 }
 
 func (r *userRepoMock) UpdateProfile(user *model.User) string {
@@ -328,7 +342,7 @@ func (suite *UserUseCaseTestSuite) TestLogin_Success() {
 	user := &dummyCredentials[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(user.Password, user.Username, user.UserID, user.Role, nil)
-	res, err := userUC.Login(user.Email, user.Password)
+	res, err := userUC.Login(user.Email, user.Password, "")
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), res)
 
@@ -344,7 +358,7 @@ func (suite *UserUseCaseTestSuite) TestLogin_Failed() {
 	user := &dummyCredentials[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(nil, errors.New("Failed login"))
-	res, err := userUC.Login(user.Email, user.Password)
+	res, err := userUC.Login(user.Email, user.Password, "")
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), res)
 }

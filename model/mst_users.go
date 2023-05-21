@@ -11,6 +11,7 @@ type User struct {
 	Balance      uint   `json:"balance"`
 	Role         string `json:"role"`
 	Point        int    `json:"point"`
+	Token        string `json:"token"`
 }
 
 // Define the table name for the User struct
@@ -41,4 +42,5 @@ type Credentials struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
+	Token    string `json:"token"`
 }

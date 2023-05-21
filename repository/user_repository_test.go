@@ -523,7 +523,7 @@ func TestGetByEmailAndPasswordSuccess(t *testing.T) {
 	mock.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email).WillReturnRows(
 		sqlmock.NewRows([]string{"user_id", "username", "password", "role"}).
 			AddRow(user.ID, user.Username, user.Password, user.Role))
-	result, _ := repo.GetByEmailAndPassword(user.Email, "password1")
+	result, _ := repo.GetByEmailAndPassword(user.Email, "password1", "token")
 
 	err = mock.ExpectationsWereMet()
 	if err != nil {
@@ -547,7 +547,7 @@ func (suite *UserRepositoryTestSuite) TestGetByEmailAndPassword_Failed() {
 	suite.mockSql.ExpectQuery("SELECT user_id, username, password, role FROM mst_users WHERE email = \\$1").WithArgs(user.Email).WillReturnError(
 		expectedErr)
 	userRepository := NewUserRepository(suite.mockDB)
-	result, err := userRepository.GetByEmailAndPassword(user.Email, "password1")
+	result, err := userRepository.GetByEmailAndPassword(user.Email, "password1", "token")
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), result)
 }

@@ -11,7 +11,7 @@ import (
 )
 
 type UserUseCase interface {
-	Login(email string, password string) (*model.Credentials, error)
+	Login(email string, password string, token string) (*model.Credentials, error)
 	FindUsers() any
 	FindByUsername(username string) (*model.UserResponse, error)
 	FindById(id uint) (*model.User, error)
@@ -20,15 +20,20 @@ type UserUseCase interface {
 	EditEmailPassword(user *model.User) string
 	Unreg(user *model.User) string
 	FindByPhone(phoneNumber string) (*model.User, error)
+	SaveDeviceToken(userID uint, token string) error
+	FindByiDToken(id uint) (*model.User, error)
 }
 
 type userUseCase struct {
 	userRepo repository.UserRepository
 }
 
-func (uc *userUseCase) Login(email string, password string) (*model.Credentials, error) {
+func (uc *userUseCase) SaveDeviceToken(userID uint, token string) error {
+	return uc.userRepo.SaveDeviceToken(userID, token)
+}
+func (uc *userUseCase) Login(email string, password string, token string) (*model.Credentials, error) {
 	// Get the user by email and hashed password
-	user, err := uc.userRepo.GetByEmailAndPassword(email, password)
+	user, err := uc.userRepo.GetByEmailAndPassword(email, password, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
@@ -36,9 +41,15 @@ func (uc *userUseCase) Login(email string, password string) (*model.Credentials,
 	// Compare the provided password with the stored password hash
 	err = utils.CheckPasswordHash(password, user.Password)
 	if err != nil {
-		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, user.Password)
+		return nil, fmt.Errorf("invalid credentials \n password = %s\n hashed = %s", password, user.Password)
 	}
-	return &model.Credentials{Password: user.Password, Username: user.Username, UserID: user.UserID, Role: user.Role}, nil
+
+	return &model.Credentials{
+		Password: user.Password,
+		Username: user.Username,
+		UserID:   user.UserID,
+		Role:     user.Role,
+	}, nil
 }
 
 func (uc *userUseCase) FindUsers() any {
@@ -55,7 +66,9 @@ func (uc *userUseCase) FindByPhone(phone string) (*model.User, error) {
 func (uc *userUseCase) FindById(id uint) (*model.User, error) {
 	return uc.userRepo.GetByiD(id)
 }
-
+func (uc *userUseCase) FindByiDToken(id uint) (*model.User, error) {
+	return uc.userRepo.GetByIDToken(id)
+}
 func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
 	return uc.userRepo.Create(user)
 }

@@ -44,7 +44,12 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid bank_account_id")
 		return
 	}
-
+	user, err := c.userUsecase.FindByiDToken(uint(userID))
+	if err != nil {
+		logrus.Errorf("user_id not found: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "user_id not found")
+		return
+	}
 	// Retrieve bank account by bank_account_id
 	bankAcc, err := c.bankUsecase.FindBankAccByAccountID(uint(bankAccID))
 	if err != nil {
@@ -82,6 +87,17 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	if err := c.txUsecase.CreateDepositBank(&reqBody); err != nil {
 		logrus.Errorf("Failed to create Deposit Transaction: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Deposit Transaction")
+		return
+	}
+
+	amount := float64(reqBody.Amount) / 1000                           //
+	formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64) //
+
+	err = model.SendFCMNotification(user.Token, "Deposit Berhasil", "Anda telah melakukan deposit sebesar "+formattedAmount)
+
+	if err != nil {
+		logrus.Errorf("failed to send FCM notification: %v", err)
+
 		return
 	}
 
@@ -174,6 +190,12 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid bank_account_id")
 		return
 	}
+	user, err := c.userUsecase.FindByiDToken(uint(userID))
+	if err != nil {
+		logrus.Errorf("user_id not found: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "user_id not found")
+		return
+	}
 
 	// Retrieve bank account by bank_account_id
 	bankAcc, err := c.bankUsecase.FindBankAccByAccountID(uint(bankAccID))
@@ -216,6 +238,17 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 			return
 		}
 	}
+	amount := float64(reqBody.Amount) / 1000                           // Mengonversi nilai amount ke dalam format yang diinginkan
+	formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64) // Mengformat nilai amount menjadi format mata uang Rupiah dengan 3 digit di belakang koma
+
+	err = model.SendFCMNotification(user.Token, "Withdraw Berhasil", "Anda telah menarik uang sebesar "+formattedAmount)
+
+	if err != nil {
+		logrus.Errorf("failed to send FCM notification: %v", err)
+
+		return
+	}
+
 	logrus.Info("Withdrawal Transaction created Succesfully")
 	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Withdrawal Transaction created Succesfully")
 }
@@ -244,7 +277,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	}
 
 	// Get sender by ID
-	sender, err := c.userUsecase.FindById(uint(userID))
+	sender, err := c.userUsecase.FindByiDToken(uint(userID))
 	if err != nil {
 		logrus.Errorf("Failed to get Sender User: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Sender User")
@@ -278,6 +311,25 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	if err != nil {
 		logrus.Errorf("Failed to create Transfer Transaction: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Transfer Transaction")
+		return
+	}
+
+	amount := float64(newTransfer.Amount) / 1000 // Mengonversi nilai amount ke dalam format yang diinginkan
+	formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64)
+	// Mengformat nilai amount menjadi format mata uang Rupiah dengan 3 digit di belakang koma
+
+	err = model.SendFCMNotification(sender.Token, "Transfer Berhasil", "Anda telah mengirim uang ke "+recipient.Name+" sebesar "+formattedAmount)
+
+	if err != nil {
+		logrus.Errorf("failed to send FCM notification: %v", err)
+
+		return
+	}
+	err = model.SendFCMNotification(recipient.Token, "Receive Berhasil", "Anda telah menerima uang dari "+sender.Name+" sebesar "+formattedAmount)
+	logrus.Info(recipient.Token)
+	if err != nil {
+		logrus.Errorf("failed to send FCM notification: %v", err)
+
 		return
 	}
 

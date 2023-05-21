@@ -12,7 +12,7 @@ import (
 )
 
 type UserRepository interface {
-	GetByEmailAndPassword(email string, password string) (*model.Credentials, error)
+	GetByEmailAndPassword(email string, password string, token string) (*model.Credentials, error)
 	GetAll() any
 	GetByUsername(username string) (*model.UserResponse, error)
 	GetByiD(id uint) (*model.User, error)
@@ -23,10 +23,21 @@ type UserRepository interface {
 	UpdateBalance(userID uint, newBalance uint) error
 	UpdatePoint(userID uint, newPoint int) error
 	GetByPhone(phoneNumber string) (*model.User, error)
+	SaveDeviceToken(userID uint, token string) error
+	GetByIDToken(id uint) (*model.User, error)
 }
 
 type userRepository struct {
 	db *sql.DB
+}
+
+func (r *userRepository) SaveDeviceToken(userID uint, token string) error {
+	_, err := r.db.Exec("UPDATE mst_users SET token = $1 WHERE user_id = $2", token, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *userRepository) UpdateBalance(userID uint, newBalance uint) error {
@@ -126,6 +137,25 @@ func (r *userRepository) GetByiD(id uint) (*model.User, error) {
 	}
 	return &user, nil
 }
+func (r *userRepository) GetByIDToken(id uint) (*model.User, error) {
+	var user model.User
+
+	// Mengambil data pengguna berdasarkan ID
+	err := r.db.QueryRow(`
+		SELECT name, user_id, email, phone_number, address, balance, username, point,token
+		FROM mst_users
+		WHERE user_id = $1
+	`, id).Scan(&user.Name, &user.ID, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Username, &user.Point, &user.Token)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("id not found")
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
 
 func (r *userRepository) UpdateProfile(user *model.User) string {
 	_, err := r.GetByiD(user.ID)
@@ -192,8 +222,7 @@ func (r *userRepository) Create(user *model.UserCreate) (any, error) {
 	}
 	return "user created successfully", nil
 }
-
-func (r *userRepository) GetByEmailAndPassword(email string, password string) (*model.Credentials, error) {
+func (r *userRepository) GetByEmailAndPassword(email string, password string, token string) (*model.Credentials, error) {
 	var m model.Credentials
 	query := "SELECT user_id, username, password, role FROM mst_users WHERE email = $1"
 	row := r.db.QueryRow(query, email)
@@ -210,7 +239,7 @@ func (r *userRepository) GetByEmailAndPassword(email string, password string) (*
 	// Verify that the retrieved password is a valid hash
 	err = utils.CheckPasswordHash(password, hashedPassword)
 	if err != nil {
-		return nil, fmt.Errorf("invalid credentials \n password = %s\n hased = %s", password, hashedPassword)
+		return nil, fmt.Errorf("invalid credentials \n password = %s\n hashed = %s", password, hashedPassword)
 	}
 
 	user := &model.Credentials{
@@ -219,6 +248,13 @@ func (r *userRepository) GetByEmailAndPassword(email string, password string) (*
 		UserID:   m.UserID,
 		Role:     m.Role,
 	}
+
+	// Save the device token for the user
+	err = r.SaveDeviceToken(m.UserID, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save device token: %v", err)
+	}
+
 	return user, nil
 }
 

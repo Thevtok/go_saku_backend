@@ -19,7 +19,7 @@ var dummyTxBank = []*model.TransactionBank{
 		SenderID:        uint(1),
 		BankAccountID:   uint(1),
 		Amount:          uint(50000),
-		TransactionDate: now,
+		TransactionDate: "now",
 	},
 }
 var dummyTxCard = []*model.TransactionCard{
@@ -47,7 +47,7 @@ var txs = []*model.Transaction{
 		PointExchangeID: &value,
 		Point:           &value,
 		Amount:          &value,
-		TransactionDate: now,
+		TransactionDate: "now",
 	},
 	{
 		SenderID:        &value1,
@@ -58,7 +58,7 @@ var txs = []*model.Transaction{
 		PointExchangeID: &value1,
 		Point:           &value1,
 		Amount:          &value1,
-		TransactionDate: now,
+		TransactionDate: "now",
 	},
 }
 var txP = []*model.TransactionPoint{
@@ -69,7 +69,7 @@ var txP = []*model.TransactionPoint{
 		PointExchangeID: 1,
 		Point:           1,
 
-		TransactionDate: now,
+		TransactionDate: "now",
 	},
 }
 
@@ -297,7 +297,7 @@ func (suite *TransactionRepositoryTestSuite) TestCreateTransfer_Success() {
 		SenderID:        1,
 		RecipientID:     2,
 		Amount:          50000,
-		TransactionDate: now,
+		TransactionDate: "now",
 	}
 
 	repo := NewTxRepository(suite.mockDB)

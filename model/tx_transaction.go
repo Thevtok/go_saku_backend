@@ -40,12 +40,15 @@ type TransactionCard struct {
 }
 
 type TransactionWithdraw struct {
-	ID              uint   `json:"tx_id"`
-	TransactionType string `json:"transaction_type"`
-	BankAccountID   uint   `json:"bank_account_id"`
-	SenderID        uint   `json:"sender_id"`
-	Amount          uint   `json:"amount"`
-	TransactionDate string `json:"transaction_date"`
+	ID                uint   `json:"tx_id"`
+	TransactionType   string `json:"transaction_type"`
+	BankAccountID     uint   `json:"bank_account_id"`
+	SenderID          uint   `json:"sender_id"`
+	Amount            uint   `json:"amount"`
+	TransactionDate   string `json:"transaction_date"`
+	SenderName        string `json:"sender_name"`
+	BankName          string `json:"bank_name"`
+	BankAccountNumber string `json:"bank_account_number"`
 }
 
 type TransactionTransfer struct {

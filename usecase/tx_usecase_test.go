@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 
@@ -61,7 +60,7 @@ var dummyTxTransfer = []model.TransactionTransferResponse{
 		SenderID:        uint(1),
 		RecipientID:     uint(1),
 		Amount:          uint(5000),
-		TransactionDate: time.Now(),
+		TransactionDate: "",
 	},
 }
 
@@ -72,7 +71,7 @@ var dummyTxBank = []*model.TransactionBank{
 		SenderID:        uint(1),
 		BankAccountID:   uint(1),
 		Amount:          uint(50000),
-		TransactionDate: time.Now(),
+		TransactionDate: "time.Now()",
 	},
 }
 
@@ -83,7 +82,7 @@ var dummyTxWithdraw = []*model.TransactionWithdraw{
 		SenderID:        uint(1),
 		BankAccountID:   uint(1),
 		Amount:          uint(5000),
-		TransactionDate: time.Now(),
+		TransactionDate: "time.Now()",
 	},
 }
 
@@ -94,7 +93,7 @@ var dummyTxCard = []*model.TransactionCard{
 		SenderID:        uint(1),
 		CardID:          uint(1),
 		Amount:          uint(50000),
-		TransactionDate: time.Now(),
+		TransactionDate: "time.Now()",
 	},
 }
 

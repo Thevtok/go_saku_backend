@@ -47,37 +47,6 @@ var dummyBankAcc = []model.BankAcc{
 	},
 }
 
-var dummyBankAccResponse = []model.BankAccResponse{
-	{
-		UserID:            1,
-		AccountID:         1,
-		BankName:          "Test1",
-		AccountNumber:     "123412341111",
-		AccountHolderName: "Test1",
-	},
-	{
-		UserID:            1,
-		AccountID:         2,
-		BankName:          "Test2",
-		AccountNumber:     "123412341112",
-		AccountHolderName: "Test2",
-	},
-	{
-		UserID:            2,
-		AccountID:         3,
-		BankName:          "Test3",
-		AccountNumber:     "123412341113",
-		AccountHolderName: "Test3",
-	},
-	{
-		UserID:            2,
-		AccountID:         4,
-		BankName:          "Test4",
-		AccountNumber:     "123412341114",
-		AccountHolderName: "Test4",
-	},
-}
-
 var dummyBankAccResponse1 = []*model.BankAccResponse{
 	{
 		UserID:            1,
