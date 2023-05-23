@@ -34,13 +34,11 @@ func RunServer() {
 	bankAccRepo := repository.NewBankAccRepository(db)
 	bankAccusecase := usecase.NewBankAccUsecase(bankAccRepo)
 	bankAccController := controller.NewBankAccController(bankAccusecase)
-	cardRepo := repository.NewCardRepository(db)
-	cardUsecase := usecase.NewCardUsecase(cardRepo)
-	cardController := controller.NewCardController(cardUsecase)
+
 	photoRepo := repository.NewPhotoRepository(db)
 	photoUsecase := usecase.NewPhotoUseCase(photoRepo)
 	photoController := controller.NewPhotoController(photoUsecase)
-	userController := controller.NewUserController(userUsecase, bankAccusecase, cardUsecase, photoUsecase)
+	userController := controller.NewUserController(userUsecase, bankAccusecase, photoUsecase)
 	authMiddlewareIdExist := userController.AuthMiddlewareIDExist()
 
 	// USER GROUP
@@ -61,27 +59,11 @@ func RunServer() {
 
 	// Bank Acc Depedency
 
-	r.GET("user/bank", authMiddlewareRole, bankAccController.FindAllBankAcc)
 	bankAccRouter.GET("/:user_id", bankAccController.FindBankAccByUserID)
 	bankAccRouter.GET("/:user_id/:account_id", bankAccController.FindBankAccByAccountID)
 	bankAccRouter.POST("/add/:user_id", bankAccController.CreateBankAccount)
-	bankAccRouter.PUT("update/:user_id/:account_id", bankAccController.Edit)
-	bankAccRouter.DELETE("/:user_id", bankAccController.UnregAll)
+
 	bankAccRouter.DELETE("/:user_id/:account_id", bankAccController.UnregByAccountID)
-
-	// CarDUnregByAccountID Router
-	cardRouter := r.Group("/user/card")
-	cardRouter.Use(authMiddlewareIdExist)
-
-	// Card Depedency
-
-	r.GET("user/card", authMiddlewareRole, cardController.FindAllCard)
-	cardRouter.GET("/:user_id", cardController.FindCardByUserID)
-	cardRouter.GET("/:user_id/:card_id", cardController.FindCardByCardID)
-	cardRouter.POST("/add/:user_id", cardController.CreateCardID)
-	cardRouter.PUT("/update/:user_id/:card_id", cardController.Edit)
-	cardRouter.DELETE("/:user_id", cardController.UnregAll)
-	cardRouter.DELETE("/:user_id/:card_id", cardController.UnregByCardID)
 
 	// Photo Router
 	photoRouter := r.Group("/user/photo")
@@ -101,11 +83,11 @@ func RunServer() {
 	// TX Depedency
 	txRepo := repository.NewTxRepository(db)
 	txUsecase := usecase.NewTransactionUseCase(txRepo, userRepo)
-	txController := controller.NewTransactionController(txUsecase, userUsecase, bankAccusecase, cardUsecase)
+	txController := controller.NewTransactionController(txUsecase, userUsecase, bankAccusecase)
 
 	txRouter.POST("/tf/:user_id", txController.CreateTransferTransaction)
 	txRouter.POST("depo/bank/:user_id/:bank_account_id", txController.CreateDepositBank)
-	txRouter.POST("depo/card/:user_id/:card_id", txController.CreateDepositCard)
+
 	txRouter.POST("wd/:user_id/:bank_account_id", txController.CreateWithdrawal)
 	txRouter.POST("redeem/:user_id/:pe_id", txController.CreateRedeemTransaction)
 	txRouter.GET(":user_id", txController.GetTxBySenderId)

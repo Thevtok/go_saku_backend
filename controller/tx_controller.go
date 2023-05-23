@@ -17,7 +17,6 @@ type TransactionController struct {
 	txUsecase   usecase.TransactionUseCase
 	userUsecase usecase.UserUseCase
 	bankUsecase usecase.BankAccUsecase
-	cardUsecase usecase.CardUsecase
 }
 
 func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
@@ -30,12 +29,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid user_id")
-		return
-	}
+	userID := ctx.Param("user_id")
 
 	// Parse bank_account_id parameter
 	bankAccID, err := strconv.Atoi(ctx.Param("bank_account_id"))
@@ -44,7 +38,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid bank_account_id")
 		return
 	}
-	user, err := c.userUsecase.FindByiDToken(uint(userID))
+	user, err := c.userUsecase.FindByiDToken(userID)
 	if err != nil {
 		logrus.Errorf("user_id not found: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "user_id not found")
@@ -59,7 +53,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	}
 
 	// Check if bank account belongs to the given user_id
-	if bankAcc.UserID != uint(userID) {
+	if bankAcc.UserID != userID {
 		logrus.Errorf("Bank Account doesn't belong to the given UserID: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Bank Account doesn't belong to the given UserID")
 
@@ -67,7 +61,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	}
 
 	// Parse request body
-	var reqBody model.TransactionBank
+	var reqBody model.Deposit
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
 		logrus.Errorf("Incorrect request body: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
@@ -75,8 +69,11 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	}
 
 	// Set the sender ID to the user ID
-	reqBody.SenderID = uint(userID)
-	reqBody.BankAccountID = uint(bankAccID)
+	reqBody.UserID = userID
+	reqBody.BankName = bankAcc.BankName
+	reqBody.AccountHolderName = bankAcc.AccountHolderName
+	reqBody.AccountNumber = bankAcc.AccountNumber
+
 	if reqBody.Amount < 10000 {
 		logrus.Errorf("Minimum deposit 10.000: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum deposit 10.000")
@@ -106,69 +103,6 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Deposit Transaction created Succesfully")
 }
 
-func (c *TransactionController) CreateDepositCard(ctx *gin.Context) {
-	logger, err := utils.CreateLogFile()
-	if err != nil {
-		log.Fatalf("Fatal to create log file: %v", err)
-	}
-
-	logrus.SetOutput(logger)
-
-	// Parse user_id parameter
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid user_id")
-		return
-	}
-	cardID, err := strconv.Atoi(ctx.Param("card_id"))
-	if err != nil {
-		logrus.Errorf("Invalid CardID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid card_id")
-		return
-	}
-	cardAcc, err := c.cardUsecase.FindCardByCardID(uint(cardID))
-	if err != nil {
-		logrus.Errorf("Card_id not found: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Card_id not found")
-		return
-	}
-
-	if cardAcc.UserID != uint(userID) {
-		logrus.Errorf("CardID doesn't belong to the given UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "CardID doesn't belong to the given UserID")
-		return
-	}
-
-	// Parse request body
-	var reqBody model.TransactionCard
-	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
-		logrus.Errorf("Incorrect request body: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
-		return
-	}
-	if reqBody.Amount < 10000 {
-		logrus.Errorf("Minimum deposit 10.000: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum deposit 10.000")
-		return
-	}
-
-	// Set the sender ID to the user ID
-	reqBody.SenderID = uint(userID)
-	reqBody.CardID = uint(cardID)
-
-	// Create the deposit transaction
-	if err := c.txUsecase.CreateDepositCard(&reqBody); err != nil {
-		logrus.Errorf("Failed to create Deposit Transaction: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Deposit Transaction")
-		return
-	}
-
-	// Return success response
-	logrus.Info("Deposit Transaction created Succesfully")
-	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Deposit Transaction created Succesfully")
-}
-
 func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
@@ -178,19 +112,15 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	logrus.SetOutput(logger)
 
 	// Parse user_id parameter
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid user_id")
-		return
-	}
+	userID := ctx.Param("user_id")
+
 	bankAccID, err := strconv.Atoi(ctx.Param("bank_account_id"))
 	if err != nil {
 		logrus.Errorf("Invalid Bank AccountID: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "invalid bank_account_id")
 		return
 	}
-	user, err := c.userUsecase.FindByiDToken(uint(userID))
+	user, err := c.userUsecase.FindByiDToken(userID)
 	if err != nil {
 		logrus.Errorf("user_id not found: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "user_id not found")
@@ -204,14 +134,14 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Bank_account_id not found")
 		return
 	}
-	if bankAcc.UserID != uint(userID) {
+	if bankAcc.UserID != userID {
 		logrus.Errorf("Bank Account doesn't belong to the given UserID: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Bank Account doesn't belong to the given UserID")
 		return
 	}
 
 	// Parse request body
-	var reqBody model.TransactionWithdraw
+	var reqBody model.Withdraw
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
 		logrus.Errorf("Incorrect request body: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
@@ -224,7 +154,10 @@ func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {
 	}
 
 	// Set the sender ID to the user ID
-	reqBody.SenderID = uint(userID)
+	reqBody.UserID = userID
+	reqBody.BankName = bankAcc.BankName
+	reqBody.AccountHolderName = bankAcc.AccountHolderName
+	reqBody.AccountNumber = bankAcc.AccountNumber
 
 	// Create the withdrawal transaction
 	if err := c.txUsecase.CreateWithdrawal(&reqBody); err != nil {
@@ -262,29 +195,24 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	logrus.SetOutput(logger)
 
 	// Parse transfer data from request body
-	var newTransfer model.TransactionTransferResponse
+	var newTransfer model.Transfer
 	if err := ctx.BindJSON(&newTransfer); err != nil {
 		logrus.Errorf("Failed to parse transfer data: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to parse transfer data: invalid JSON format")
 		return
 	}
 
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid user_id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user_id")
-		return
-	}
+	userID := ctx.Param("user_id")
 
 	// Get sender by ID
-	sender, err := c.userUsecase.FindByiDToken(uint(userID))
+	sender, err := c.userUsecase.FindByiDToken(userID)
 	if err != nil {
 		logrus.Errorf("Failed to get Sender User: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Sender User")
 		return
 	}
 
-	recipient, err := c.userUsecase.FindByPhone(newTransfer.RecipientNumber)
+	recipient, err := c.userUsecase.FindByPhone(newTransfer.RecipientPhoneNumber)
 	if err != nil {
 		logrus.Errorf("Failed to get Recipient User: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Recipient User")
@@ -305,13 +233,24 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum transfer amount is 10,000")
 		return
 	}
-
+	newTransfer.SenderName = sender.Name
+	newTransfer.RecipientName = recipient.Name
+	newTransfer.SenderPhoneNumber = sender.Phone_Number
+	newTransfer.RecipientPhoneNumber = recipient.Phone_Number
 	// Create transfer transaction in use case layer
-	result, err := c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
+	err = c.txUsecase.CreateTransfer(sender, recipient, newTransfer.Amount)
+	logrus.Info("Processing transfer transaction...")
+	logrus.Infof("Sender: %s, Recipient: %s, Amount: %d", sender.Name, recipient.Name, newTransfer.Amount)
+
 	if err != nil {
 		logrus.Errorf("Failed to create Transfer Transaction: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Transfer Transaction")
 		return
+	}
+	err = c.txUsecase.AssignBadge(sender)
+	if err != nil {
+		logrus.Errorf("Failed to assign badge: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to asign badge")
 	}
 
 	amount := float64(newTransfer.Amount) / 1000 // Mengonversi nilai amount ke dalam format yang diinginkan
@@ -334,7 +273,7 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 	}
 
 	logrus.Info("Transfer Transaction created Successfully")
-	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, result)
+	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Transfer Successfully")
 }
 
 func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
@@ -346,12 +285,8 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	logrus.SetOutput(logger)
 
 	// Parse user_id from URL parameter
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid user_id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user_id")
-		return
-	}
+	userID := ctx.Param("user_id")
+
 	peID, err := strconv.Atoi(ctx.Param("pe_id"))
 	if err != nil {
 		logrus.Errorf("Invalid pe_id: %v", err)
@@ -359,7 +294,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.userUsecase.FindById(uint(userID))
+	user, err := c.userUsecase.FindById(userID)
 
 	if err != nil {
 		logrus.Errorf("Failed to get user: %v", err)
@@ -375,7 +310,7 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 	}
 
 	// Parse redeem data from request body
-	var txData model.TransactionPoint
+	var txData model.Redeem
 	if err := ctx.ShouldBindJSON(&txData); err != nil {
 		logrus.Info(txData)
 		logrus.Errorf("Invalid input: %v", err)
@@ -383,21 +318,21 @@ func (c *TransactionController) CreateRedeemTransaction(ctx *gin.Context) {
 		return
 	}
 	price := pointExchange.Price
-	if txData.Point != price {
+	if txData.Amount != price {
 		logrus.Info(txData)
 		logrus.Errorf("Reward or price on point exchange data doesn't match with the transaction data")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Reward or price on point exchange data doesn't match with the transaction data")
 		return
 	}
-	if user.Point < txData.Point {
+	if user.Point < txData.Amount {
 		logrus.Info(txData)
 		logrus.Errorf("your point is not enough to redeem")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "your point is not enough to redeem")
 		return
 	}
 
-	txData.SenderID = uint(userID)
-	txData.PointExchangeID = peID
+	txData.UserID = userID
+	txData.PEID = peID
 
 	// Create redeem transaction in use case layer
 	err = c.txUsecase.CreateRedeem(&txData)
@@ -419,28 +354,23 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 
 	logrus.SetOutput(logger)
 
-	userId, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Invalid user_id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get UserID")
-		return
-	}
+	userId := ctx.Param("user_id")
 
 	// Get sender by ID
-	_, err = c.userUsecase.FindById(uint(userId))
+	_, err = c.userUsecase.FindById(userId)
 	if err != nil {
 		logrus.Errorf("Failed to get Sender User: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Failed to get Sender User")
 		return
 	}
 
-	txs, err := c.txUsecase.FindTxById(uint(userId), uint(userId))
+	txs, err := c.txUsecase.FindTxById(userId)
 	if err != nil {
-		logrus.Errorf("Failed to get Transaction")
+		logrus.Errorf("Failed to get Transaction %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to get Transaction")
 		return
 	}
-	if txs == nil {
+	if len(txs) == 0 {
 		logrus.Errorf("Transaction not found")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "Transaction not found")
 		return
@@ -450,12 +380,11 @@ func (c *TransactionController) GetTxBySenderId(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, txs)
 }
 
-func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase, bk usecase.BankAccUsecase, cd usecase.CardUsecase) *TransactionController {
+func NewTransactionController(usecase usecase.TransactionUseCase, uc usecase.UserUseCase, bk usecase.BankAccUsecase) *TransactionController {
 	controller := TransactionController{
 		txUsecase:   usecase,
 		userUsecase: uc,
 		bankUsecase: bk,
-		cardUsecase: cd,
 	}
 	return &controller
 }

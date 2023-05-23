@@ -16,12 +16,12 @@ import (
 var dummyPhoto = []model.PhotoUrl{
 	{
 		Photo_ID: 1,
-		UserID:   1,
+		UserID:   "1",
 		Url:      "/Developments/Golang/src/final-project-inc/file/avatar1.jpg",
 	},
 	{
 		Photo_ID: 2,
-		UserID:   2,
+		UserID:   "2",
 		Url:      "/Developments/Golang/src/final-project-inc/file/avatar2.jpg",
 	},
 }
@@ -70,19 +70,19 @@ func (suite *PhotoRepositoryTestSuite) TestGetByID_Failed() {
 	res, err := photoRepository.GetByID(photo.UserID)
 	assert.NotNil(suite.T(), res)
 	assert.Nil(suite.T(), err)
-	
+
 }
 
 // Test Update
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Success() {
-    photo := dummyPhoto[0]
-    suite.mockSql.ExpectExec("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
-        photo.Url,
-        photo.UserID,
-    ).WillReturnResult(sqlmock.NewResult(1, 1))
-    photoRepository := NewPhotoRepository(suite.mockDB)
-    err := photoRepository.Update(&photo)
-    assert.Nil(suite.T(), err)
+	photo := dummyPhoto[0]
+	suite.mockSql.ExpectExec("UPDATE mst_photo_url SET url_photo = \\$1 WHERE user_id = \\$2").WithArgs(
+		photo.Url,
+		photo.UserID,
+	).WillReturnResult(sqlmock.NewResult(1, 1))
+	photoRepository := NewPhotoRepository(suite.mockDB)
+	err := photoRepository.Update(&photo)
+	assert.Nil(suite.T(), err)
 }
 func (suite *PhotoRepositoryTestSuite) TestUpdate_Failed() {
 	photo := dummyPhoto[0]

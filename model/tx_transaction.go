@@ -1,82 +1,71 @@
 package model
 
 type Transaction struct {
-	TransactionType   string  `json:"transaction_type"`
-	SenderID          *uint   `json:"sender_id"`
-	RecipientID       *uint   `json:"recipient_id"`
-	BankAccountID     *uint   `json:"bank_account_id"`
-	CardID            *uint   `json:"card_id"`
-	PointExchangeID   *uint   `json:"pe_id"`
-	Amount            *uint   `json:"amount"`
-	Point             *uint   `json:"point"`
-	TransactionDate   string  `json:"transaction_date"`
-	SenderNumber      *string `json:"sender_phone_number"`
-	RecipientNumber   *string `json:"recipient_phone_number"`
-	SenderName        *string `json:"sender_name"`
-	RecipientName     *string `json:"recipient_name"`
-	BankName          *string `json:"bank_name"`
-	BankAccountNumber *string `json:"bank_account_number"`
+	TxID                    int    `json:"tx_id"`
+	TransactionType         string `json:"transaction_type"`
+	TransactionDate         string `json:"transaction_date"`
+	DepositBankName         string `json:"deposit_bank_name"`
+	DepositBankNumber       string `json:"deposit_bank_number"`
+	DepositAccountBankName  string `json:"deposit_account_bank_name"`
+	DepositAmount           string `json:"deposit_amount"`
+	WithdrawBankName        string `json:"withdraw_bank_name"`
+	WithdrawBankNumber      string `json:"withdraw_bank_number"`
+	WithdrawAccountBankName string `json:"withdraw_account_bank_name"`
+	WithdrawAmount          string `json:"withdraw_amount"`
+	TransferSenderName      string `json:"transfer_sender_name"`
+	TransferSenderPhone     string `json:"transfer_sender_phone"`
+	TransferRecipientName   string `json:"transfer_recipient_name"`
+	TransferRecipientPhone  string `json:"transfer_recipient_phone"`
+	TransferAmount          string `json:"transfer_amount"`
+
+	RedeemPEID   string `json:"redeem_pe_id"`
+	RedeemAmount string `json:"redeem_amount"`
+	RedeemReward string `json:"redeem_reward"`
 }
 
-type TransactionBank struct {
-	ID                uint   `json:"tx_id"`
-	TransactionType   string `json:"transaction_type"`
-	SenderID          uint   `json:"sender_id"`
-	BankAccountID     uint   `json:"bank_account_id"`
-	Amount            uint   `json:"amount"`
-	TransactionDate   string `json:"transaction_date"`
-	SenderName        string `json:"sender_name"`
+type Deposit struct {
+	DepositID         int    `json:"deposit_id"`
+	UserID            string `json:"user_id"`
+	Amount            int    `json:"amount"`
 	BankName          string `json:"bank_name"`
-	BankAccountNumber string `json:"bank_account_number"`
-}
-
-type TransactionCard struct {
-	ID              uint   `json:"tx_id"`
-	TransactionType string `json:"transaction_type"`
-	SenderID        uint   `json:"sender_id"`
-	CardID          uint   `json:"card_id"`
-	Amount          uint   `json:"amount"`
-	TransactionDate string `json:"transaction_date"`
-}
-
-type TransactionWithdraw struct {
-	ID                uint   `json:"tx_id"`
+	AccountNumber     string `json:"account_number"`
+	AccountHolderName string `json:"account_holder_name"`
+	TransactionID     int    `json:"transaction_id"`
+	TxID              int    `json:"tx_id"`
 	TransactionType   string `json:"transaction_type"`
-	BankAccountID     uint   `json:"bank_account_id"`
-	SenderID          uint   `json:"sender_id"`
-	Amount            uint   `json:"amount"`
 	TransactionDate   string `json:"transaction_date"`
-	SenderName        string `json:"sender_name"`
+}
+
+type Withdraw struct {
+	WithdrawID        int    `json:"withdraw_id"`
+	UserID            string `json:"user_id"`
+	Amount            int    `json:"amount"`
 	BankName          string `json:"bank_name"`
-	BankAccountNumber string `json:"bank_account_number"`
+	AccountNumber     string `json:"account_number"`
+	AccountHolderName string `json:"account_holder_name"`
+	TransactionID     int    `json:"transaction_id"`
+	TxID              int    `json:"tx_id"`
+	TransactionType   string `json:"transaction_type"`
+	TransactionDate   string `json:"transaction_date"`
+}
+type Transfer struct {
+	TransferID           int    `json:"transfer_id"`
+	SenderID             string `json:"sender_id"`
+	RecipientID          string `json:"recipient_id"`
+	Amount               int    `json:"amount"`
+	SenderPhoneNumber    string `json:"sender_phone_number"`
+	RecipientPhoneNumber string `json:"recipient_phone_number"`
+	SenderName           string `json:"sender_name"`
+	RecipientName        string `json:"recipient_name"`
+	TransactionID        int    `json:"transaction_id"`
+	TxID                 int    `json:"tx_id"`
+	TransactionType      string `json:"transaction_type"`
+	TransactionDate      string `json:"transaction_date"`
 }
 
-type TransactionTransfer struct {
-	ID              uint   `json:"tx_id"`
-	TransactionType string `json:"transaction_type"`
-	SenderID        uint   `json:"sender_id"`
-	RecipientID     uint   `json:"recipient_id"`
-	Amount          uint   `json:"amount"`
-	TransactionDate string `json:"transaction_date"`
-}
-type TransactionTransferResponse struct {
-	TransactionType string `json:"transaction_type"`
-	SenderID        uint   `json:"sender_id"`
-	RecipientID     uint   `json:"recipient_id"`
-	Amount          uint   `json:"amount"`
-	TransactionDate string `json:"transaction_date"`
-	SenderNumber    string `json:"sender_phone_number"`
-	RecipientNumber string `json:"recipient_phone_number"`
-	SenderName      string `json:"sender_name"`
-	RecipientName   string `json:"recipient_name"`
-}
-
-type TransactionPoint struct {
-	ID uint `json:"tx_id"`
-
-	TransactionType string `json:"transaction_type"`
-	SenderID        uint   `json:"sender_id"`
-	Point           int    `json:"point"`
-	PointExchangeID int    `json:"pe_id"`
-	TransactionDate string `json:"transaction_date"`
+type Redeem struct {
+	TransactionID int    `json:"transaction_id"`
+	UserID        string `json:"user_id"`
+	PEID          int    `json:"pe_id"`
+	Amount        int    `json:"amount"`
 }

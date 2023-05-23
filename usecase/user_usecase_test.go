@@ -10,47 +10,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var dummyCredentials = []model.Credentials{
-	{
-		Email:    "email1@mail.com",
-		Password: "password1",
-		UserID:   1,
-		Username: "username1",
-		Role:     "user",
-	},
-	{
-		Email:    "email2@mail.com",
-		Password: "password2",
-		UserID:   2,
-		Username: "username2",
-		Role:     "admin",
-	},
-}
-
-var dummyUserRespons = []model.UserResponse{
-	{
-		Name:         "name1",
-		Username:     "username1",
-		Email:        "email1@mail.com",
-		Phone_Number: "08111111",
-		Address:      "address1",
-		Balance:      100000,
-		Point:        20,
-	},
-	{
-		Name:         "name2",
-		Username:     "username2",
-		Email:        "email2@mail.com",
-		Phone_Number: "08111111",
-		Address:      "address2",
-		Balance:      100000,
-		Point:        40,
-	},
-}
-
 var dummyUser = []model.User{
 	{
-		ID:           1,
+		ID:           "1",
 		Name:         "name1",
 		Username:     "username1",
 		Email:        "email1@mail.com",
@@ -62,7 +24,7 @@ var dummyUser = []model.User{
 		Point:        10,
 	},
 	{
-		ID:           2,
+		ID:           "2",
 		Name:         "name2",
 		Username:     "username2",
 		Email:        "email2@mail.com",
@@ -75,37 +37,16 @@ var dummyUser = []model.User{
 	},
 }
 
-var dummyUserCreate = []model.UserCreate{
-	{
-		Name:         "name1",
-		Username:     "username1",
-		Email:        "email1@mail.com",
-		Password:     "password1",
-		Phone_Number: "08111111",
-		Address:      "address1",
-		Balance:      100000,
-	},
-	{
-		Name:         "name2",
-		Username:     "username2",
-		Email:        "email2@mail.com",
-		Password:     "password2",
-		Phone_Number: "082222",
-		Address:      "address2",
-		Balance:      100000,
-	},
-}
-
 type userRepoMock struct {
 	mock.Mock
 }
 
-func (r *userRepoMock) GetByEmailAndPassword(email string, password string, token string) (*model.Credentials, error) {
+func (r *userRepoMock) GetByEmailAndPassword(email string, password string, token string) (*model.User, error) {
 	args := r.Called(email, password)
 	if args[0] == nil {
 		return nil, args.Error(1)
 	}
-	return &dummyCredentials[0], nil
+	return &dummyUser[0], nil
 }
 
 func (r *userRepoMock) GetAll() any {
@@ -116,12 +57,12 @@ func (r *userRepoMock) GetAll() any {
 	return dummyUser
 }
 
-func (r *userRepoMock) GetByUsername(username string) (*model.UserResponse, error) {
+func (r *userRepoMock) GetByUsername(username string) (*model.User, error) {
 	args := r.Called(username)
 	if args[0] != nil {
 		return nil, args.Error(1)
 	}
-	return &dummyUserRespons[0], nil
+	return &dummyUser[0], nil
 }
 func (r *userRepoMock) GetByPhone(username string) (*model.User, error) {
 	args := r.Called(username)
@@ -131,14 +72,14 @@ func (r *userRepoMock) GetByPhone(username string) (*model.User, error) {
 	return &dummyUser[0], nil
 }
 
-func (r *userRepoMock) GetByiD(id uint) (*model.User, error) {
+func (r *userRepoMock) GetByiD(id string) (*model.User, error) {
 	args := r.Called(id)
 	if args[0] == nil {
 		return nil, args.Error(1)
 	}
 	return args[0].(*model.User), args.Error(1)
 }
-func (r *userRepoMock) GetByIDToken(id uint) (*model.User, error) {
+func (r *userRepoMock) GetByIDToken(id string) (*model.User, error) {
 	args := r.Called(id)
 	if args[0] == nil {
 		return nil, args.Error(1)
@@ -146,17 +87,17 @@ func (r *userRepoMock) GetByIDToken(id uint) (*model.User, error) {
 	return args[0].(*model.User), args.Error(1)
 }
 
-func (r *userRepoMock) Create(user *model.UserCreate) (any, error) {
+func (r *userRepoMock) Create(user *model.User) (any, error) {
 	args := r.Called(user)
 	if args[0] != nil {
 		return nil, args.Error(1)
 	}
-	return &dummyUserCreate[0], nil
+	return &dummyUser[0], nil
 }
-func (r *userRepoMock) SaveDeviceToken(userID uint, token string) error {
+func (r *userRepoMock) SaveDeviceToken(userID string, token string) error {
 	args := r.Called(userID, token)
 	if args[0] != nil {
-
+		return args.Error(1)
 	}
 	return nil
 }
@@ -185,7 +126,7 @@ func (r *userRepoMock) Delete(user *model.User) string {
 	return "Success Delete user"
 }
 
-func (r *userRepoMock) UpdateBalance(userID uint, newBalance uint) error {
+func (r *userRepoMock) UpdateBalance(userID string, newBalance int) error {
 	args := r.Called(userID, newBalance)
 	if args[0] != nil {
 		return args.Error(0)
@@ -193,7 +134,7 @@ func (r *userRepoMock) UpdateBalance(userID uint, newBalance uint) error {
 	return nil
 }
 
-func (r *userRepoMock) UpdatePoint(userID uint, newPoint int) error {
+func (r *userRepoMock) UpdatePoint(userID string, newPoint int) error {
 	args := r.Called(userID, newPoint)
 	if args[0] != nil {
 		return args.Error(0)
@@ -298,7 +239,7 @@ func (suite *UserUseCaseTestSuite) TestUnreg_Failed() {
 
 // Test Register
 func (suite *UserUseCaseTestSuite) TestRegister_Success() {
-	user := &dummyUserCreate[0]
+	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("Create", user).Return(user, nil)
 	res, err := userUC.Register(user)
@@ -306,7 +247,7 @@ func (suite *UserUseCaseTestSuite) TestRegister_Success() {
 	assert.Nil(suite.T(), res)
 }
 func (suite *UserUseCaseTestSuite) TestRegister_Failed() {
-	user := &dummyUserCreate[0]
+	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("Create", user).Return(nil, errors.New("Failed create user"))
 	res, err := userUC.Register(user)
@@ -339,9 +280,9 @@ func (suite *UserUseCaseTestSuite) TestEditEmailPassword_Error() {
 
 // Test Login
 func (suite *UserUseCaseTestSuite) TestLogin_Success() {
-	user := &dummyCredentials[0]
+	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
-	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(user.Password, user.Username, user.UserID, user.Role, nil)
+	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(user.Password, user.Username, user.ID, user.Role, nil)
 	res, err := userUC.Login(user.Email, user.Password, "")
 	assert.NotNil(suite.T(), err)
 	assert.Nil(suite.T(), res)
@@ -355,7 +296,7 @@ func (suite *UserUseCaseTestSuite) TestLogin_Success() {
 	// assert.Equal(suite.T(), expected, err)
 }
 func (suite *UserUseCaseTestSuite) TestLogin_Failed() {
-	user := &dummyCredentials[0]
+	user := &dummyUser[0]
 	userUC := NewUserUseCase(suite.userRepoMock)
 	suite.userRepoMock.On("GetByEmailAndPassword", user.Email, user.Password).Return(nil, errors.New("Failed login"))
 	res, err := userUC.Login(user.Email, user.Password, "")

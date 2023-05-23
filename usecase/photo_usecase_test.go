@@ -14,12 +14,12 @@ import (
 var dummyPhoto = []model.PhotoUrl{
 	{
 		Photo_ID: 1,
-		UserID:   1,
+		UserID:   "1",
 		Url:      "/Developments/Golang/src/final-project-inc/file/avatar1.jpg",
 	},
 	{
 		Photo_ID: 2,
-		UserID:   2,
+		UserID:   "2",
 		Url:      "/Developments/Golang/src/final-project-inc/file/avatar2.jpg",
 	},
 }
@@ -36,7 +36,7 @@ func (r *photoRepoMock) Create(photo *model.PhotoUrl) error {
 	return nil
 }
 
-func (r *photoRepoMock) GetByID(id uint) (*model.PhotoUrl, error) {
+func (r *photoRepoMock) GetByID(id string) (*model.PhotoUrl, error) {
 	args := r.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -52,7 +52,7 @@ func (r *photoRepoMock) Update(photo *model.PhotoUrl) error {
 	return nil
 }
 
-func (r *photoRepoMock) Delete(id uint) string {
+func (r *photoRepoMock) Delete(id string) string {
 	args := r.Called(id)
 	if args[0] != nil {
 		return "delete failed"

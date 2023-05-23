@@ -21,7 +21,7 @@ type LoginAuth struct {
 
 var jwtKey = []byte(utils.DotEnv("KEY"))
 
-func generateToken(user *model.Credentials) (string, error) {
+func generateToken(user *model.User) (string, error) {
 	logger, err := utils.CreateLogFile()
 	if err != nil {
 		log.Fatalf("Fatal to create log file: %v", err)
@@ -33,7 +33,7 @@ func generateToken(user *model.Credentials) (string, error) {
 	claims["email"] = user.Email
 	claims["password"] = user.Password
 	claims["username"] = user.Username
-	claims["user_id"] = uint(user.UserID)
+	claims["user_id"] = user.ID
 	claims["role"] = user.Role
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
@@ -127,7 +127,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	var user model.Credentials
+	var user model.User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		logrus.Errorf("invalid json")
@@ -160,7 +160,7 @@ func (l *LoginAuth) Login(c *gin.Context) {
 	}
 
 	// Save the device token to the user's record in the database
-	err = l.usecase.SaveDeviceToken(foundUser.UserID, user.Token)
+	err = l.usecase.SaveDeviceToken(foundUser.ID, user.Token)
 	if err != nil {
 		logrus.Errorf("failed to save device token")
 		// Handle the error as per your application's requirements

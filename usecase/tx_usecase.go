@@ -12,13 +12,14 @@ var now = time.Now().Local()
 var date = now.Format("2006-01-02")
 
 type TransactionUseCase interface {
-	CreateDepositBank(transaction *model.TransactionBank) error
-	CreateDepositCard(transaction *model.TransactionCard) error
-	CreateWithdrawal(transaction *model.TransactionWithdraw) error
-	CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error)
-	CreateRedeem(transaction *model.TransactionPoint) error
-	FindTxById(senderId, recipientId uint) ([]*model.Transaction, error)
+	CreateDepositBank(transaction *model.Deposit) error
+
+	CreateWithdrawal(transaction *model.Withdraw) error
+	CreateTransfer(sender *model.User, recipient *model.User, amount int) error
+	CreateRedeem(transaction *model.Redeem) error
+	FindTxById(userID string) ([]*model.Transaction, error)
 	FindByPeId(id int) (*model.PointExchange, error)
+	AssignBadge(user *model.User) error
 }
 
 type transactionUseCase struct {
@@ -26,15 +27,23 @@ type transactionUseCase struct {
 	userRepo        repository.UserRepository
 }
 
+func (uc *transactionUseCase) AssignBadge(user *model.User) error {
+	err := uc.transactionRepo.AssignBadge(user)
+	if err != nil {
+		return fmt.Errorf("failed to assign badge: %v", err)
+	}
+	return nil
+}
+
 func (uc *transactionUseCase) FindByPeId(id int) (*model.PointExchange, error) {
 	return uc.transactionRepo.GetByPeId(id)
 }
 
-func (uc *transactionUseCase) FindTxById(senderId, recipientId uint) ([]*model.Transaction, error) {
-	return uc.transactionRepo.GetBySenderId(senderId, recipientId)
+func (uc *transactionUseCase) FindTxById(userID string) ([]*model.Transaction, error) {
+	return uc.transactionRepo.GetTransactions(userID)
 }
-func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBank) error {
-	user, err := uc.userRepo.GetByiD(transaction.SenderID)
+func (uc *transactionUseCase) CreateDepositBank(transaction *model.Deposit) error {
+	user, err := uc.userRepo.GetByiD(transaction.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user data: %v", err)
 	}
@@ -49,10 +58,10 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	// check if user is eligible for bonus points
 	if transaction.Amount >= 50000 {
 		newPoint := user.Point + 20
-		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+		_ = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	} else if transaction.Amount < 50000 {
 		newPoint := user.Point
-		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
+		_ = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	}
 
 	err = uc.transactionRepo.CreateDepositBank(transaction)
@@ -63,40 +72,8 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.TransactionBa
 	return nil
 }
 
-func (uc *transactionUseCase) CreateDepositCard(transaction *model.TransactionCard) error {
-	user, err := uc.userRepo.GetByiD(transaction.SenderID)
-	if err != nil {
-		return fmt.Errorf("failed to get user data: %v", err)
-	}
-
-	// update user balance
-	newBalance := user.Balance + transaction.Amount
-	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
-	if err != nil {
-		return fmt.Errorf("failed to update user balance: %v", err)
-	}
-
-	if transaction.Amount >= 50000 {
-		newPoint := user.Point + 20
-		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
-	} else if transaction.Amount < 50000 {
-		newPoint := user.Point
-		err = uc.userRepo.UpdatePoint(user.ID, newPoint)
-	}
-
-	// check if user is eligible for bonus points
-
-	// insert transaction
-	err = uc.transactionRepo.CreateDepositCard(transaction)
-	if err != nil {
-		return fmt.Errorf("failed to create deposit transaction: %v", err)
-	}
-
-	return nil
-}
-
-func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionWithdraw) error {
-	user, err := uc.userRepo.GetByiD(transaction.SenderID)
+func (uc *transactionUseCase) CreateWithdrawal(transaction *model.Withdraw) error {
+	user, err := uc.userRepo.GetByiD(transaction.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user data: %v", err)
 	}
@@ -121,72 +98,76 @@ func (uc *transactionUseCase) CreateWithdrawal(transaction *model.TransactionWit
 
 	return nil
 }
-
-func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *model.User, amount uint) (any, error) {
-	// update sender balance
-	newBalanceS := sender.Balance - amount
+func (uc *transactionUseCase) CreateTransfer(sender *model.User, recipient *model.User, amount int) error {
+	// Update sender balance
+	newBalanceS := sender.Balance - amount - 2500
 	err := uc.userRepo.UpdateBalance(sender.ID, newBalanceS)
 	if err != nil {
-		return newBalanceS, err
-	}
-	// validate sender balance
-	if sender.Balance < amount {
-		return nil, fmt.Errorf("insufficient balance")
+		return err
 	}
 
-	// update recipient balance
+	// Validate sender balance
+	if sender.Balance < amount+2500 {
+		return fmt.Errorf("insufficient balance")
+	}
+
+	// Update recipient balance
 	newBalanceR := recipient.Balance + amount
 	err = uc.userRepo.UpdateBalance(recipient.ID, newBalanceR)
 	if err != nil {
-		return nil, err
+		return err
 	}
+
+	// Update sender's point based on transfer amount
+	var newPoint int
 	if amount >= 50000 {
-		newPoint := sender.Point + 20
-		err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
-	} else if amount < 50000 {
-		newPoint := sender.Point
-		err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
+		newPoint = sender.Point + 20
+	} else {
+		newPoint = sender.Point
 	}
-	// check if sender is eligible for bonus points
+	err = uc.userRepo.UpdatePoint(sender.ID, newPoint)
+	if err != nil {
+		return err
+	}
 
-	// insert transaction
-	newTransfer := model.TransactionTransferResponse{
-		SenderID:        sender.ID,
-		RecipientID:     recipient.ID,
-		SenderNumber:    sender.Phone_Number,
-		RecipientNumber: recipient.Phone_Number,
-		Amount:          amount,
-		TransactionType: "Transfer",
-		TransactionDate: date,
-
-		SenderName:    sender.Username,
-		RecipientName: recipient.Username,
+	// Insert transaction
+	newTransfer := model.Transfer{
+		SenderID:             sender.ID,
+		RecipientID:          recipient.ID,
+		SenderPhoneNumber:    sender.Phone_Number,
+		RecipientPhoneNumber: recipient.Phone_Number,
+		Amount:               amount,
+		TransactionType:      "Transfer",
+		TransactionDate:      date,
+		SenderName:           sender.Username,
+		RecipientName:        recipient.Username,
 	}
 	return uc.transactionRepo.CreateTransfer(&newTransfer)
 }
-func (uc *transactionUseCase) CreateRedeem(transaction *model.TransactionPoint) error {
-	user, err := uc.userRepo.GetByiD(transaction.SenderID)
+
+func (uc *transactionUseCase) CreateRedeem(transaction *model.Redeem) error {
+	user, err := uc.userRepo.GetByiD(transaction.UserID)
 	if err != nil {
 		return err
 	}
 	// Get point exchange by ID
-	pointExchange, err := uc.transactionRepo.GetByPeId(transaction.PointExchangeID)
+	pointExchange, err := uc.transactionRepo.GetByPeId(transaction.PEID)
 	if err != nil {
 		return err
 	}
 
 	// Check if point exchange reward and price match with transaction data
-	if pointExchange.Price != transaction.Point {
+	if pointExchange.Price != transaction.Amount {
 		return fmt.Errorf("reward or price on point exchange data doesn't match with the transaction data")
 	}
 
 	// update user balance
-	if user.Point < transaction.Point {
+	if user.Point < transaction.Amount {
 		return fmt.Errorf("your point is not enough to redeem")
 	}
 
 	// update user point
-	newPoint := user.Point - transaction.Point
+	newPoint := user.Point - transaction.Amount
 	err = uc.userRepo.UpdatePoint(user.ID, newPoint)
 	if err != nil {
 		return err

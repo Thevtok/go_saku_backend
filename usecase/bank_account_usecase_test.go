@@ -13,86 +13,59 @@ import (
 var dummyBankAcc = []model.BankAcc{
 	{
 		AccountID:         1,
-		UserID:            1,
+		UserID:            "1",
 		BankName:          "Test1",
 		AccountNumber:     "123412341111",
 		AccountHolderName: "Test1",
 	},
 	{
 		AccountID:         2,
-		UserID:            1,
+		UserID:            "1",
 		BankName:          "Test2",
 		AccountNumber:     "123412341112",
 		AccountHolderName: "Test2",
 	},
 	{
 		AccountID:         3,
-		UserID:            2,
+		UserID:            "2",
 		BankName:          "Test3",
 		AccountNumber:     "123412341113",
 		AccountHolderName: "Test3",
 	},
 	{
 		AccountID:         4,
-		UserID:            2,
+		UserID:            "2",
 		BankName:          "Test2",
 		AccountNumber:     "123412341114",
 		AccountHolderName: "Test4",
 	},
 }
 
-var dummyBankAccResponse1 = []*model.BankAccResponse{
+var dummyBankAccResponse1 = []*model.BankAcc{
 	{
-		UserID:            1,
+		UserID:            "1",
 		AccountID:         1,
 		BankName:          "Test1",
 		AccountNumber:     "123412341111",
 		AccountHolderName: "Test1",
 	},
 	{
-		UserID:            1,
+		UserID:            "1",
 		AccountID:         2,
 		BankName:          "Test2",
 		AccountNumber:     "123412341112",
 		AccountHolderName: "Test2",
 	},
 	{
-		UserID:            2,
+		UserID:            "2",
 		AccountID:         3,
 		BankName:          "Test3",
 		AccountNumber:     "123412341113",
 		AccountHolderName: "Test3",
 	},
 	{
-		UserID:            2,
+		UserID:            "2",
 		AccountID:         4,
-		BankName:          "Test4",
-		AccountNumber:     "123412341114",
-		AccountHolderName: "Test4",
-	},
-}
-
-var dummyCreateBankAcc = []model.CreateBankAcc{
-	{
-		UserID:            1,
-		BankName:          "Test1",
-		AccountNumber:     "123412341111",
-		AccountHolderName: "Test1",
-	},
-	{
-		UserID:            1,
-		BankName:          "Test2",
-		AccountNumber:     "123412341112",
-		AccountHolderName: "Test2",
-	},
-	{
-		UserID:            2,
-		BankName:          "Test3",
-		AccountNumber:     "123412341113",
-		AccountHolderName: "Test3",
-	},
-	{
-		UserID:            2,
 		BankName:          "Test4",
 		AccountNumber:     "123412341114",
 		AccountHolderName: "Test4",
@@ -111,12 +84,12 @@ func (r *bankaccRepoMock) GetAll() any {
 	return dummyBankAcc
 }
 
-func (r *bankaccRepoMock) GetByUserID(id uint) ([]*model.BankAccResponse, error) {
+func (r *bankaccRepoMock) GetByUserID(id string) ([]*model.BankAcc, error) {
 	args := r.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*model.BankAccResponse), nil
+	return args.Get(0).([]*model.BankAcc), nil
 }
 
 func (r *bankaccRepoMock) GetByAccountID(id uint) (*model.BankAcc, error) {
@@ -127,12 +100,12 @@ func (r *bankaccRepoMock) GetByAccountID(id uint) (*model.BankAcc, error) {
 	return args.Get(0).(*model.BankAcc), nil
 }
 
-func (r *bankaccRepoMock) Create(id uint, newBankAcc *model.CreateBankAcc) (any, error) {
+func (r *bankaccRepoMock) Create(id string, newBankAcc *model.BankAcc) (any, error) {
 	args := r.Called(id, newBankAcc)
 	if args.Get(0) == nil {
 		return nil, errors.New("failed to create data")
 	}
-	return dummyCreateBankAcc, nil
+	return dummyBankAcc, nil
 }
 
 func (r *bankaccRepoMock) Update(bankAcc *model.BankAcc) string {
@@ -141,14 +114,6 @@ func (r *bankaccRepoMock) Update(bankAcc *model.BankAcc) string {
 		return "failed to update Bank Account"
 	}
 	return "Bank Account updated Successfully"
-}
-
-func (r *bankaccRepoMock) DeleteByUserID(userID uint) string {
-	args := r.Called(userID)
-	if args.Get(0) == nil {
-		return "failed to delete Bank Account"
-	}
-	return "All Bank Account deleted Successfully"
 }
 
 func (r *bankaccRepoMock) DeleteByAccountID(accountID uint) error {
@@ -164,24 +129,8 @@ type BankAccUsecaseTestSuite struct {
 	suite.Suite
 }
 
-func (suite *BankAccUsecaseTestSuite) TestFindAllBankAcc_Success() {
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("GetAll").Return(dummyBankAcc)
-	res := bankAccUsecase.FindAllBankAcc()
-	assert.NotNil(suite.T(), res)
-	assert.Equal(suite.T(), dummyBankAcc, res)
-}
-
-func (suite *BankAccUsecaseTestSuite) TestFindAllBankAcc_Failed() {
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("GetAll").Return(nil)
-	res := bankAccUsecase.FindAllBankAcc()
-	assert.Nil(suite.T(), res)
-	assert.Empty(suite.T(), res)
-}
-
 func (suite *BankAccUsecaseTestSuite) TestFindAccByUserID_Success() {
-	userID := uint(1)
+	userID := "uint(1)"
 	bankAcc := dummyBankAccResponse1
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("GetByUserID", userID).Return(bankAcc, nil)
@@ -191,7 +140,7 @@ func (suite *BankAccUsecaseTestSuite) TestFindAccByUserID_Success() {
 }
 
 func (suite *BankAccUsecaseTestSuite) TestFindAccByUserID_Failed() {
-	userID := uint(1)
+	userID := "uint(1)"
 	expectedErr := errors.New("failed to get bank account")
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
 	suite.bankaccRepoMock.On("GetByUserID", userID).Return(nil, expectedErr)
@@ -222,53 +171,21 @@ func (suite *BankAccUsecaseTestSuite) TestFindAccByAccID_Failed() {
 }
 
 func (suite *BankAccUsecaseTestSuite) TestRegister_Success() {
-	userID := uint(1)
+	userID := "uint(1)"
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Create", userID, &dummyCreateBankAcc[0]).Return(dummyCreateBankAcc, nil)
-	result, err := bankAccUsecase.Register(userID, &dummyCreateBankAcc[0])
+	suite.bankaccRepoMock.On("Create", userID, &dummyBankAcc[0]).Return(dummyBankAcc, nil)
+	result, err := bankAccUsecase.Register(userID, &dummyBankAcc[0])
 	assert.NotNil(suite.T(), result)
 	assert.Nil(suite.T(), err)
 }
 
 func (suite *BankAccUsecaseTestSuite) TestRegister_Failed() {
-	userID := uint(1)
+	userID := " uint(1)"
 	expectedErr := errors.New("failed to create data")
 	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Create", userID, &dummyCreateBankAcc[0]).Return(nil, expectedErr)
-	result, err := bankAccUsecase.Register(userID, &dummyCreateBankAcc[0])
+	suite.bankaccRepoMock.On("Create", userID, &dummyBankAcc[0]).Return(nil, expectedErr)
+	result, err := bankAccUsecase.Register(userID, &dummyBankAcc[0])
 	assert.Nil(suite.T(), result)
-	assert.NotNil(suite.T(), err)
-}
-
-func (suite *BankAccUsecaseTestSuite) TestEdit_Success() {
-	bankAcc := &dummyBankAcc[0]
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Update", bankAcc).Return("Bank Account updated Successfully")
-	result := bankAccUsecase.Edit(bankAcc)
-	assert.NotNil(suite.T(), result)
-}
-
-func (suite *BankAccUsecaseTestSuite) TestEdit_Failed() {
-	bankAcc := &dummyBankAcc[0]
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("Update", bankAcc).Return("Failed to update Bank Account")
-	err := bankAccUsecase.Edit(bankAcc)
-	assert.NotNil(suite.T(), err)
-}
-
-func (suite *BankAccUsecaseTestSuite) TestUnregAll_Success() {
-	userID := uint(1)
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("All Bank Account deleted Successfully")
-	result := bankAccUsecase.UnregAll(userID)
-	assert.NotNil(suite.T(), result)
-}
-
-func (suite *BankAccUsecaseTestSuite) TestUnregAll_Failed() {
-	userID := uint(1)
-	bankAccUsecase := NewBankAccUsecase(suite.bankaccRepoMock)
-	suite.bankaccRepoMock.On("DeleteByUserID", userID).Return("Failed to delete Bank Account")
-	err := bankAccUsecase.UnregAll(userID)
 	assert.NotNil(suite.T(), err)
 }
 

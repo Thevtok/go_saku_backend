@@ -3,7 +3,6 @@ package controller
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -18,9 +17,9 @@ import (
 )
 
 type UserController struct {
-	usecase      usecase.UserUseCase
-	bankusecase  usecase.BankAccUsecase
-	cardusecase  usecase.CardUsecase
+	usecase     usecase.UserUseCase
+	bankusecase usecase.BankAccUsecase
+
 	photousecase usecase.PhotoUsecase
 }
 
@@ -90,7 +89,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	newUser := model.UserCreate{}
+	newUser := model.User{}
 	if err := ctx.BindJSON(&newUser); err != nil {
 		logrus.Errorf("Invalid Input : %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid Input")
@@ -140,16 +139,10 @@ func (c *UserController) EditEmailPassword(ctx *gin.Context) {
 
 	logrus.SetOutput(logger)
 	// Retrieve the user_id parameter from the request
-	user_id_str := ctx.Param("user_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
-	if err != nil {
-		logrus.Errorf("Invalid user ID : %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
+	user_id := ctx.Param("user_id")
 
 	// Retrieve the existing user
-	existingUser, _ := c.usecase.FindById(uint(user_id))
+	existingUser, _ := c.usecase.FindById(user_id)
 	if existingUser == nil {
 		logrus.Error("User not found")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "User not found")
@@ -204,16 +197,10 @@ func (c *UserController) EditProfile(ctx *gin.Context) {
 
 	logrus.SetOutput(logger)
 	// Retrieve the user_id parameter from the request
-	user_id_str := ctx.Param("user_id")
-	user_id, err := strconv.ParseUint(user_id_str, 10, 64)
-	if err != nil {
-		logrus.Errorf("Invalid user ID : %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
+	user_id := ctx.Param("user_id")
 
 	// Retrieve the existing user
-	existingUser, _ := c.usecase.FindById(uint(user_id))
+	existingUser, _ := c.usecase.FindById(user_id)
 	if existingUser == nil {
 		logrus.Error("User not found")
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusNotFound, "User not found")
@@ -259,18 +246,12 @@ func (c *UserController) Unreg(ctx *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	userID, err := strconv.ParseUint(ctx.Param("user_id"), 10, 64)
-	if err != nil {
-		logrus.Errorf("Invalid user ID : %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
+	userID := ctx.Param("user_id")
+
 	user := &model.User{
-		ID: uint(userID),
+		ID: userID,
 	}
 
-	_ = c.bankusecase.UnregAll(user.ID)
-	_ = c.cardusecase.UnregALL(user.ID)
 	_ = c.photousecase.Remove(user.ID)
 
 	res := c.usecase.Unreg(user)
@@ -278,11 +259,11 @@ func (c *UserController) Unreg(ctx *gin.Context) {
 	response.JSONSuccess(ctx.Writer, true, http.StatusOK, res)
 }
 
-func NewUserController(usercase usecase.UserUseCase, bank usecase.BankAccUsecase, card usecase.CardUsecase, photo usecase.PhotoUsecase) *UserController {
+func NewUserController(usercase usecase.UserUseCase, bank usecase.BankAccUsecase, photo usecase.PhotoUsecase) *UserController {
 	controller := UserController{
-		usecase:      usercase,
-		bankusecase:  bank,
-		cardusecase:  card,
+		usecase:     usercase,
+		bankusecase: bank,
+
 		photousecase: photo,
 	}
 	return &controller
@@ -335,7 +316,7 @@ func (ctx *UserController) AuthMiddlewareIDExist() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		userID := uint((*claims)["user_id"].(float64))
+		userID := (*claims)["user_id"].(string)
 
 		if !ok {
 			logrus.Errorf("invalid claim user_id")
@@ -344,22 +325,16 @@ func (ctx *UserController) AuthMiddlewareIDExist() gin.HandlerFunc {
 			return
 		}
 
-		requestedID, err := strconv.ParseUint(c.Param("user_id"), 10, 32)
-		if err != nil {
-			logrus.Errorf("invalid user_id")
-			response.JSONErrorResponse(c.Writer, false, http.StatusBadRequest, "invalid user_id")
-			c.Abort()
-			return
-		}
+		requestedID := c.Param("user_id")
 
-		exist, _ := ctx.usecase.FindById(uint(requestedID))
+		exist, _ := ctx.usecase.FindById(requestedID)
 		if exist == nil {
 			response.JSONErrorResponse(c.Writer, false, http.StatusNotFound, "User Not Found")
 			c.Abort()
 			return
 		}
 
-		if userID != uint(requestedID) {
+		if userID != requestedID {
 			logrus.Errorf("you do not have permission to access this resource")
 
 			response.JSONErrorResponse(c.Writer, false, http.StatusForbidden, "you do not have permission to access this resource")

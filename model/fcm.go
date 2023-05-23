@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"log"
 	"net/http"
 
@@ -62,8 +63,7 @@ func SendFCMNotification(token string, title string, body string) error {
 		return fmt.Errorf("FCM request failed with status: %s", res.Status)
 	}
 
-	// Log the FCM response
-	responseBody, err := ioutil.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read FCM response body: %v", err)
 	}

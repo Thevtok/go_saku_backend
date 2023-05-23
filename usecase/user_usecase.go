@@ -11,27 +11,27 @@ import (
 )
 
 type UserUseCase interface {
-	Login(email string, password string, token string) (*model.Credentials, error)
+	Login(email string, password string, token string) (*model.User, error)
 	FindUsers() any
-	FindByUsername(username string) (*model.UserResponse, error)
-	FindById(id uint) (*model.User, error)
-	Register(user *model.UserCreate) (any, error)
+	FindByUsername(username string) (*model.User, error)
+	FindById(id string) (*model.User, error)
+	Register(user *model.User) (any, error)
 	EditProfile(user *model.User) string
 	EditEmailPassword(user *model.User) string
 	Unreg(user *model.User) string
 	FindByPhone(phoneNumber string) (*model.User, error)
-	SaveDeviceToken(userID uint, token string) error
-	FindByiDToken(id uint) (*model.User, error)
+	SaveDeviceToken(userID string, token string) error
+	FindByiDToken(id string) (*model.User, error)
 }
 
 type userUseCase struct {
 	userRepo repository.UserRepository
 }
 
-func (uc *userUseCase) SaveDeviceToken(userID uint, token string) error {
+func (uc *userUseCase) SaveDeviceToken(userID string, token string) error {
 	return uc.userRepo.SaveDeviceToken(userID, token)
 }
-func (uc *userUseCase) Login(email string, password string, token string) (*model.Credentials, error) {
+func (uc *userUseCase) Login(email string, password string, token string) (*model.User, error) {
 	// Get the user by email and hashed password
 	user, err := uc.userRepo.GetByEmailAndPassword(email, password, token)
 	if err != nil {
@@ -44,10 +44,10 @@ func (uc *userUseCase) Login(email string, password string, token string) (*mode
 		return nil, fmt.Errorf("invalid credentials \n password = %s\n hashed = %s", password, user.Password)
 	}
 
-	return &model.Credentials{
+	return &model.User{
 		Password: user.Password,
 		Username: user.Username,
-		UserID:   user.UserID,
+		ID:       user.ID,
 		Role:     user.Role,
 	}, nil
 }
@@ -56,20 +56,20 @@ func (uc *userUseCase) FindUsers() any {
 	return uc.userRepo.GetAll()
 }
 
-func (uc *userUseCase) FindByUsername(username string) (*model.UserResponse, error) {
+func (uc *userUseCase) FindByUsername(username string) (*model.User, error) {
 	return uc.userRepo.GetByUsername(username)
 }
 func (uc *userUseCase) FindByPhone(phone string) (*model.User, error) {
 	return uc.userRepo.GetByPhone(phone)
 }
 
-func (uc *userUseCase) FindById(id uint) (*model.User, error) {
+func (uc *userUseCase) FindById(id string) (*model.User, error) {
 	return uc.userRepo.GetByiD(id)
 }
-func (uc *userUseCase) FindByiDToken(id uint) (*model.User, error) {
+func (uc *userUseCase) FindByiDToken(id string) (*model.User, error) {
 	return uc.userRepo.GetByIDToken(id)
 }
-func (uc *userUseCase) Register(user *model.UserCreate) (any, error) {
+func (uc *userUseCase) Register(user *model.User) (any, error) {
 	return uc.userRepo.Create(user)
 }
 

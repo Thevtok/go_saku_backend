@@ -3,16 +3,15 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 )
 
 type PhotoRepository interface {
 	Create(photo *model.PhotoUrl) error
-	GetByID(id uint) (*model.PhotoUrl, error)
+	GetByID(id string) (*model.PhotoUrl, error)
 	Update(photo *model.PhotoUrl) error
-	Delete(id uint) string
+	Delete(id string) string
 }
 
 type photoRepository struct {
@@ -22,17 +21,17 @@ type photoRepository struct {
 func (r *photoRepository) Create(photo *model.PhotoUrl) error {
 	_, err := r.db.Exec("INSERT INTO mst_photo_url (url_photo, user_id) VALUES ($1, $2)", photo.Url, photo.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create photo: %w", err)
 	}
 	return nil
 }
 
-func (r *photoRepository) GetByID(id uint) (*model.PhotoUrl, error) {
+func (r *photoRepository) GetByID(id string) (*model.PhotoUrl, error) {
 	var user model.PhotoUrl
 	row := r.db.QueryRow("SELECT url_photo, user_id from mst_photo_url WHERE user_id = $1", id)
 	err := row.Scan(&user.Url, &user.UserID)
 	if err != nil {
-		log.Println(err)
+		return nil, err // Mengembalikan kesalahan jika terjadi error saat pemindaian
 	}
 	return &user, nil
 }
@@ -46,7 +45,7 @@ func (r *photoRepository) Update(photo *model.PhotoUrl) error {
 	return nil
 }
 
-func (r *photoRepository) Delete(id uint) string {
+func (r *photoRepository) Delete(id string) string {
 	query := "DELETE FROM mst_photo_url WHERE user_id = $1"
 	_, err := r.db.Exec(query, id)
 	if err != nil {

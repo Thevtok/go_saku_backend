@@ -14,47 +14,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var dummyCredentials = []model.Credentials{
-	{
-		Email:    "email1@mail.com",
-		Password: "password1",
-		UserID:   1,
-		Username: "username1",
-		Role:     "user",
-	},
-	{
-		Email:    "email2@mail.com",
-		Password: "password2",
-		UserID:   2,
-		Username: "username2",
-		Role:     "admin",
-	},
-}
-
-var dummyUserRespons = []model.UserResponse{
-	{
-		Name:         "name1",
-		Username:     "username1",
-		Email:        "email1@mail.com",
-		Phone_Number: "08111111",
-		Address:      "address1",
-		Balance:      100000,
-		Point:        20,
-	},
-	{
-		Name:         "name2",
-		Username:     "username2",
-		Email:        "email2@mail.com",
-		Phone_Number: "08111111",
-		Address:      "address2",
-		Balance:      100000,
-		Point:        40,
-	},
-}
-
 var dummyUser = []model.User{
 	{
-		ID:           1,
+		ID:           "1",
 		Name:         "name1",
 		Username:     "username1",
 		Email:        "email1@mail.com",
@@ -66,7 +28,7 @@ var dummyUser = []model.User{
 		Point:        10,
 	},
 	{
-		ID:           2,
+		ID:           "2",
 		Name:         "name2",
 		Username:     "username2",
 		Email:        "email2@mail.com",
@@ -76,27 +38,6 @@ var dummyUser = []model.User{
 		Balance:      50000,
 		Role:         "user",
 		Point:        10,
-	},
-}
-
-var dummyUserCreate = []model.UserCreate{
-	{
-		Name:         "name1",
-		Username:     "username1",
-		Email:        "email1@mail.com",
-		Password:     "password1",
-		Phone_Number: "08111111",
-		Address:      "address1",
-		Balance:      100000,
-	},
-	{
-		Name:         "name2",
-		Username:     "username2",
-		Email:        "email2@mail.com",
-		Password:     "password2",
-		Phone_Number: "082222",
-		Address:      "address2",
-		Balance:      100000,
 	},
 }
 
@@ -271,7 +212,7 @@ func TestUpdatePointError(t *testing.T) {
 
 // Test GetAll
 func (suite *UserRepositoryTestSuite) TestGetAll_Success() {
-	var users = dummyUserRespons[:2]
+	var users = dummyUser[:2]
 	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point from mst_users").
 		WillReturnRows(sqlmock.NewRows([]string{"name", "username", "email", "phone_number", "address", "balance", "point"}).
 			AddRow(users[0].Name, users[0].Username, users[0].Email, users[0].Phone_Number, users[0].Address, users[0].Balance, users[0].Point).
@@ -290,7 +231,7 @@ func (suite *UserRepositoryTestSuite) TestGetAll_Failed() {
 }
 
 func (suite *UserRepositoryTestSuite) TestGetAllScan_Failed() {
-	var users = dummyUserRespons[:2]
+	var users = dummyUser[:2]
 	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point from mst_users").
 		WillReturnRows(sqlmock.NewRows([]string{"name", "username", "email", "phone_number", "address", "balance", "point"}).
 			AddRow(nil, users[0].Username, users[0].Email, users[0].Phone_Number, users[0].Address, users[0].Balance, users[0].Point).
@@ -302,7 +243,7 @@ func (suite *UserRepositoryTestSuite) TestGetAllScan_Failed() {
 
 // Test GetByUsername
 func (suite *UserRepositoryTestSuite) TestGetByUsername_Success() {
-	user := dummyUserRespons[1]
+	user := dummyUser[1]
 	suite.mockSql.ExpectQuery("SELECT name, username, email, phone_number, address, balance, point FROM mst_users WHERE username = $1").WithArgs(user.Username).WillReturnRows(sqlmock.NewRows([]string{"name", "username", "email", "phone_number", "address", "balance", "point"}).AddRow(user.Name, user.Username, user.Email, user.Phone_Number, user.Address, user.Balance, user.Point))
 	userRepository := NewUserRepository(suite.mockDB)
 	res, err := userRepository.GetByUsername(user.Username)
@@ -451,7 +392,7 @@ func (suite *UserRepositoryTestSuite) TestDelete_Failed() {
 
 // Test Create
 func (suite *UserRepositoryTestSuite) TestCreate_Success() {
-	newUser := &dummyUserCreate[0]
+	newUser := &dummyUser[0]
 	suite.mockSql.ExpectExec(`INSERT INTO mst_users \(name, username, email, password, phone_number, address, balance, role, point\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	userRepository := NewUserRepository(suite.mockDB)
@@ -459,7 +400,7 @@ func (suite *UserRepositoryTestSuite) TestCreate_Success() {
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), res)
 
-	user := res.(*model.UserCreate)
+	user := res.(*model.User)
 	assert.Equal(suite.T(), newUser.Name, user.Name)
 	assert.Equal(suite.T(), newUser.Username, user.Username)
 	assert.Equal(suite.T(), newUser.Email, user.Email)
@@ -469,7 +410,7 @@ func (suite *UserRepositoryTestSuite) TestCreate_Success() {
 	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
 }
 func (suite *UserRepositoryTestSuite) TestCreate_Failed() {
-	newUser := &dummyUserCreate[0]
+	newUser := &dummyUser[0]
 	expectedError := fmt.Errorf("failed to Create user")
 	suite.mockSql.ExpectExec(`INSERT INTO mst_users \(name, username, email, password, phone_number, address, balance, role, point\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9\)`).WithArgs(newUser.Name, newUser.Username, newUser.Email, sqlmock.AnyArg(), newUser.Phone_Number, newUser.Address, 0, "user", 0).
 		WillReturnError(expectedError)
@@ -534,12 +475,12 @@ func TestGetByEmailAndPasswordSuccess(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
-	if result.UserID != user.ID || result.Username != user.Username || result.Role != user.Role {
+	if result.ID != user.ID || result.Username != user.Username || result.Role != user.Role {
 		t.Errorf("unexpected result: %+v", result)
 	}
 }
 func (suite *UserRepositoryTestSuite) TestGetByEmailAndPassword_Failed() {
-	user := &dummyCredentials[0]
+	user := &dummyUser[0]
 	hashedPassword, _ := utils.HasingPassword(user.Password)
 
 	user.Password = hashedPassword

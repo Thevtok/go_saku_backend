@@ -12,134 +12,259 @@ var now = time.Now().Local()
 var date = now.Format("2006-01-02")
 
 type TransactionRepository interface {
-	CreateDepositBank(tx *model.TransactionBank) error
-	CreateDepositCard(tx *model.TransactionCard) error
-	CreateWithdrawal(tx *model.TransactionWithdraw) error
-	CreateTransfer(tx *model.TransactionTransferResponse) (any, error)
-	CreateRedeem(tx *model.TransactionPoint) error
+	CreateDepositBank(tx *model.Deposit) error
+
+	CreateWithdrawal(tx *model.Withdraw) error
+	CreateTransfer(tx *model.Transfer) error
+	CreateRedeem(tx *model.Redeem) error
 	GetAllPoint() ([]*model.PointExchange, error)
-	GetBySenderId(senderId, recipientId uint) ([]*model.Transaction, error)
+	GetTransactions(userID string) ([]*model.Transaction, error)
 	GetByPeId(id int) (*model.PointExchange, error)
+	AssignBadge(user *model.User) error
 }
 
 type transactionRepository struct {
 	db *sql.DB
 }
 
-func (r *transactionRepository) GetBySenderId(senderId, recipientId uint) ([]*model.Transaction, error) {
-	var txs []*model.Transaction
-	rows, err := r.db.Query(`
-        SELECT  transaction_type, sender_id, recipient_id, bank_account_id, card_id, pe_id, amount, point, transaction_date,sender_phone_number,recipient_phone_number,sender_name,recipient_name,bank_name,bank_account_number
-        FROM tx_transaction
-        WHERE sender_id = $1 OR recipient_id = $2 ORDER BY
-		tx_id DESC
-    `, senderId, recipientId)
+func (ur *transactionRepository) AssignBadge(user *model.User) error {
+	queryCount := "SELECT COUNT(*) FROM tx_transfer WHERE sender_id = $1"
+	row := ur.db.QueryRow(queryCount, user.ID)
+
+	var txCount int
+	err := row.Scan(&txCount)
 	if err != nil {
-		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
+		return fmt.Errorf("failed to retrieve transaction count: %v", err)
+	}
+
+	// Mengambil badge berdasarkan jumlah transaksi
+	queryBadge := "SELECT badge_id FROM mst_badges WHERE threshold <= $1 ORDER BY threshold DESC LIMIT 1"
+	row = ur.db.QueryRow(queryBadge, txCount)
+
+	var badgeID int
+	err = row.Scan(&badgeID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve badge ID: %v", err)
+	}
+
+	// Update field tx_count dan badge_id pada tabel pengguna
+	queryUpdate := "UPDATE mst_users SET tx_count = $1, badge_id = $2 WHERE user_id = $3"
+	_, err = ur.db.Exec(queryUpdate, txCount, badgeID, user.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %v", err)
+	}
+
+	user.TxCount = txCount
+	user.BadgeID = badgeID
+
+	return nil
+}
+
+func (r *transactionRepository) GetTransactions(userID string) ([]*model.Transaction, error) {
+	query := `
+	SELECT 
+    t.tx_id, t.transaction_type, t.transaction_date,
+    d.bank_name, d.account_number, d.account_holder_name, d.amount,
+    w.bank_name, w.account_number, w.account_holder_name, w.amount,
+    tr.sender_name, tr.sender_phone_number, tr.recipient_name, tr.recipient_phone_number, tr.amount,
+    CAST(rp.pe_id AS VARCHAR), rp.amount,
+    pe.reward
+FROM tx_transaction t
+LEFT JOIN tx_deposit d ON t.tx_id = d.transaction_id
+LEFT JOIN tx_withdraw w ON t.tx_id = w.transaction_id
+LEFT JOIN tx_transfer tr ON t.tx_id = tr.transaction_id
+LEFT JOIN tx_redeem rp ON t.tx_id = rp.transaction_id
+LEFT JOIN mst_point_exchange pe ON rp.pe_id = pe.pe_id
+WHERE (t.sender_id = $1 OR t.recipient_id = $1)
+   
+ORDER BY t.tx_id DESC
+
+
+
+	`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %v", err)
 	}
 	defer rows.Close()
 
+	transactions := []*model.Transaction{}
 	for rows.Next() {
+		var (
+			txID                       int
+			transactionType            string
+			transactionDate            string
+			depositBankName            sql.NullString
+			deposit_bank_number        sql.NullString
+			deposit_account_bank_name  sql.NullString
+			deposit_amount             sql.NullString
+			withdrawBankName           sql.NullString
+			withdraw_bank_number       sql.NullString
+			withdraw_account_bank_name sql.NullString
+			withdraw_amount            sql.NullString
+			transfer_sender_name       sql.NullString
+			transfer_sender_phone      sql.NullString
+			transfer_recipient_name    sql.NullString
+			transfer_recipient_phone   sql.NullString
+			transfer_amount            sql.NullString
+			redeemPEID                 sql.NullString
+			redeemAmount               sql.NullString
+			redeemReward               sql.NullString
+		)
 
-		tx := &model.Transaction{}
-		err := rows.Scan(&tx.TransactionType, &tx.SenderID, &tx.RecipientID, &tx.BankAccountID, &tx.CardID, &tx.PointExchangeID, &tx.Amount, &tx.Point, &tx.TransactionDate, &tx.SenderNumber, &tx.RecipientNumber, &tx.SenderName, &tx.RecipientName, &tx.BankName, &tx.BankAccountNumber)
+		err := rows.Scan(&txID, &transactionType, &transactionDate, &depositBankName, &deposit_bank_number, &deposit_account_bank_name, &deposit_amount, &withdrawBankName, &withdraw_bank_number, &withdraw_account_bank_name, &withdraw_amount, &transfer_sender_name, &transfer_sender_phone, &transfer_recipient_name, &transfer_recipient_phone, &transfer_amount, &redeemPEID, &redeemAmount, &redeemReward)
 		if err != nil {
-			return nil, fmt.Errorf("error while scanning transaction: %v", err)
+			return nil, fmt.Errorf("failed to scan transaction row: %v", err)
 		}
-		if tx.SenderID == nil {
-			tx.SenderID = new(uint)
+
+		transaction := &model.Transaction{
+			TxID:            txID,
+			TransactionType: transactionType,
+			TransactionDate: transactionDate,
 		}
-		if tx.RecipientID == nil {
-			tx.RecipientID = new(uint)
+
+		if depositBankName.Valid {
+			transaction.DepositBankName = depositBankName.String
 		}
-		if tx.BankAccountID == nil {
-			tx.BankAccountID = new(uint)
+		if deposit_bank_number.Valid {
+			transaction.DepositBankNumber = deposit_bank_number.String
 		}
-		if tx.CardID == nil {
-			tx.CardID = new(uint)
+		if deposit_account_bank_name.Valid {
+			transaction.DepositAccountBankName = depositBankName.String
 		}
-		if tx.PointExchangeID == nil {
-			tx.PointExchangeID = new(uint)
+		if deposit_amount.Valid {
+			transaction.DepositAmount = deposit_amount.String
 		}
-		if tx.Amount == nil {
-			tx.Amount = new(uint)
+
+		if withdrawBankName.Valid {
+			transaction.WithdrawBankName = withdrawBankName.String
 		}
-		if tx.Point == nil {
-			tx.Point = new(uint)
+		if withdraw_bank_number.Valid {
+			transaction.WithdrawBankNumber = withdraw_bank_number.String
 		}
-		if tx.SenderNumber == nil {
-			tx.SenderNumber = nil
+		if withdraw_account_bank_name.Valid {
+			transaction.WithdrawAccountBankName = withdraw_account_bank_name.String
 		}
-		if tx.RecipientNumber == nil {
-			tx.RecipientNumber = nil
+		if withdraw_amount.Valid {
+			transaction.WithdrawAmount = withdraw_amount.String
 		}
-		if tx.SenderName == nil {
-			tx.SenderName = nil
+		if transfer_sender_name.Valid {
+			transaction.TransferSenderName = transfer_sender_name.String
 		}
-		if tx.RecipientName == nil {
-			tx.RecipientName = nil
+		if transfer_sender_phone.Valid {
+			transaction.TransferSenderPhone = transfer_sender_phone.String
 		}
-		if tx.BankName == nil {
-			tx.BankName = nil
+		if transfer_recipient_name.Valid {
+			transaction.TransferRecipientName = transfer_recipient_name.String
 		}
-		if tx.BankAccountNumber == nil {
-			tx.BankAccountNumber = nil
+		if transfer_recipient_phone.Valid {
+			transaction.TransferRecipientPhone = transfer_recipient_phone.String
 		}
-		txs = append(txs, tx)
+		if transfer_amount.Valid {
+			transaction.TransferAmount = transfer_amount.String
+		}
+
+		if redeemPEID.Valid {
+			transaction.RedeemPEID = redeemPEID.String
+		}
+		if redeemAmount.Valid {
+			transaction.RedeemAmount = redeemAmount.String
+		}
+		if redeemReward.Valid {
+			transaction.RedeemReward = redeemReward.String
+		}
+
+		transactions = append(transactions, transaction)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error while getting transactions for sender %v: %v", senderId, err)
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate through result set: %v", err)
 	}
 
-	return txs, nil
+	return transactions, nil
 }
 
-func (r *transactionRepository) CreateDepositBank(tx *model.TransactionBank) error {
-	query := "INSERT INTO tx_transaction (transaction_type, sender_id, bank_account_id, amount, transaction_date,sender_name,bank_name,bank_account_number) VALUES ($1, $2, $3, $4, $5,$6,$7,$8)"
-	_, err := r.db.Exec(query, "Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, date, tx.SenderName, tx.BankName, tx.BankAccountNumber)
+func (r *transactionRepository) CreateDepositBank(tx *model.Deposit) error {
+	query := "INSERT INTO tx_transaction (transaction_type, transaction_date, sender_id) VALUES ($1, $2, $3)"
+	_, err := r.db.Exec(query, "Deposit", date, tx.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert transaction: %v", err)
+	}
+
+	var txID int
+	err = r.db.QueryRow("SELECT lastval()").Scan(&txID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
+	}
+
+	query = "INSERT INTO tx_deposit (transaction_id, amount, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4, $5)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName)
+	if err != nil {
+		return fmt.Errorf("failed to insert deposit: %v", err)
+	}
+
+	return nil
+}
+func (r *transactionRepository) CreateWithdrawal(tx *model.Withdraw) error {
+	query := "INSERT INTO tx_transaction (transaction_type, transaction_date, sender_id) VALUES ($1, $2, $3)"
+	_, err := r.db.Exec(query, "Withdraw", date, tx.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to insert transaction: %v", err)
+	}
+
+	var txID int
+	err = r.db.QueryRow("SELECT lastval()").Scan(&txID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
+	}
+
+	query = "INSERT INTO tx_withdraw (transaction_id, amount, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4, $5)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName)
+	if err != nil {
+		return fmt.Errorf("failed to insert withdrawal: %v", err)
 	}
 
 	return nil
 }
 
-func (r *transactionRepository) CreateDepositCard(tx *model.TransactionCard) error {
-	query := "INSERT INTO tx_transaction (transaction_type, sender_id, card_id, amount, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Deposit Card", tx.SenderID, tx.CardID, tx.Amount, now)
+func (r *transactionRepository) CreateTransfer(tx *model.Transfer) error {
+	query := "INSERT INTO tx_transaction (transaction_type, transaction_date, sender_id,recipient_id) VALUES ($1, $2, $3,$4)"
+	_, err := r.db.Exec(query, "Transfer", date, tx.SenderID, tx.RecipientID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert transaction: %v", err)
+	}
+
+	var txID int
+	err = r.db.QueryRow("SELECT lastval()").Scan(&txID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
+	}
+
+	query = "INSERT INTO tx_transfer (transaction_id, sender_name, recipient_name, amount, sender_phone_number, recipient_phone_number,sender_id,recipient_id) VALUES ($1, $2, $3, $4, $5, $6,$7,$8)"
+	_, err = r.db.Exec(query, txID, tx.SenderName, tx.RecipientName, tx.Amount, tx.SenderPhoneNumber, tx.RecipientPhoneNumber, tx.SenderID, tx.RecipientID)
+	if err != nil {
+		return fmt.Errorf("failed to insert transfer: %v", err)
 	}
 
 	return nil
 }
 
-func (r *transactionRepository) CreateWithdrawal(tx *model.TransactionWithdraw) error {
-	query := "INSERT INTO tx_transaction (transaction_type, bank_account_id, sender_id, amount, transaction_date,sender_name,bank_name,bank_account_number) VALUES ($1, $2, $3, $4,$5,$6,$7,$8)"
-	_, err := r.db.Exec(query, "Withdraw", tx.BankAccountID, tx.SenderID, tx.Amount, date, tx.SenderName, tx.BankName, tx.BankAccountNumber)
+func (r *transactionRepository) CreateRedeem(tx *model.Redeem) error {
+	query := "INSERT INTO tx_transaction (transaction_type, transaction_date,sender_id) VALUES ($1, $2,$3)"
+	_, err := r.db.Exec(query, "Redeem", date, tx.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert transaction: %v", err)
 	}
-
-	return nil
-}
-
-func (r *transactionRepository) CreateTransfer(tx *model.TransactionTransferResponse) (any, error) {
-	query := "INSERT INTO tx_transaction (transaction_type, sender_id, recipient_id, amount, transaction_date,sender_phone_number,recipient_phone_number,sender_name,recipient_name) VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9)"
-	_, err := r.db.Exec(query, "Transfer", tx.SenderID, tx.RecipientID, tx.Amount, date, tx.SenderNumber, tx.RecipientNumber, tx.SenderName, tx.RecipientName)
+	var txID int
+	err = r.db.QueryRow("SELECT lastval()").Scan(&txID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create data: %v", err)
+		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
 	}
-
-	return tx, nil
-}
-
-func (r *transactionRepository) CreateRedeem(tx *model.TransactionPoint) error {
-	query := "INSERT INTO tx_transaction (transaction_type, sender_id, pe_id, point, transaction_date) VALUES ($1, $2, $3, $4, $5)"
-	_, err := r.db.Exec(query, "Redeem", tx.SenderID, tx.PointExchangeID, tx.Point, now)
+	query = "INSERT INTO tx_redeem (transaction_id,amount, pe_id) VALUES ($1, $2, $3)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.PEID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert redeem: %v", err)
 	}
 
 	return nil
@@ -159,7 +284,7 @@ func (r *transactionRepository) GetAllPoint() ([]*model.PointExchange, error) {
 		pe := &model.PointExchange{}
 		err := rows.Scan(&pe.PE_ID, &pe.Reward, &pe.Price)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan data: %v", err)
+			return nil, fmt.Errorf("failed to scan store: %v", err)
 		}
 		pointExchanges = append(pointExchanges, pe)
 	}
@@ -172,7 +297,7 @@ func (r *transactionRepository) GetByPeId(id int) (*model.PointExchange, error) 
 	query := "SELECT pe_id, reward, price FROM mst_point_exchange WHERE pe_id = $1"
 	err := r.db.QueryRow(query, id).Scan(&peAcc.PE_ID, &peAcc.Reward, &peAcc.Price)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to scan pe_id: %v", err)
 	}
 	return &peAcc, nil
 }

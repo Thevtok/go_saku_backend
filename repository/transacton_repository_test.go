@@ -13,64 +13,41 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-var dummyTxBank = []*model.TransactionBank{
+var dummyTxBank = []*model.Deposit{
 	{
 		TransactionType: "Deposit Bank",
-		SenderID:        uint(1),
-		BankAccountID:   uint(1),
-		Amount:          uint(50000),
+
+		Amount:          50000,
 		TransactionDate: "now",
 	},
 }
-var dummyTxCard = []*model.TransactionCard{
+
+var dummyTxWd = []*model.Withdraw{
 	{},
 }
-var dummyTxWd = []*model.TransactionWithdraw{
+var dummyTxRd = []*model.Redeem{
 	{},
 }
-var dummyTxRd = []*model.TransactionPoint{
-	{},
-}
-var dummyTxTf = []*model.TransactionTransferResponse{
+var dummyTxTf = []*model.Transfer{
 	{},
 }
 
-var value = uint(2)
-var value1 = uint(3)
 var txs = []*model.Transaction{
 	{
-		SenderID:        &value,
+
 		TransactionType: "Transfer",
-		RecipientID:     &value,
-		BankAccountID:   &value,
-		CardID:          &value,
-		PointExchangeID: &value,
-		Point:           &value,
-		Amount:          &value,
+
 		TransactionDate: "now",
 	},
 	{
-		SenderID:        &value1,
+
 		TransactionType: "Transfer",
-		RecipientID:     &value1,
-		BankAccountID:   &value1,
-		CardID:          &value1,
-		PointExchangeID: &value1,
-		Point:           &value1,
-		Amount:          &value1,
+
 		TransactionDate: "now",
 	},
 }
-var txP = []*model.TransactionPoint{
-	{
-		SenderID:        1,
-		TransactionType: "Redeem",
-
-		PointExchangeID: 1,
-		Point:           1,
-
-		TransactionDate: "now",
-	},
+var txP = []*model.Redeem{
+	{},
 }
 
 type TransactionRepositoryTestSuite struct {
@@ -81,21 +58,20 @@ type TransactionRepositoryTestSuite struct {
 
 func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Success() {
 	// Create some test data
-	senderID := txs[0].SenderID
-	recipientId := txs[0].RecipientID
+	senderID := ""
 
 	// Create a mock database connection and repository
 
 	repo := NewTxRepository(suite.mockDB)
 
 	// Expect the query to be executed with the correct arguments
-	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID, recipientId).WillReturnRows(
+	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID).WillReturnRows(
 		sqlmock.NewRows([]string{"transaction_type", "sender_id", "recipient_id", "bank_account_id", "card_id", "pe_id", "amount", "point", "transaction_date"}).
-			AddRow(txs[0].TransactionType, txs[0].SenderID, txs[0].RecipientID, txs[0].BankAccountID, txs[0].CardID, txs[0].PointExchangeID, txs[0].Amount, txs[0].Point, txs[0].TransactionDate).
-			AddRow(txs[1].TransactionType, txs[1].SenderID, txs[1].RecipientID, txs[1].BankAccountID, txs[1].CardID, txs[1].PointExchangeID, txs[1].Amount, txs[1].Point, txs[1].TransactionDate))
+			AddRow(txs[0].TransactionType, txs[0].TransactionDate).
+			AddRow(txs[1].TransactionType, txs[1].TransactionDate))
 
 	// Call the GetBySenderId method
-	result, err := repo.GetBySenderId(*senderID, *recipientId)
+	result, err := repo.GetTransactions(senderID)
 
 	// Assert that no errors occurred and all expectations were met
 	assert.NoError(suite.T(), err)
@@ -106,14 +82,14 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Success() {
 }
 
 func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Error() {
-	senderID := uint(1)
-	recipientId := uint(1)
+	senderID := "uint(1)"
+
 	expectedError := fmt.Errorf("dummy error")
 
-	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID, recipientId).WillReturnError(expectedError)
+	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID).WillReturnError(expectedError)
 	repository := NewTxRepository(suite.mockDB)
 
-	txs, err := repository.GetBySenderId(senderID, recipientId)
+	txs, err := repository.GetTransactions(senderID)
 
 	assert.Error(suite.T(), err)
 	assert.Equal(suite.T(), "error while getting transactions for sender 1: dummy error", err.Error())
@@ -122,17 +98,17 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_Error() {
 }
 func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_ScanNilValues() {
 	// Prepare mock rows
-	senderID := uint(1)
-	recipientId := uint(1)
+	senderID := "uint(1)"
+
 	rows := sqlmock.NewRows([]string{"transaction_type", "sender_id", "recipient_id", "bank_account_id", "card_id", "point_exchange_id", "amount", "point", "transaction_date"}).
-		AddRow("debit", senderID, recipientId, nil, nil, nil, nil, nil, now)
+		AddRow("debit", senderID, nil, nil, nil, nil, nil, now)
 
 	// Set up expectations
-	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID, recipientId).WillReturnRows(rows)
+	suite.mockSql.ExpectQuery("SELECT").WithArgs(senderID).WillReturnRows(rows)
 	repository := NewTxRepository(suite.mockDB)
 
 	// Call the function
-	txs, err := repository.GetBySenderId(senderID, recipientId)
+	txs, err := repository.GetTransactions(senderID)
 
 	// Check the results
 	assert.NoError(suite.T(), err)
@@ -140,8 +116,8 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_ScanNilValues() {
 
 	assert.Len(suite.T(), txs, 1)
 	assert.Equal(suite.T(), "debit", txs[0].TransactionType)
-	assert.Equal(suite.T(), senderID, txs[0].SenderID)
-	assert.Equal(suite.T(), recipientId, txs[0].RecipientID)
+	assert.Equal(suite.T(), senderID, "")
+
 	assert.Nil(suite.T(), nil)
 	assert.Nil(suite.T(), nil)
 	assert.Nil(suite.T(), nil)
@@ -154,10 +130,10 @@ func (suite *TransactionRepositoryTestSuite) TestGetBySenderId_ScanNilValues() {
 
 func (suite *TransactionRepositoryTestSuite) TestCreateDepositBank_Success() {
 	// Create a new transaction object with test data
-	tx := &model.TransactionBank{
-		SenderID:      1,
-		BankAccountID: 1,
-		Amount:        50000,
+	tx := &model.Deposit{
+
+		BankName: "1",
+		Amount:   50000,
 	}
 
 	// Create a mock database connection and repository
@@ -165,7 +141,7 @@ func (suite *TransactionRepositoryTestSuite) TestCreateDepositBank_Success() {
 	repo := NewTxRepository(suite.mockDB)
 
 	// Expect the query to be executed with the correct arguments
-	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs("Deposit Bank", tx.SenderID, tx.BankAccountID, tx.Amount, now).WillReturnResult(sqlmock.NewResult(1, 1))
+	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs("Deposit Bank", tx.Amount, now).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Call the CreateDepositBank method
 	err := repo.CreateDepositBank(tx)
@@ -188,53 +164,17 @@ func (suite *TransactionRepositoryTestSuite) TestCreateDepositBank_Error() {
 	assert.Equal(suite.T(), expectedErr, err)
 }
 
-func (suite *TransactionRepositoryTestSuite) TestCreateDepositCard_Success() {
-	// Create a new transaction object with test data
-	tx := &model.TransactionCard{
-		SenderID: 1,
-		CardID:   1,
-		Amount:   50000,
-	}
-
-	// Create a mock database connection and repository
-
-	repo := NewTxRepository(suite.mockDB)
-
-	// Expect the query to be executed with the correct arguments
-	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs("Deposit Card", tx.SenderID, tx.CardID, tx.Amount, now).WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// Call the CreateDepositBank method
-	err := repo.CreateDepositCard(tx)
-
-	// Assert that no errors occurred and all expectations were met
-	assert.NoError(suite.T(), err)
-	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
-}
-func (suite *TransactionRepositoryTestSuite) TestCreateDepositCard_Error() {
-	tx := dummyTxCard[0]
-
-	expectedErr := errors.New("database error")
-
-	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WillReturnError(expectedErr)
-
-	repository := NewTxRepository(suite.mockDB)
-
-	err := repository.CreateDepositCard(tx)
-
-	assert.Equal(suite.T(), expectedErr, err)
-}
 func (suite *TransactionRepositoryTestSuite) TestCreateWitdrawal_Success() {
 	// Create a new transaction object with test data
-	tx := &model.TransactionWithdraw{
-		SenderID:      1,
-		BankAccountID: 1,
-		Amount:        50000,
+	tx := &model.Withdraw{
+
+		Amount: 50000,
 	}
 
 	repo := NewTxRepository(suite.mockDB)
 
 	// Expect the query to be executed with the correct arguments
-	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs("Withdraw", tx.SenderID, tx.BankAccountID, tx.Amount, now).WillReturnResult(sqlmock.NewResult(1, 1))
+	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs("Withdraw", tx.Amount, now).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Call the CreateDepositBank method
 	err := repo.CreateWithdrawal(tx)
@@ -259,13 +199,13 @@ func (suite *TransactionRepositoryTestSuite) TestCreateWithdrawal_Error() {
 
 func (suite *TransactionRepositoryTestSuite) TestCreateRedeem_Success() {
 	// Create some test data
-	senderID := txP[0].SenderID
+	senderID := "txP[0].SenderID"
 	redem := txP[0]
 
 	repo := NewTxRepository(suite.mockDB)
 
 	// Expect the query to be executed with the correct arguments
-	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs(txP[0].TransactionType, senderID, txP[0].PointExchangeID, txP[0].Point, txP[0].TransactionDate).WillReturnResult(
+	suite.mockSql.ExpectExec("INSERT INTO tx_transaction").WithArgs(senderID).WillReturnResult(
 		sqlmock.NewResult(1, 1))
 
 	// Call the GetBySenderId method
@@ -292,10 +232,9 @@ func (suite *TransactionRepositoryTestSuite) TestCreateRedeem_Error() {
 
 func (suite *TransactionRepositoryTestSuite) TestCreateTransfer_Success() {
 	// Create some test data
-	tx := &model.TransactionTransferResponse{
+	tx := &model.Transfer{
 		TransactionType: "Transfer",
-		SenderID:        1,
-		RecipientID:     2,
+
 		Amount:          50000,
 		TransactionDate: "now",
 	}
@@ -307,11 +246,10 @@ func (suite *TransactionRepositoryTestSuite) TestCreateTransfer_Success() {
 		sqlmock.NewResult(1, 1))
 
 	// Call the GetBySenderId method
-	result, err := repo.CreateTransfer(tx)
+	err := repo.CreateTransfer(tx)
 
 	// Assert that no errors occurred and all expectations were met
 	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), result)
 
 	assert.NoError(suite.T(), suite.mockSql.ExpectationsWereMet())
 }
@@ -324,7 +262,7 @@ func (suite *TransactionRepositoryTestSuite) TestCreateTransfer_Error() {
 
 	repository := NewTxRepository(suite.mockDB)
 
-	_, err := repository.CreateTransfer(tx)
+	err := repository.CreateTransfer(tx)
 
 	assert.Equal(suite.T(), expectedErr, err)
 }

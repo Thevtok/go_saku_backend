@@ -7,9 +7,9 @@ import (
 
 type PhotoUsecase interface {
 	Upload(photo *model.PhotoUrl) error
-	Download(id uint) (*model.PhotoUrl, error)
+	Download(id string) (*model.PhotoUrl, error)
 	Edit(photo *model.PhotoUrl) error
-	Remove(id uint) string
+	Remove(id string) string
 }
 
 type photoUsecase struct {
@@ -20,7 +20,7 @@ func (u *photoUsecase) Upload(photo *model.PhotoUrl) error {
 	return u.photoRepo.Create(photo)
 }
 
-func (u *photoUsecase) Download(id uint) (*model.PhotoUrl, error) {
+func (u *photoUsecase) Download(id string) (*model.PhotoUrl, error) {
 	return u.photoRepo.GetByID(id)
 }
 
@@ -28,7 +28,7 @@ func (u *photoUsecase) Edit(photo *model.PhotoUrl) error {
 	return u.photoRepo.Update(photo)
 }
 
-func (u *photoUsecase) Remove(id uint) string {
+func (u *photoUsecase) Remove(id string) string {
 	return u.photoRepo.Delete(id)
 }
 

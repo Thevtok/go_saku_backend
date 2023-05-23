@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
@@ -30,12 +29,8 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 
 	logrus.SetOutput(logger)
 	// Body Form data user_id
-	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
-	if err != nil {
-		logrus.Errorf("Failed to get user id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get user id")
-		return
-	}
+	userID := ctx.Param("user_id")
+
 	// Body Form data File
 	file, err := ctx.FormFile("photo")
 	if err != nil {
@@ -43,11 +38,12 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get file from request")
 		return
 	}
+
 	// url photo location
 	filename := file.Filename
 	path := fmt.Sprintf(utils.DotEnv("FILE_LOCATION"), filename)
-    // Cek apakah file dengan nama yang sama sudah ada
-    if _, err := os.Stat(path); err == nil {
+	// Cek apakah file dengan nama yang sama sudah ada
+	if _, err := os.Stat(path); err == nil {
 		logrus.Errorf("File with the same name already exists: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "File with the same name already exists")
 		return
@@ -59,6 +55,7 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		return
 	}
 	defer fileIn.Close()
+
 	// Validasi ekstensi file
 	ext := filepath.Ext(filename)
 	if ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
@@ -79,9 +76,27 @@ func (c *PhotoController) Upload(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to write file")
 		return
 	}
+	oldPhoto, err := c.photoUsecase.Download(userID)
+	if err != nil {
+		logrus.Errorf("Failed to download photo: %v", err)
+
+	}
+
+	// If user already has a photo, delete the old photo
+	if oldPhoto != nil {
+		if err = os.Remove(oldPhoto.Url); err != nil {
+			logrus.Errorf("Failed to delete old photo file: %v", err)
+		}
+
+		// Remove old photo entry from the database
+		_ = c.photoUsecase.Remove(userID)
+		if err != nil {
+			logrus.Errorf("Failed to delete old photo from database: %v", err)
+		}
+	}
 	// Simpan informasi file ke database
 	photo := &model.PhotoUrl{
-		UserID: uint(userID),
+		UserID: userID,
 		Url:    path,
 	}
 	err = c.photoUsecase.Upload(photo)
@@ -102,13 +117,9 @@ func (c *PhotoController) Download(ctx *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Failed to get user id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get user id")
-		return
-	}
-	photo, err := c.photoUsecase.Download(uint(userID))
+	userID := ctx.Param("user_id")
+
+	photo, err := c.photoUsecase.Download(userID)
 	if err != nil {
 		logrus.Errorf("Something went wrong when downloading file: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Something went wrong when downloading file")
@@ -147,12 +158,8 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 
 	logrus.SetOutput(logger)
 	// Body Form data user_id
-	userID, err := strconv.Atoi(ctx.PostForm("user_id"))
-	if err != nil {
-		logrus.Errorf("Failed to get user id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get user id")
-		return
-	}
+	userID := ctx.Param("user_id")
+
 	// Body Form data File
 	file, err := ctx.FormFile("photo")
 	if err != nil {
@@ -184,17 +191,16 @@ func (c *PhotoController) Edit(ctx *gin.Context) {
 		return
 	}
 	defer fileIn.Close()
-	
-	
+
 	// Simpan informasi file ke database
-	oldPhoto, err := c.photoUsecase.Download(uint(userID))
+	oldPhoto, err := c.photoUsecase.Download(userID)
 	if err != nil {
 		logrus.Errorf("Failed to download photo: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to download photo")
 		return
 	}
 	photo := &model.PhotoUrl{
-		UserID: uint(userID),
+		UserID: userID,
 		Url:    path,
 	}
 	err = c.photoUsecase.Edit(photo)
@@ -226,14 +232,9 @@ func (c *PhotoController) Remove(ctx *gin.Context) {
 	}
 
 	logrus.SetOutput(logger)
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
-	if err != nil {
-		logrus.Errorf("Failed to get user id: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Failed to get user id")
-		return
-	}
+	userID := ctx.Param("user_id")
 
-	photo, err := c.photoUsecase.Download(uint(userID))
+	photo, err := c.photoUsecase.Download(userID)
 	if err != nil {
 		logrus.Errorf("Something went wrong when downloading file: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Something went wrong when downloading file")
