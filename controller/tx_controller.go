@@ -252,10 +252,45 @@ func (c *TransactionController) CreateTransferTransaction(ctx *gin.Context) {
 		logrus.Errorf("Failed to assign badge: %v", err)
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to asign badge")
 	}
+	if sender.BadgeID == 2 {
+		err = model.SendFCMNotification(sender.Token, "Selamat", "Anda telah naik level menjadi Silver ")
 
-	amount := float64(newTransfer.Amount) / 1000 // Mengonversi nilai amount ke dalam format yang diinginkan
+		if err != nil {
+			logrus.Errorf("failed to send FCM notification: %v", err)
+
+			return
+		}
+	}
+	if sender.BadgeID == 3 {
+		err = model.SendFCMNotification(sender.Token, "Selamat", "Anda telah naik level menjadi Gold ")
+
+		if err != nil {
+			logrus.Errorf("failed to send FCM notification: %v", err)
+
+			return
+		}
+	}
+	if sender.BadgeID == 4 {
+		err = model.SendFCMNotification(sender.Token, "Selamat", "Anda telah naik level menjadi Platinum ")
+
+		if err != nil {
+			logrus.Errorf("failed to send FCM notification: %v", err)
+
+			return
+		}
+	}
+	if sender.BadgeID == 5 {
+		err = model.SendFCMNotification(sender.Token, "Selamat", "Anda telah naik level menjadi Diamond ")
+
+		if err != nil {
+			logrus.Errorf("failed to send FCM notification: %v", err)
+
+			return
+		}
+	}
+
+	amount := float64(newTransfer.Amount) / 1000
 	formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64)
-	// Mengformat nilai amount menjadi format mata uang Rupiah dengan 3 digit di belakang koma
 
 	err = model.SendFCMNotification(sender.Token, "Transfer Berhasil", "Anda telah mengirim uang ke "+recipient.Name+" sebesar "+formattedAmount)
 

@@ -98,18 +98,18 @@ ORDER BY t.tx_id DESC
 			depositBankName            sql.NullString
 			deposit_bank_number        sql.NullString
 			deposit_account_bank_name  sql.NullString
-			deposit_amount             sql.NullString
+			deposit_amount             sql.NullInt64
 			withdrawBankName           sql.NullString
 			withdraw_bank_number       sql.NullString
 			withdraw_account_bank_name sql.NullString
-			withdraw_amount            sql.NullString
+			withdraw_amount            sql.NullInt64
 			transfer_sender_name       sql.NullString
 			transfer_sender_phone      sql.NullString
 			transfer_recipient_name    sql.NullString
 			transfer_recipient_phone   sql.NullString
-			transfer_amount            sql.NullString
+			transfer_amount            sql.NullInt64
 			redeemPEID                 sql.NullString
-			redeemAmount               sql.NullString
+			redeemAmount               sql.NullInt64
 			redeemReward               sql.NullString
 		)
 
@@ -131,10 +131,10 @@ ORDER BY t.tx_id DESC
 			transaction.DepositBankNumber = deposit_bank_number.String
 		}
 		if deposit_account_bank_name.Valid {
-			transaction.DepositAccountBankName = depositBankName.String
+			transaction.DepositAccountBankName = deposit_account_bank_name.String
 		}
 		if deposit_amount.Valid {
-			transaction.DepositAmount = deposit_amount.String
+			transaction.DepositAmount = int(deposit_amount.Int64)
 		}
 
 		if withdrawBankName.Valid {
@@ -147,7 +147,7 @@ ORDER BY t.tx_id DESC
 			transaction.WithdrawAccountBankName = withdraw_account_bank_name.String
 		}
 		if withdraw_amount.Valid {
-			transaction.WithdrawAmount = withdraw_amount.String
+			transaction.WithdrawAmount = int(withdraw_amount.Int64)
 		}
 		if transfer_sender_name.Valid {
 			transaction.TransferSenderName = transfer_sender_name.String
@@ -162,14 +162,14 @@ ORDER BY t.tx_id DESC
 			transaction.TransferRecipientPhone = transfer_recipient_phone.String
 		}
 		if transfer_amount.Valid {
-			transaction.TransferAmount = transfer_amount.String
+			transaction.TransferAmount = int(transfer_amount.Int64)
 		}
 
 		if redeemPEID.Valid {
 			transaction.RedeemPEID = redeemPEID.String
 		}
 		if redeemAmount.Valid {
-			transaction.RedeemAmount = redeemAmount.String
+			transaction.RedeemAmount = int(redeemAmount.Int64)
 		}
 		if redeemReward.Valid {
 			transaction.RedeemReward = redeemReward.String

@@ -133,7 +133,7 @@ func (r *userRepository) GetByUsername(username string) (*model.User, error) {
 
 func (r *userRepository) GetByPhone(phoneNumber string) (*model.User, error) {
 	var user model.User
-	err := r.db.QueryRow("SELECT user_id,name, username, email, phone_number, address, balance, point,badge_id,tx_count  FROM mst_users WHERE phone_number = $1", phoneNumber).Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.BadgeID, &user.TxCount)
+	err := r.db.QueryRow("SELECT user_id,name, username, email, phone_number, address, balance, point,badge_id,tx_count,token  FROM mst_users WHERE phone_number = $1", phoneNumber).Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.Phone_Number, &user.Address, &user.Balance, &user.Point, &user.BadgeID, &user.TxCount, &user.Token)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("phone not found")

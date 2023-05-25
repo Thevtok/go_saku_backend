@@ -7,19 +7,19 @@ type Transaction struct {
 	DepositBankName         string `json:"deposit_bank_name"`
 	DepositBankNumber       string `json:"deposit_bank_number"`
 	DepositAccountBankName  string `json:"deposit_account_bank_name"`
-	DepositAmount           string `json:"deposit_amount"`
+	DepositAmount           int    `json:"deposit_amount"`
 	WithdrawBankName        string `json:"withdraw_bank_name"`
 	WithdrawBankNumber      string `json:"withdraw_bank_number"`
 	WithdrawAccountBankName string `json:"withdraw_account_bank_name"`
-	WithdrawAmount          string `json:"withdraw_amount"`
+	WithdrawAmount          int    `json:"withdraw_amount"`
 	TransferSenderName      string `json:"transfer_sender_name"`
 	TransferSenderPhone     string `json:"transfer_sender_phone"`
 	TransferRecipientName   string `json:"transfer_recipient_name"`
 	TransferRecipientPhone  string `json:"transfer_recipient_phone"`
-	TransferAmount          string `json:"transfer_amount"`
+	TransferAmount          int    `json:"transfer_amount"`
 
 	RedeemPEID   string `json:"redeem_pe_id"`
-	RedeemAmount string `json:"redeem_amount"`
+	RedeemAmount int    `json:"redeem_amount"`
 	RedeemReward string `json:"redeem_reward"`
 }
 
