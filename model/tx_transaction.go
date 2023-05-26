@@ -8,19 +8,23 @@ type Transaction struct {
 	DepositBankNumber       string `json:"deposit_bank_number"`
 	DepositAccountBankName  string `json:"deposit_account_bank_name"`
 	DepositAmount           int    `json:"deposit_amount"`
+	DepositStatus           int    `json:"deposit_status"`
 	WithdrawBankName        string `json:"withdraw_bank_name"`
 	WithdrawBankNumber      string `json:"withdraw_bank_number"`
 	WithdrawAccountBankName string `json:"withdraw_account_bank_name"`
 	WithdrawAmount          int    `json:"withdraw_amount"`
+	WithdrawStatus          int    `json:"withdraw_status"`
 	TransferSenderName      string `json:"transfer_sender_name"`
 	TransferSenderPhone     string `json:"transfer_sender_phone"`
 	TransferRecipientName   string `json:"transfer_recipient_name"`
 	TransferRecipientPhone  string `json:"transfer_recipient_phone"`
 	TransferAmount          int    `json:"transfer_amount"`
+	TransferStatus          int    `json:"transfer_status"`
 
 	RedeemPEID   string `json:"redeem_pe_id"`
 	RedeemAmount int    `json:"redeem_amount"`
 	RedeemReward string `json:"redeem_reward"`
+	RedeemStatus int    `json:"redeem_status"`
 }
 
 type Deposit struct {
@@ -34,6 +38,9 @@ type Deposit struct {
 	TxID              int    `json:"tx_id"`
 	TransactionType   string `json:"transaction_type"`
 	TransactionDate   string `json:"transaction_date"`
+	Status            string `json:"status"`
+	VaNumber          string `json:"va_number"`
+	Token             string `json:"token"`
 }
 
 type Withdraw struct {
@@ -47,6 +54,7 @@ type Withdraw struct {
 	TxID              int    `json:"tx_id"`
 	TransactionType   string `json:"transaction_type"`
 	TransactionDate   string `json:"transaction_date"`
+	Status            string `json:"status"`
 }
 type Transfer struct {
 	TransferID           int    `json:"transfer_id"`
@@ -61,6 +69,7 @@ type Transfer struct {
 	TxID                 int    `json:"tx_id"`
 	TransactionType      string `json:"transaction_type"`
 	TransactionDate      string `json:"transaction_date"`
+	Status               string `json:"status"`
 }
 
 type Redeem struct {
@@ -68,4 +77,5 @@ type Redeem struct {
 	UserID        string `json:"user_id"`
 	PEID          int    `json:"pe_id"`
 	Amount        int    `json:"amount"`
+	Status        string `json:"status"`
 }

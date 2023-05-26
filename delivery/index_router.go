@@ -19,7 +19,7 @@ func RunServer() {
 
 	authMiddlewareUsername := controller.AuthMiddleware()
 
-	authMiddlewareRole := controller.AuthMiddlewareRole()
+	// authMiddlewareRole := controller.AuthMiddlewareRole()
 
 	r := gin.Default()
 
@@ -45,7 +45,7 @@ func RunServer() {
 	r.POST("/login", userAuth.Login)
 	r.POST("/register", userController.Register)
 
-	r.GET("user", authMiddlewareRole, userController.FindUsers)
+	r.GET("user", userController.FindUsers)
 	userRouter.GET("username/:username", userController.FindUserByUsername)
 	r.GET("user/:phone_number", userController.FindUserByPhone)
 	// r.PUT("user/:user_id", controller.AuthMiddlewareID(), userController.Edit)
@@ -91,6 +91,7 @@ func RunServer() {
 	txRouter.POST("wd/:user_id/:bank_account_id", txController.CreateWithdrawal)
 	txRouter.POST("redeem/:user_id/:pe_id", txController.CreateRedeemTransaction)
 	txRouter.GET(":user_id", txController.GetTxBySenderId)
+	r.POST("notif/midtrans", txController.HandlePaymentNotification)
 
 	if err := r.Run(utils.DotEnv("SERVER_PORT")); err != nil {
 		log.Fatal(err)

@@ -20,11 +20,21 @@ type TransactionUseCase interface {
 	FindTxById(userID string) ([]*model.Transaction, error)
 	FindByPeId(id int) (*model.PointExchange, error)
 	AssignBadge(user *model.User) error
+	UpdateDepositStatus(vaNumber, token string) error
 }
 
 type transactionUseCase struct {
 	transactionRepo repository.TransactionRepository
 	userRepo        repository.UserRepository
+}
+
+func (uc *transactionUseCase) UpdateDepositStatus(vaNumber, token string) error {
+	err := uc.transactionRepo.UpdateDepositStatus(vaNumber, token)
+	if err != nil {
+		return fmt.Errorf("failed to update deposit status: %v", err)
+	}
+
+	return nil
 }
 
 func (uc *transactionUseCase) AssignBadge(user *model.User) error {
@@ -42,20 +52,14 @@ func (uc *transactionUseCase) FindByPeId(id int) (*model.PointExchange, error) {
 func (uc *transactionUseCase) FindTxById(userID string) ([]*model.Transaction, error) {
 	return uc.transactionRepo.GetTransactions(userID)
 }
+
 func (uc *transactionUseCase) CreateDepositBank(transaction *model.Deposit) error {
 	user, err := uc.userRepo.GetByiD(transaction.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user data: %v", err)
+		return fmt.Errorf("gagal mendapatkan data pengguna: %v", err)
 	}
 
-	// update user balance
-	newBalance := user.Balance + transaction.Amount
-	err = uc.userRepo.UpdateBalance(user.ID, newBalance)
-	if err != nil {
-		return fmt.Errorf("failed to update user balance: %v", err)
-	}
-
-	// check if user is eligible for bonus points
+	// cek apakah pengguna memenuhi syarat untuk bonus poin
 	if transaction.Amount >= 50000 {
 		newPoint := user.Point + 20
 		_ = uc.userRepo.UpdatePoint(user.ID, newPoint)
@@ -66,7 +70,7 @@ func (uc *transactionUseCase) CreateDepositBank(transaction *model.Deposit) erro
 
 	err = uc.transactionRepo.CreateDepositBank(transaction)
 	if err != nil {
-		return fmt.Errorf("failed to create deposit transaction: %v", err)
+		return fmt.Errorf("gagal membuat transaksi deposit: %v", err)
 	}
 
 	return nil

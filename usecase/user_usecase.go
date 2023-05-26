@@ -22,6 +22,7 @@ type UserUseCase interface {
 	FindByPhone(phoneNumber string) (*model.User, error)
 	SaveDeviceToken(userID string, token string) error
 	FindByiDToken(id string) (*model.User, error)
+	UpdateBalance(userID string, newBalance int) error
 }
 
 type userUseCase struct {
@@ -30,6 +31,9 @@ type userUseCase struct {
 
 func (uc *userUseCase) SaveDeviceToken(userID string, token string) error {
 	return uc.userRepo.SaveDeviceToken(userID, token)
+}
+func (uc *userUseCase) UpdateBalance(userID string, newBalance int) error {
+	return uc.userRepo.UpdateBalance(userID, newBalance)
 }
 func (uc *userUseCase) Login(email string, password string, token string) (*model.User, error) {
 	// Get the user by email and hashed password

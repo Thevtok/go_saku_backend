@@ -21,6 +21,7 @@ type TransactionRepository interface {
 	GetTransactions(userID string) ([]*model.Transaction, error)
 	GetByPeId(id int) (*model.PointExchange, error)
 	AssignBadge(user *model.User) error
+	UpdateDepositStatus(vaNumber, token string) error
 }
 
 type transactionRepository struct {
@@ -64,10 +65,10 @@ func (r *transactionRepository) GetTransactions(userID string) ([]*model.Transac
 	query := `
 	SELECT 
     t.tx_id, t.transaction_type, t.transaction_date,
-    d.bank_name, d.account_number, d.account_holder_name, d.amount,
-    w.bank_name, w.account_number, w.account_holder_name, w.amount,
-    tr.sender_name, tr.sender_phone_number, tr.recipient_name, tr.recipient_phone_number, tr.amount,
-    CAST(rp.pe_id AS VARCHAR), rp.amount,
+    d.bank_name, d.account_number, d.account_holder_name, d.amount,d.status,
+    w.bank_name, w.account_number, w.account_holder_name, w.amount,w.status,
+    tr.sender_name, tr.sender_phone_number, tr.recipient_name, tr.recipient_phone_number, tr.amount,tr.status,
+    CAST(rp.pe_id AS VARCHAR), rp.amount,rp.status,
     pe.reward
 FROM tx_transaction t
 LEFT JOIN tx_deposit d ON t.tx_id = d.transaction_id
@@ -99,21 +100,25 @@ ORDER BY t.tx_id DESC
 			deposit_bank_number        sql.NullString
 			deposit_account_bank_name  sql.NullString
 			deposit_amount             sql.NullInt64
+			deposit_status             string
 			withdrawBankName           sql.NullString
 			withdraw_bank_number       sql.NullString
 			withdraw_account_bank_name sql.NullString
 			withdraw_amount            sql.NullInt64
+			withdraw_status            string
 			transfer_sender_name       sql.NullString
 			transfer_sender_phone      sql.NullString
 			transfer_recipient_name    sql.NullString
 			transfer_recipient_phone   sql.NullString
 			transfer_amount            sql.NullInt64
+			transfer_status            string
 			redeemPEID                 sql.NullString
 			redeemAmount               sql.NullInt64
 			redeemReward               sql.NullString
+			redeem_status              string
 		)
 
-		err := rows.Scan(&txID, &transactionType, &transactionDate, &depositBankName, &deposit_bank_number, &deposit_account_bank_name, &deposit_amount, &withdrawBankName, &withdraw_bank_number, &withdraw_account_bank_name, &withdraw_amount, &transfer_sender_name, &transfer_sender_phone, &transfer_recipient_name, &transfer_recipient_phone, &transfer_amount, &redeemPEID, &redeemAmount, &redeemReward)
+		err := rows.Scan(&txID, &transactionType, &transactionDate, &depositBankName, &deposit_bank_number, &deposit_account_bank_name, &deposit_amount, &deposit_status, &withdrawBankName, &withdraw_bank_number, &withdraw_account_bank_name, &withdraw_amount, &withdraw_status, &transfer_sender_name, &transfer_sender_phone, &transfer_recipient_name, &transfer_recipient_phone, &transfer_amount, &transfer_status, &redeemPEID, &redeemAmount, &redeem_status, &redeemReward)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan transaction row: %v", err)
 		}
@@ -198,8 +203,8 @@ func (r *transactionRepository) CreateDepositBank(tx *model.Deposit) error {
 		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
 	}
 
-	query = "INSERT INTO tx_deposit (transaction_id, amount, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4, $5)"
-	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName)
+	query = "INSERT INTO tx_deposit (transaction_id, amount, bank_name, account_number, account_holder_name,status,va_number,token) VALUES ($1, $2, $3, $4, $5,$6,$7,$8)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName, "Pending", tx.VaNumber, tx.Token)
 	if err != nil {
 		return fmt.Errorf("failed to insert deposit: %v", err)
 	}
@@ -219,8 +224,8 @@ func (r *transactionRepository) CreateWithdrawal(tx *model.Withdraw) error {
 		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
 	}
 
-	query = "INSERT INTO tx_withdraw (transaction_id, amount, bank_name, account_number, account_holder_name) VALUES ($1, $2, $3, $4, $5)"
-	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName)
+	query = "INSERT INTO tx_withdraw (transaction_id, amount, bank_name, account_number, account_holder_name,status) VALUES ($1, $2, $3, $4, $5,$6)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.BankName, tx.AccountNumber, tx.AccountHolderName, "Success")
 	if err != nil {
 		return fmt.Errorf("failed to insert withdrawal: %v", err)
 	}
@@ -241,10 +246,19 @@ func (r *transactionRepository) CreateTransfer(tx *model.Transfer) error {
 		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
 	}
 
-	query = "INSERT INTO tx_transfer (transaction_id, sender_name, recipient_name, amount, sender_phone_number, recipient_phone_number,sender_id,recipient_id) VALUES ($1, $2, $3, $4, $5, $6,$7,$8)"
-	_, err = r.db.Exec(query, txID, tx.SenderName, tx.RecipientName, tx.Amount, tx.SenderPhoneNumber, tx.RecipientPhoneNumber, tx.SenderID, tx.RecipientID)
+	query = "INSERT INTO tx_transfer (transaction_id, sender_name, recipient_name, amount, sender_phone_number, recipient_phone_number,sender_id,recipient_id,status) VALUES ($1, $2, $3, $4, $5, $6,$7,$8,$9)"
+	_, err = r.db.Exec(query, txID, tx.SenderName, tx.RecipientName, tx.Amount, tx.SenderPhoneNumber, tx.RecipientPhoneNumber, tx.SenderID, tx.RecipientID, "Success")
 	if err != nil {
 		return fmt.Errorf("failed to insert transfer: %v", err)
+	}
+
+	return nil
+}
+func (r *transactionRepository) UpdateDepositStatus(vaNumber, token string) error {
+	query := "UPDATE tx_deposit SET status = $1, va_number = $2 WHERE token = $3"
+	_, err := r.db.Exec(query, "Success", vaNumber, token)
+	if err != nil {
+		return fmt.Errorf("failed to update deposit status: %v", err)
 	}
 
 	return nil
@@ -261,8 +275,8 @@ func (r *transactionRepository) CreateRedeem(tx *model.Redeem) error {
 	if err != nil {
 		return fmt.Errorf("failed to retrieve transaction ID: %v", err)
 	}
-	query = "INSERT INTO tx_redeem (transaction_id,amount, pe_id) VALUES ($1, $2, $3)"
-	_, err = r.db.Exec(query, txID, tx.Amount, tx.PEID)
+	query = "INSERT INTO tx_redeem (transaction_id,amount, pe_id,status) VALUES ($1, $2, $3,$4)"
+	_, err = r.db.Exec(query, txID, tx.Amount, tx.PEID, "Success")
 	if err != nil {
 		return fmt.Errorf("failed to insert redeem: %v", err)
 	}

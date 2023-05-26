@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,10 +15,85 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var depositToken string
+var userIDdepo string
+var depoAmount int
+var deviceToken string
+
 type TransactionController struct {
 	txUsecase   usecase.TransactionUseCase
 	userUsecase usecase.UserUseCase
 	bankUsecase usecase.BankAccUsecase
+}
+
+func (c *TransactionController) HandlePaymentNotification(ctx *gin.Context) {
+	logger, err := utils.CreateLogFile()
+	if err != nil {
+		log.Fatalf("Fatal to create log file: %v", err)
+	}
+
+	logrus.SetOutput(logger)
+
+	if ctx.Request.Method != http.MethodPost {
+		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
+		return
+	}
+
+	body, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+	defer ctx.Request.Body.Close()
+
+	logrus.Println("Received payment notification:")
+	logrus.Println(string(body))
+
+	// Mengambil nomor virtual account (VA)
+	var notification response.PaymentNotification
+	err = json.Unmarshal(body, &notification)
+	if err != nil {
+		logrus.Errorf("Failed to decode notification payload: %v", err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Failed to decode notification payload"})
+		return
+	}
+
+	if notification.TransactionStatus == "settlement" {
+		if len(notification.VANumbers) > 0 {
+			vaNumber := notification.VANumbers[0].VANumber
+
+			err = c.userUsecase.UpdateBalance(userIDdepo, depoAmount)
+			if err != nil {
+				logrus.Errorf("Failed to update balance user: %v", err)
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to update balance user"})
+				return
+			}
+			logrus.Infof("useridDEPO: %s", userIDdepo)
+			logrus.Infof("depoAmount: %d", depoAmount)
+
+			err = c.txUsecase.UpdateDepositStatus(vaNumber, depositToken)
+			if err != nil {
+				logrus.Errorf("Failed to update deposit status: %v", err)
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to update deposit status"})
+				return
+			}
+			amount := float64(depoAmount) / 1000                               //
+			formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64) //
+
+			err = model.SendFCMNotification(deviceToken, "Deposit Berhasil", "Anda telah melakukan deposit sebesar "+formattedAmount)
+
+			if err != nil {
+				logrus.Errorf("failed to send FCM notification: %v", err)
+
+				return
+			}
+
+			logrus.Infof("Deposit status updated for VA Number: %s", vaNumber)
+
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Notification received"})
 }
 
 func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
@@ -52,14 +129,6 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		return
 	}
 
-	// Check if bank account belongs to the given user_id
-	if bankAcc.UserID != userID {
-		logrus.Errorf("Bank Account doesn't belong to the given UserID: %v", err)
-		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Bank Account doesn't belong to the given UserID")
-
-		return
-	}
-
 	// Parse request body
 	var reqBody model.Deposit
 	if err := ctx.ShouldBindJSON(&reqBody); err != nil {
@@ -67,8 +136,8 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Incorrect request body")
 		return
 	}
-
-	// Set the sender ID to the user ID
+	depoAmount = reqBody.Amount
+	userIDdepo = userID
 	reqBody.UserID = userID
 	reqBody.BankName = bankAcc.BankName
 	reqBody.AccountHolderName = bankAcc.AccountHolderName
@@ -79,6 +148,16 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Minimum deposit 10.000")
 		return
 	}
+	token, err := model.CreateMidtransTransactionFromDeposit(&reqBody, user)
+	if err != nil {
+		logrus.Errorf("Failed to create Midtrans transaction: %v", err)
+		response.JSONErrorResponse(ctx.Writer, false, http.StatusInternalServerError, "Failed to create Midtrans transaction")
+		return
+	}
+
+	reqBody.Token = token
+	depositToken = token
+	deviceToken = user.Token
 
 	// Create the deposit transaction
 	if err := c.txUsecase.CreateDepositBank(&reqBody); err != nil {
@@ -90,7 +169,7 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 	amount := float64(reqBody.Amount) / 1000                           //
 	formattedAmount := "Rp " + strconv.FormatFloat(amount, 'f', 3, 64) //
 
-	err = model.SendFCMNotification(user.Token, "Deposit Berhasil", "Anda telah melakukan deposit sebesar "+formattedAmount)
+	err = model.SendFCMNotification(user.Token, "Deposit Pending", "Silahkan selesaikan transaksi anda terlebih dahulu sebesar "+formattedAmount)
 
 	if err != nil {
 		logrus.Errorf("failed to send FCM notification: %v", err)
@@ -98,9 +177,12 @@ func (c *TransactionController) CreateDepositBank(ctx *gin.Context) {
 		return
 	}
 
-	// Return success response
-	logrus.Info("Deposit Transaction created Succesfully")
-	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, "Deposit Transaction created Succesfully")
+	// Kirim respons sukses
+	logrus.Info("Deposit Transaction created Successfully")
+	response.JSONSuccess(ctx.Writer, true, http.StatusCreated, gin.H{
+		"body_midtrans": token,
+	})
+
 }
 
 func (c *TransactionController) CreateWithdrawal(ctx *gin.Context) {

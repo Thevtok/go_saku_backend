@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ReygaFitra/inc-final-project.git/model"
 	"github.com/ReygaFitra/inc-final-project.git/model/response"
@@ -81,6 +82,7 @@ func (c *BankAccController) CreateBankAccount(ctx *gin.Context) {
 		response.JSONErrorResponse(ctx.Writer, false, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+	newBankAcc.BankName = strings.ToLower(newBankAcc.BankName)
 
 	if newBankAcc.BankName == "" || newBankAcc.AccountNumber == "" || newBankAcc.AccountHolderName == "" {
 		logrus.Errorf("Invalid Input: Required fields are empty")

@@ -87,6 +87,14 @@ func (m *transactionRepoMock) AssignBadge(user *model.User) error {
 	}
 	return nil
 }
+func (m *transactionRepoMock) UpdateDepositStatus(vaNumber, token string) error {
+	args := m.Called(vaNumber, token)
+
+	if args[0] != nil {
+		return args.Error(0)
+	}
+	return nil
+}
 
 func (m *transactionRepoMock) GetTransactions(ID string) ([]*model.Transaction, error) {
 	args := m.Called(ID)

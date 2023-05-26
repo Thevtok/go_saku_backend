@@ -82,6 +82,7 @@ func (r *UserUseCaseMock) SaveDeviceToken(userId string, token string) error {
 	}
 	return nil
 }
+
 func (r *UserUseCaseMock) FindByUsername(username string) (*model.User, error) {
 	args := r.Called(username)
 	if args[0] == nil {
@@ -136,7 +137,7 @@ func (r *UserUseCaseMock) Unreg(user *model.User) string {
 	return "Success Delete user"
 }
 
-func (r *UserUseCaseMock) UpdateBalance(userID string, newBalance uint) error {
+func (r *UserUseCaseMock) UpdateBalance(userID string, newBalance int) error {
 	args := r.Called(userID, newBalance)
 	if args[0] == nil {
 		return args.Error(0)
